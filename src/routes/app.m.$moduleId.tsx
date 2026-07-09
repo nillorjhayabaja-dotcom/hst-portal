@@ -14,7 +14,6 @@ import { RequestsModule } from "@/features/modules/RequestsModule";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboards/charts";
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Check, Minus } from "lucide-react";
 import {
