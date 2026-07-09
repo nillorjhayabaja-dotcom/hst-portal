@@ -30,6 +30,7 @@ export type ModuleId =
   | "departments"
   | "workflows"
   | "control-numbers"
+  | "delegations"
   | "settings";
 
 // Granular actions a role may hold on a module

@@ -31,7 +31,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-sidebar-border lg:block">
         <SidebarNav />
@@ -44,11 +44,23 @@ export function AppLayout() {
         </SheetContent>
       </Sheet>
 
-      <div className="lg:pl-64">
+      <div className="flex flex-1 flex-col lg:pl-64">
         <Header onOpenMobile={() => setMobileOpen(true)} />
-        <main className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8 lg:py-8">
           <Outlet />
         </main>
+
+        {/* Footer */}
+        <footer className="border-t border-border bg-background/50 px-6 py-4">
+          <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 text-center text-xs text-muted-foreground/60 sm:flex-row">
+            <p>© {new Date().getFullYear()} HST Enterprise Portal. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <span>v1.0.0</span>
+              <span>·</span>
+              <span>Powered by HST Corp</span>
+            </div>
+          </div>
+        </footer>
       </div>
 
       <RoleSwitcher />

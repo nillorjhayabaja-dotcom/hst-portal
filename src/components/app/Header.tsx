@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Menu, Search, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, Menu, Search, User as UserIcon, Settings, HelpCircle, Info, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROLES } from "@/rbac/roles";
-import { NOTIFICATIONS } from "@/mock/data";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "./ThemeToggle";
+import { GlobalSearch } from "@/components/enterprise/GlobalSearch";
+import { NotificationCenter } from "@/components/enterprise/NotificationCenter";
+import { LogoutDialog } from "@/components/enterprise/EnterpriseDialogs";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,19 +17,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 
 export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
   const { user, logout } = useAuth();
+  const { mode, setMode } = useTheme();
   const navigate = useNavigate();
+  const [showLogout, setShowLogout] = useState(false);
+
   if (!user) return null;
   const role = ROLES[user.role];
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
     toast.success("Signed out");
     navigate({ to: "/", replace: true });
+  };
+
+  const cycleTheme = () => {
+    const modes: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
+    const currentIdx = modes.indexOf(mode);
+    const next = modes[(currentIdx + 1) % modes.length];
+    setMode(next);
+    toast.success(`Theme: ${next.charAt(0).toUpperCase() + next.slice(1)}`);
   };
 
   return (
@@ -35,29 +50,30 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
         <Menu className="size-5" />
       </Button>
 
-      <div className="relative hidden max-w-md flex-1 md:block">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search modules, requests, employees…" className="pl-9" />
+      {/* Global Search */}
+      <div className="hidden md:block">
+        <GlobalSearch />
       </div>
 
       <div className="ml-auto flex items-center gap-1">
-        <ThemeToggle />
-
+        {/* Mobile Search - opens command palette */}
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
-          onClick={() => navigate({ to: "/app/notifications" })}
-          aria-label="Notifications"
+          className="md:hidden"
+          onClick={() => {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+          }}
         >
-          <Bell className="size-5" />
-          {unread > 0 && (
-            <span className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-              {unread}
-            </span>
-          )}
+          <Search className="size-5" />
         </Button>
 
+        <ThemeToggle />
+
+        {/* Notification Center */}
+        <NotificationCenter />
+
+        {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="ml-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-accent/50">
@@ -74,24 +90,65 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
               </span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel>
               <p className="text-sm font-semibold">{user.name}</p>
               <p className="text-xs font-normal text-muted-foreground">{user.email}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground/60">{user.title} · {user.department}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/app/profile">
-                <UserIcon className="mr-2 size-4" /> My Profile
-              </Link>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to="/app/profile" className="cursor-pointer">
+                  <UserIcon className="mr-2 size-4" />
+                  My Profile
+                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/app/dashboard" className="cursor-pointer">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={cycleTheme}>
+                <Palette className="mr-2 size-4" />
+                Theme: {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 size-4" /> Sign out
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => toast.info("HST Enterprise Portal v1.0.0")}>
+                <Info className="mr-2 size-4" />
+                About
+                <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/" className="cursor-pointer">
+                  <HelpCircle className="mr-2 size-4" />
+                  Help & Support
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setShowLogout(true)}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 size-4" />
+              Sign out
+              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutDialog
+        open={showLogout}
+        onOpenChange={setShowLogout}
+        onConfirm={handleLogout}
+      />
     </header>
   );
 }

@@ -24,6 +24,7 @@ export const MODULES: Record<ModuleId, { label: string; icon: string; group: str
   users: { label: "Users & Roles", icon: "ShieldCheck", group: "Administration", to: "/app/m/users" },
   workflows: { label: "Workflows", icon: "GitBranch", group: "Administration", to: "/app/m/workflows" },
   "control-numbers": { label: "Control Numbers", icon: "Hash", group: "Administration", to: "/app/m/control-numbers" },
+  delegations: { label: "Delegations", icon: "UserCheck", group: "Administration", to: "/app/m/delegations" },
   settings: { label: "Settings", icon: "Settings", group: "Administration", to: "/app/m/settings" },
 
   profile: { label: "My Profile", icon: "User", group: "Account", to: "/app/profile" },
@@ -49,6 +50,7 @@ const MODULE_ORDER: ModuleId[] = [
   "users",
   "workflows",
   "control-numbers",
+  "delegations",
   "settings",
   "profile",
 ];

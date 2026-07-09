@@ -8,9 +8,14 @@ import { PERMISSIONS } from "@/rbac/permissions";
 import type { ModuleId } from "@/types";
 import { PageHeader } from "@/components/app/PageHeader";
 import { AccessDenied } from "@/components/app/AccessDenied";
-import { DataTable, type Column } from "@/components/app/DataTable";
-import { StatusBadge } from "@/components/app/StatusBadge";
-import { RequestsModule } from "@/features/modules/RequestsModule";
+import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
+import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
+import { GatePassModule } from "@/features/modules/GatePassModule";
+import { LeaveModule } from "@/features/modules/LeaveModule";
+import { MRFModule } from "@/features/modules/MRFModule";
+import { PRModule } from "@/features/modules/PRModule";
+import { ApprovalInbox } from "@/components/enterprise/ApprovalInbox";
+import { DelegationManager } from "@/components/enterprise/DelegationManager";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboards/charts";
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,20 +79,45 @@ const descriptions: Partial<Record<ModuleId, string>> = {
 };
 
 function ModuleContent({ module, role, label }: { module: ModuleId; role: import("@/types").RoleId; label: string }) {
-  if (REQUEST_MODULES.includes(module)) {
-    return <RequestsModule module={module} role={role} label={label} />;
+  // Use new enterprise modules for request-based modules
+  if (module === "gate-pass") return <GatePassModule />;
+  if (module === "leave") return <LeaveModule />;
+  if (module === "mrf") return <MRFModule />;
+  if (module === "purchase-request") return <PRModule />;
+
+  // Approvals module - Universal Approval Inbox
+  if (module === "approvals") {
+    return <ApprovalInbox />;
   }
 
   switch (module) {
     case "employees": {
-      const cols: Column<(typeof EMPLOYEES)[number]>[] = [
-        { key: "id", header: "ID", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-        { key: "name", header: "Name", render: (r) => <span className="font-medium">{r.name}</span> },
-        { key: "title", header: "Title" },
-        { key: "department", header: "Department" },
-        { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+      const cols: Column[] = [
+        { id: "id", header: "ID", accessorKey: "id", sortable: true, width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        },
+        { id: "name", header: "Name", accessorKey: "name", sortable: true, filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>
+        },
+        { id: "title", header: "Title", accessorKey: "title", sortable: true },
+        { id: "department", header: "Department", accessorKey: "department", sortable: true },
+        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        },
       ];
-      return <DataTable columns={cols} data={EMPLOYEES} searchKeys={["name", "title", "department", "id"]} />;
+      return (
+        <EnterpriseDataTable
+          title="Employee Directory"
+          data={EMPLOYEES}
+          columns={cols}
+          keyExtractor={(row) => row.id}
+          searchable
+          searchPlaceholder="Search employees by name, title, department..."
+          exportable
+          filename="employees"
+          selectable
+        />
+      );
     }
     case "departments":
       return (
@@ -113,46 +143,110 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
         </div>
       );
     case "visitors": {
-      const cols: Column<(typeof VISITORS)[number]>[] = [
-        { key: "id", header: "ID", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-        { key: "name", header: "Visitor", render: (r) => <span className="font-medium">{r.name}</span> },
-        { key: "company", header: "Company" },
-        { key: "host", header: "Host" },
-        { key: "purpose", header: "Purpose" },
-        { key: "time", header: "Time" },
-        { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+      const cols: Column[] = [
+        { id: "id", header: "ID", accessorKey: "id", sortable: true, width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        },
+        { id: "name", header: "Visitor", accessorKey: "name", sortable: true, filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>
+        },
+        { id: "company", header: "Company", accessorKey: "company", sortable: true },
+        { id: "host", header: "Host", accessorKey: "host", sortable: true },
+        { id: "purpose", header: "Purpose", accessorKey: "purpose" },
+        { id: "time", header: "Time", accessorKey: "time", sortable: true },
+        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        },
       ];
-      return <DataTable columns={cols} data={VISITORS} searchKeys={["name", "company", "host"]} />;
+      return (
+        <EnterpriseDataTable
+          title="Visitor Management"
+          data={VISITORS}
+          columns={cols}
+          keyExtractor={(row) => row.id}
+          searchable
+          searchPlaceholder="Search visitors by name, company, host..."
+          exportable
+          filename="visitors"
+        />
+      );
     }
     case "vehicles": {
-      const cols: Column<(typeof VEHICLES)[number]>[] = [
-        { key: "plate", header: "Plate", render: (r) => <span className="font-mono text-xs font-medium">{r.plate}</span> },
-        { key: "type", header: "Type" },
-        { key: "assignedTo", header: "Assigned To" },
-        { key: "location", header: "Location" },
-        { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+      const cols: Column[] = [
+        { id: "plate", header: "Plate No.", accessorKey: "plate", sortable: true, width: "140px",
+          cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>
+        },
+        { id: "type", header: "Type", accessorKey: "type", sortable: true },
+        { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
+        { id: "location", header: "Location", accessorKey: "location", sortable: true },
+        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        },
       ];
-      return <DataTable columns={cols} data={VEHICLES} searchKeys={["plate", "type", "assignedTo"]} />;
+      return (
+        <EnterpriseDataTable
+          title="Vehicle Fleet"
+          data={VEHICLES}
+          columns={cols}
+          keyExtractor={(row) => row.id}
+          searchable
+          searchPlaceholder="Search vehicles by plate, type, assignment..."
+          exportable
+          filename="vehicles"
+        />
+      );
     }
     case "assets": {
-      const cols: Column<(typeof ASSETS)[number]>[] = [
-        { key: "id", header: "Asset ID", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-        { key: "name", header: "Name", render: (r) => <span className="font-medium">{r.name}</span> },
-        { key: "category", header: "Category" },
-        { key: "assignedTo", header: "Assigned To" },
-        { key: "value", header: "Value" },
-        { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+      const cols: Column[] = [
+        { id: "id", header: "Asset ID", accessorKey: "id", sortable: true, width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        },
+        { id: "name", header: "Name", accessorKey: "name", sortable: true, filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>
+        },
+        { id: "category", header: "Category", accessorKey: "category", sortable: true },
+        { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
+        { id: "value", header: "Value", accessorKey: "value", sortable: true },
+        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        },
       ];
-      return <DataTable columns={cols} data={ASSETS} searchKeys={["name", "category", "assignedTo"]} />;
+      return (
+        <EnterpriseDataTable
+          title="Asset Registry"
+          data={ASSETS}
+          columns={cols}
+          keyExtractor={(row) => row.id}
+          searchable
+          searchPlaceholder="Search assets by name, category, assignment..."
+          exportable
+          filename="assets"
+        />
+      );
     }
     case "audit-logs": {
-      const cols: Column<(typeof AUDIT_LOGS)[number]>[] = [
-        { key: "time", header: "Timestamp", render: (r) => <span className="font-mono text-xs">{r.time}</span> },
-        { key: "actor", header: "Actor", render: (r) => <span className="font-medium">{r.actor}</span> },
-        { key: "action", header: "Action" },
-        { key: "target", header: "Target" },
+      const cols: Column[] = [
+        { id: "time", header: "Timestamp", accessorKey: "time", sortable: true, width: "180px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        },
+        { id: "actor", header: "Actor", accessorKey: "actor", sortable: true, filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>
+        },
+        { id: "action", header: "Action", accessorKey: "action", sortable: true },
+        { id: "target", header: "Target", accessorKey: "target", sortable: true },
       ];
-      return <DataTable columns={cols} data={AUDIT_LOGS} searchKeys={["actor", "action", "target"]} />;
+      return (
+        <EnterpriseDataTable
+          title="Audit Trail"
+          data={AUDIT_LOGS}
+          columns={cols}
+          keyExtractor={(row) => row.id}
+          searchable
+          searchPlaceholder="Search audit logs by actor, action, target..."
+          exportable
+          filename="audit-logs"
+        />
+      );
     }
     case "reports":
       return (
@@ -168,6 +262,8 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
       return <RbacMatrix />;
     case "workflows":
       return <WorkflowsView />;
+    case "delegations":
+      return <DelegationManager />;
     case "control-numbers":
       return <ControlNumbers />;
     case "settings":
@@ -258,13 +354,29 @@ function ControlNumbers() {
     { prefix: "MRF-2026", label: "MRF", current: 318, format: "MRF-YYYY-000000" },
     { prefix: "PR-2026", label: "Purchase Request", current: 921, format: "PR-YYYY-000000" },
   ];
-  const cols: Column<(typeof series)[number]>[] = [
-    { key: "prefix", header: "Series", render: (r) => <span className="font-mono text-xs font-medium">{r.prefix}</span> },
-    { key: "label", header: "Document" },
-    { key: "format", header: "Format", render: (r) => <span className="font-mono text-xs">{r.format}</span> },
-    { key: "current", header: "Current No.", render: (r) => <span className="font-semibold">{r.current}</span> },
+  const cols: Column[] = [
+    { id: "prefix", header: "Series", accessorKey: "prefix", sortable: true, width: "140px",
+      cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>
+    },
+    { id: "label", header: "Document", accessorKey: "label", sortable: true },
+    { id: "format", header: "Format", accessorKey: "format", sortable: true,
+      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+    },
+    { id: "current", header: "Current No.", accessorKey: "current", sortable: true,
+      cell: (val) => <span className="font-semibold">{String(val)}</span>
+    },
   ];
-  return <DataTable columns={cols} data={series} />;
+  return (
+    <EnterpriseDataTable
+      title="Control Number Series"
+      data={series}
+      columns={cols}
+      keyExtractor={(row) => row.prefix}
+      searchable={false}
+      exportable
+      filename="control-numbers"
+    />
+  );
 }
 
 function SettingsView() {
