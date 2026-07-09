@@ -21,7 +21,7 @@ export function RecentRequests({
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/app/m/approvals">View all</Link>
+          <Link to="/app/m/$moduleId" params={{ moduleId: "approvals" }}>View all</Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-1">

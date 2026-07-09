@@ -10,6 +10,8 @@ import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced
 import { ApproveDialog, RejectDialog, ReturnDialog } from "@/components/enterprise/EnterpriseDialogs";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
+import { useAuth } from "@/contexts/AuthContext";
+import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
 
 const MODULE_CONFIG: ModuleConfig = {
   moduleId: "mrf",
@@ -43,10 +45,12 @@ const MRF_COLUMNS: Column<RequestData>[] = [
 ];
 
 export function MRFModule() {
+  const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [showReturn, setShowReturn] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const mrfs = REQUESTS.filter((r) => r.type === "MRF").map((r) => ({ ...r, type: r.type }));
 
@@ -57,9 +61,30 @@ export function MRFModule() {
     rejected: mrfs.filter((r) => ["Rejected", "Returned"].includes(r.status)).length,
   };
 
-  const handleApprove = (note?: string) => { toast.success("MRF approved"); setShowApprove(false); setSelectedRequest(null); };
-  const handleReject = (note?: string) => { toast.error("MRF rejected"); setShowReject(false); setSelectedRequest(null); };
-  const handleReturn = (note?: string) => { toast.warning("MRF returned"); setShowReturn(false); setSelectedRequest(null); };
+  const handleApprove = (note?: string) => {
+    if (!user || !selectedRequest) return;
+    setLoading(true);
+    approveRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
+    setShowApprove(false);
+    setSelectedRequest(null);
+  };
+  const handleReject = (note?: string) => {
+    if (!user || !selectedRequest || !note) return;
+    setLoading(true);
+    rejectRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
+    setShowReject(false);
+    setSelectedRequest(null);
+  };
+  const handleReturn = (note?: string) => {
+    if (!user || !selectedRequest || !note) return;
+    setLoading(true);
+    returnRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
+    setShowReturn(false);
+    setSelectedRequest(null);
+  };
 
   const kpiCards = (
     <>
@@ -97,9 +122,9 @@ export function MRFModule() {
         />
       )}
 
-      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} />
-      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} />
-      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} />
+      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} loading={loading} />
+      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} loading={loading} />
+      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} loading={loading} />
     </>
   );
 }

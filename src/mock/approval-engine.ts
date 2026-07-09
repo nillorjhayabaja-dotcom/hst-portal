@@ -1,5 +1,6 @@
 // Approval Engine Mock Data - Workflows, requests, delegations, notifications
-import type { WorkflowConfig, ApprovalRequest, DelegationRule, ApprovalNotification, ControlNumberConfig } from "@/types/approval";
+// Version 2.0 - Updated with required field on step instances
+import type { WorkflowConfig, ApprovalRequest, DelegationRule, ApprovalNotification, ControlNumberConfig, ApprovalStepInstance } from "@/types/approval";
 
 // ============================================================
 // Workflow Definitions (configurable per module)
@@ -13,6 +14,7 @@ export const WORKFLOWS: WorkflowConfig[] = [
     active: true,
     createdAt: "2026-01-01",
     updatedAt: "2026-07-01",
+    version: 1,
     steps: [
       { id: "s1", name: "Employee", role: "employee", order: 1, required: true, label: "Submit Request" },
       { id: "s2", name: "Supervisor", role: "supervisor", order: 2, required: true, label: "Supervisor Review" },
@@ -27,6 +29,7 @@ export const WORKFLOWS: WorkflowConfig[] = [
     name: "Leave Approval Flow",
     description: "Standard leave approval workflow",
     active: true,
+    version: 1,
     createdAt: "2026-01-01",
     updatedAt: "2026-07-01",
     steps: [
@@ -42,6 +45,7 @@ export const WORKFLOWS: WorkflowConfig[] = [
     name: "MRF Approval Flow",
     description: "Manpower requisition approval workflow",
     active: true,
+    version: 1,
     createdAt: "2026-01-01",
     updatedAt: "2026-07-01",
     steps: [
@@ -56,6 +60,7 @@ export const WORKFLOWS: WorkflowConfig[] = [
     name: "Purchase Request Approval Flow",
     description: "Procurement approval workflow",
     active: true,
+    version: 1,
     createdAt: "2026-01-01",
     updatedAt: "2026-07-01",
     steps: [
@@ -97,11 +102,11 @@ export const APPROVAL_REQUESTS: ApprovalRequest[] = [
     createdAt: "2026-07-08T09:00:00",
     updatedAt: "2026-07-08T11:15:00",
     steps: [
-      { stepId: "s1", name: "Employee", role: "employee", order: 1, status: "approved", actorName: "Liza Mendoza", date: "2026-07-08 09:00", note: "Submitted request" },
-      { stepId: "s2", name: "Supervisor", role: "supervisor", order: 2, status: "approved", actorName: "Jomar Reyes", date: "2026-07-08 10:30", note: "Documents verified. Recommending approval." },
-      { stepId: "s3", name: "Department Manager", role: "manager", order: 3, status: "current", note: "Awaiting approval" },
-      { stepId: "s4", name: "General Administration", role: "gad", order: 4, status: "pending" },
-      { stepId: "s5", name: "Security", role: "security", order: 5, status: "pending" },
+      { stepId: "s1", name: "Employee", role: "employee", order: 1, required: true, status: "approved", actorName: "Liza Mendoza", date: "2026-07-08 09:00", note: "Submitted request" },
+      { stepId: "s2", name: "Supervisor", role: "supervisor", order: 2, required: true, status: "approved", actorName: "Jomar Reyes", date: "2026-07-08 10:30", note: "Documents verified. Recommending approval." },
+      { stepId: "s3", name: "Department Manager", role: "manager", order: 3, required: true, status: "current", note: "Awaiting approval" },
+      { stepId: "s4", name: "General Administration", role: "gad", order: 4, required: true, status: "pending" },
+      { stepId: "s5", name: "Security", role: "security", order: 5, required: true, status: "pending" },
     ],
   },
   {
@@ -120,10 +125,10 @@ export const APPROVAL_REQUESTS: ApprovalRequest[] = [
     createdAt: "2026-07-07T14:00:00",
     updatedAt: "2026-07-07T14:00:00",
     steps: [
-      { stepId: "s1", name: "Employee", role: "employee", order: 1, status: "approved", actorName: "Carla Mateo", date: "2026-07-07 14:00" },
-      { stepId: "s2", name: "Supervisor", role: "supervisor", order: 2, status: "current", note: "Awaiting review" },
-      { stepId: "s3", name: "Manager", role: "manager", order: 3, status: "pending" },
-      { stepId: "s4", name: "HR", role: "hr", order: 4, status: "pending" },
+      { stepId: "s1", name: "Employee", role: "employee", order: 1, required: true, status: "approved", actorName: "Carla Mateo", date: "2026-07-07 14:00" },
+      { stepId: "s2", name: "Supervisor", role: "supervisor", order: 2, required: true, status: "current", note: "Awaiting review" },
+      { stepId: "s3", name: "Manager", role: "manager", order: 3, required: false, status: "pending" },
+      { stepId: "s4", name: "HR", role: "hr", order: 4, required: true, status: "pending" },
     ],
   },
   {
@@ -142,10 +147,10 @@ export const APPROVAL_REQUESTS: ApprovalRequest[] = [
     createdAt: "2026-07-08T08:00:00",
     updatedAt: "2026-07-08T10:00:00",
     steps: [
-      { stepId: "s1", name: "Employee", role: "employee", order: 1, status: "approved", actorName: "Paolo Garcia", date: "2026-07-08 08:00" },
-      { stepId: "s2", name: "Manager", role: "manager", order: 2, status: "approved", actorName: "Grace Lim", date: "2026-07-08 09:00", note: "Approved. Budget available." },
-      { stepId: "s3", name: "Purchasing", role: "admin", order: 3, status: "current", note: "Under review" },
-      { stepId: "s4", name: "Finance", role: "admin", order: 4, status: "pending" },
+      { stepId: "s1", name: "Employee", role: "employee", order: 1, required: true, status: "approved", actorName: "Paolo Garcia", date: "2026-07-08 08:00" },
+      { stepId: "s2", name: "Manager", role: "manager", order: 2, required: true, status: "approved", actorName: "Grace Lim", date: "2026-07-08 09:00", note: "Approved. Budget available." },
+      { stepId: "s3", name: "Purchasing", role: "admin", order: 3, required: true, status: "current", note: "Under review" },
+      { stepId: "s4", name: "Finance", role: "admin", order: 4, required: true, status: "pending" },
     ],
   },
   {
@@ -165,9 +170,9 @@ export const APPROVAL_REQUESTS: ApprovalRequest[] = [
     updatedAt: "2026-07-06T16:00:00",
     completedAt: "2026-07-06T16:00:00",
     steps: [
-      { stepId: "s1", name: "Employee", role: "employee", order: 1, status: "approved", actorName: "Grace Lim", date: "2026-07-05 10:00" },
-      { stepId: "s2", name: "Manager", role: "manager", order: 2, status: "approved", actorName: "Grace Lim", date: "2026-07-05 14:00" },
-      { stepId: "s3", name: "HR", role: "hr", order: 3, status: "approved", actorName: "Bianca Flores", date: "2026-07-06 16:00", note: "Approved with budget note" },
+      { stepId: "s1", name: "Employee", role: "employee", order: 1, required: true, status: "approved", actorName: "Grace Lim", date: "2026-07-05 10:00" },
+      { stepId: "s2", name: "Manager", role: "manager", order: 2, required: true, status: "approved", actorName: "Grace Lim", date: "2026-07-05 14:00" },
+      { stepId: "s3", name: "HR", role: "hr", order: 3, required: true, status: "approved", actorName: "Bianca Flores", date: "2026-07-06 16:00", note: "Approved with budget note" },
     ],
   },
 ];

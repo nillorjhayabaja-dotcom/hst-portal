@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { MODULES } from "@/navigation/nav";
@@ -16,11 +16,18 @@ import { MRFModule } from "@/features/modules/MRFModule";
 import { PRModule } from "@/features/modules/PRModule";
 import { ApprovalInbox } from "@/components/enterprise/ApprovalInbox";
 import { DelegationManager } from "@/components/enterprise/DelegationManager";
+import { WorkflowBuilder } from "@/components/enterprise/WorkflowBuilder";
+import { CompanyProfileEditor } from "@/components/enterprise/CompanyProfileEditor";
+import { HolidayCalendar } from "@/components/enterprise/HolidayCalendar";
+import { NotificationRulesManager } from "@/components/enterprise/NotificationRulesManager";
+import { BusinessRulesEngine } from "@/components/enterprise/BusinessRulesEngine";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboards/charts";
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, TrendingUp, Clock, CheckCircle2, XCircle, Users, GitBranch, Hash, Settings, Activity } from "lucide-react";
+import { getApprovalMetrics } from "@/services/approval-engine";
+import type { ApprovalMetrics } from "@/types/approval";
 import {
   EMPLOYEES,
   DEPARTMENTS,
@@ -69,7 +76,13 @@ const descriptions: Partial<Record<ModuleId, string>> = {
   departments: "Departments and organization structure",
   reports: "Analytics and operational reports",
   "audit-logs": "System activity audit trail",
+  "company-profile": "Company profile and organizational settings",
   users: "Role-based access control matrix",
+  "workflow-templates": "Reusable workflow template library",
+  "notification-rules": "Configurable notification rules engine",
+  "business-rules": "IF-THEN business rules engine",
+  "holiday-calendar": "Company holiday calendar and events",
+  positions: "Job position management",
   visitors: "Visitor management and verification",
   vehicles: "Company vehicle fleet and assignments",
   assets: "Asset registry and assignments",
@@ -261,7 +274,17 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
     case "users":
       return <RbacMatrix />;
     case "workflows":
-      return <WorkflowsView />;
+      return <WorkflowBuilder />;
+    case "workflow-templates":
+      return <WorkflowBuilder />;
+    case "company-profile":
+      return <CompanyProfileEditor />;
+    case "holiday-calendar":
+      return <HolidayCalendar />;
+    case "notification-rules":
+      return <NotificationRulesManager />;
+    case "business-rules":
+      return <BusinessRulesEngine />;
     case "delegations":
       return <DelegationManager />;
     case "control-numbers":

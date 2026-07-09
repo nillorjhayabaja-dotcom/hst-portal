@@ -11,6 +11,7 @@ import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced
 import { ApproveDialog, RejectDialog, ReturnDialog } from "@/components/enterprise/EnterpriseDialogs";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
+import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
 
 const MODULE_CONFIG: ModuleConfig = {
   moduleId: "gate-pass",
@@ -49,6 +50,7 @@ export function GatePassModule() {
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [showReturn, setShowReturn] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const gatePasses = REQUESTS.filter((r) => r.type === "Gate Pass").map((r) => ({
     ...r,
@@ -67,19 +69,28 @@ export function GatePassModule() {
   };
 
   const handleApprove = (note?: string) => {
-    toast.success("Gate pass approved", { description: note });
+    if (!user || !selectedRequest) return;
+    setLoading(true);
+    approveRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
     setShowApprove(false);
     setSelectedRequest(null);
   };
 
   const handleReject = (note?: string) => {
-    toast.error("Gate pass rejected", { description: note });
+    if (!user || !selectedRequest || !note) return;
+    setLoading(true);
+    rejectRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
     setShowReject(false);
     setSelectedRequest(null);
   };
 
   const handleReturn = (note?: string) => {
-    toast.warning("Gate pass returned", { description: note });
+    if (!user || !selectedRequest || !note) return;
+    setLoading(true);
+    returnRequest(selectedRequest.id, user.id, user.name, note);
+    setLoading(false);
     setShowReturn(false);
     setSelectedRequest(null);
   };
@@ -121,9 +132,9 @@ export function GatePassModule() {
         />
       )}
 
-      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} />
-      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} />
-      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} />
+      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} loading={loading} />
+      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} loading={loading} />
+      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} loading={loading} />
     </>
   );
 }

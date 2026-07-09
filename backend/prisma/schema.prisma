@@ -1,0 +1,854 @@
+// HST Enterprise Portal - Prisma Schema
+// Based on docs/backend-blueprint.md Section 2
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Domain: Authentication & Identity
+// ============================================================
+
+model User {
+  id                  String    @id @default(uuid())
+  employeeId          String    @unique @map("employee_id")
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  displayName         String    @map("display_name")
+  avatarUrl           String?   @map("avatar_url")
+
+  // Account state
+  isActive            Boolean   @default(true) @map("is_active")
+  isLocked            Boolean   @default(false) @map("is_locked")
+  lockedUntil         DateTime? @map("locked_until")
+  loginAttempts       Int       @default(0) @map("login_attempts")
+  lastLoginAt         DateTime? @map("last_login_at")
+  passwordChangedAt   DateTime  @default(now()) @map("password_changed_at")
+  mustChangePassword  Boolean   @default(false) @map("must_change_password")
+
+  // 2FA (future)
+  twoFactorEnabled    Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret     String?   @map("two_factor_secret")
+
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  userRoles           UserRole[]
+  employees           Employee?
+  approvalRequests    ApprovalRequest[] @relation("Requester")
+  approvalSteps       ApprovalStep[] @relation("Actor")
+  approvalActions     ApprovalAction[]
+  delegationsFrom     Delegation[] @relation("Delegator")
+  delegationsTo       Delegation[] @relation("Delegate")
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  attachments         Attachment[]
+  comments            Comment[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String
+  shortName   String?  @map("short_name")
+  level       Int      @default(9) // 1=highest, 9=employee
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userRoles   UserRole[]
+  permissions Permission[]
+  workflowSteps WorkflowStep[]
+  approvalSteps ApprovalStep[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId      String   @map("user_id")
+  roleId      String   @map("role_id")
+  assignedBy  String?  @map("assigned_by")
+  assignedAt  DateTime @default(now()) @map("assigned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  roleId    String   @map("role_id")
+  moduleId  String   @map("module_id")
+  actions   String[] // [create, view, edit, delete, approve, export, full]
+  scope     String   @default("own") // all, department, own
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+  @@map("permissions")
+}
+
+// ============================================================
+// Domain: Organization
+// ============================================================
+
+model Department {
+  id          String    @id @default(uuid())
+  name        String
+  code        String    @unique
+  parentId    String?   @map("parent_id")
+  headId      String?   @map("head_id")
+  description String?
+  level       Int       @default(1)
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Department[] @relation("DepartmentHierarchy")
+  employees   Employee[]
+  positions   Position[]
+  visitors    Visitor[] @relation("VisitorDepartment")
+  holidays    Holiday[]
+  approvalRequests ApprovalRequest[]
+  mrfRequests MRFRequest[]
+  purchaseRequests PurchaseRequest[]
+  vehicles    Vehicle[]
+  assets      Asset[]
+
+  @@index([parentId])
+  @@map("departments")
+}
+
+model Position {
+  id                  String    @id @default(uuid())
+  title               String
+  code                String    @unique
+  departmentId        String    @map("department_id")
+  defaultRoleId       String?   @map("default_role_id")
+  reportsToId         String?   @map("reports_to_id")
+  level               Int       @default(1)
+  hasApprovalAuthority Boolean  @default(false) @map("has_approval_authority")
+  maxApprovalAmount   Decimal?  @map("max_approval_amount") @db.Decimal(15, 2)
+  jobDescription      String?   @map("job_description")
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  employees  Employee[]
+
+  @@index([departmentId])
+  @@map("positions")
+}
+
+model Employee {
+  id              String    @id @default(uuid())
+  employeeNumber  String    @unique @map("employee_number")
+  userId          String?   @unique @map("user_id")
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  email           String    @unique
+  phone           String?
+  title           String?
+  departmentId    String?   @map("department_id")
+  positionId      String?   @map("position_id")
+  supervisorId    String?   @map("supervisor_id")
+  hireDate        DateTime  @db.Date @map("hire_date")
+  status          String    @default("active") // active, on_leave, inactive, terminated
+  avatarUrl       String?   @map("avatar_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  Department? @relation(fields: [departmentId], references: [id])
+  position    Position?   @relation(fields: [positionId], references: [id])
+  supervisor  Employee?   @relation("EmployeeHierarchy", fields: [supervisorId], references: [id])
+  subordinates Employee[] @relation("EmployeeHierarchy")
+  leaveBalances LeaveBalance[]
+  vehicles     Vehicle[] @relation("VehicleDriver")
+  visitors     Visitor[] @relation("VisitorHost")
+  assets       Asset[]
+
+  @@index([departmentId])
+  @@index([supervisorId])
+  @@map("employees")
+}
+
+// ============================================================
+// Domain: Company Configuration
+// ============================================================
+
+model CompanyProfile {
+  id                  String    @id @default(uuid())
+  name                String
+  legalName           String    @map("legal_name")
+  logoUrl             String?   @map("logo_url")
+  address             String?
+  tin                 String?
+  contactNumber       String?   @map("contact_number")
+  email               String?
+  website             String?
+  defaultTimezone     String    @default("Asia/Manila") @map("default_timezone")
+  businessHoursStart  String    @default("08:00") @map("business_hours_start")
+  businessHoursEnd    String    @default("17:00") @map("business_hours_end")
+  workingDays         Int[]     @default([1, 2, 3, 4, 5]) @map("working_days")
+  fiscalYearStart     String    @default("01-01") @map("fiscal_year_start")
+  currency            String    @default("PHP")
+  currencySymbol      String    @default("₱") @map("currency_symbol")
+  language            String    @default("en")
+  dateFormat          String    @default("YYYY-MM-DD") @map("date_format")
+  timeFormat          String    @default("HH:mm") @map("time_format")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("company_profiles")
+}
+
+model SystemSetting {
+  key          String   @id
+  value        String
+  category     String
+  description  String?
+  settingType  String   @default("text") @map("setting_type") // text, number, boolean, select, json
+  options      Json?
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("system_settings")
+}
+
+model Holiday {
+  id          String    @id @default(uuid())
+  name        String
+  date        DateTime  @db.Date
+  type        String // regular, special_non_working, special_working, company_event
+  isRecurring Boolean   @default(false) @map("is_recurring")
+  departmentId String?  @map("department_id")
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([date])
+  @@map("holidays")
+}
+
+model ControlNumberSeries {
+  id              String    @id @default(uuid())
+  moduleId        String    @unique @map("module_id")
+  prefix          String
+  separator       String    @default("-")
+  includeYear     Boolean   @default(true) @map("include_year")
+  includeMonth    Boolean   @default(false) @map("include_month")
+  sequenceLength  Int       @default(6) @map("sequence_length")
+  formatPattern   String    @map("format_pattern")
+  nextSequence    Int       @default(1) @map("next_sequence")
+  isActive        Boolean   @default(true) @map("is_active")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("control_number_series")
+}
+
+// ============================================================
+// Domain: Workflow & Approvals
+// ============================================================
+
+model Workflow {
+  id          String    @id @default(uuid())
+  moduleId    String    @map("module_id")
+  name        String
+  description String?
+  version     Int       @default(1)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdBy   String?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  steps       WorkflowStep[]
+  approvalRequests ApprovalRequest[]
+
+  @@index([moduleId])
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id                  String    @id @default(uuid())
+  workflowId          String    @map("workflow_id")
+  name                String
+  roleId              String    @map("role_id")
+  stepOrder           Int       @map("step_order")
+  isRequired          Boolean   @default(true) @map("is_required")
+  label               String?
+  description         String?
+  autoApprove         Boolean   @default(false) @map("auto_approve")
+
+  // Escalation
+  escalationEnabled   Boolean   @default(false) @map("escalation_enabled")
+  escalationRoleId    String?   @map("escalation_role_id")
+  escalationHours     Int?      @map("escalation_hours")
+
+  // Parallel approval
+  parallelApproval    Boolean   @default(false) @map("parallel_approval")
+
+  // Condition (for dynamic routing)
+  conditionField      String?   @map("condition_field")
+  conditionOperator   String?   @map("condition_operator")
+  conditionValue      String?   @map("condition_value")
+
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  role     Role     @relation(fields: [roleId], references: [id])
+
+  @@index([workflowId])
+  @@map("workflow_steps")
+}
+
+model ApprovalRequest {
+  id              String    @id @default(uuid())
+  controlNumber   String    @unique @map("control_number")
+  moduleId        String    @map("module_id")
+  title           String
+  description     String?
+  requesterId     String    @map("requester_id")
+  departmentId    String?   @map("department_id")
+  status          String    @default("draft") // draft, pending, in_review, approved, rejected, returned, cancelled
+  priority        String    @default("normal") // low, normal, high, urgent
+  workflowId      String?   @map("workflow_id")
+  currentStepIndex Int      @default(0) @map("current_step_index")
+  delegatedTo     String?   @map("delegated_to")
+  metadata        Json?
+  submittedAt     DateTime? @map("submitted_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  requester   User           @relation("Requester", fields: [requesterId], references: [id])
+  department  Department?    @relation(fields: [departmentId], references: [id])
+  workflow    Workflow?      @relation(fields: [workflowId], references: [id])
+  steps       ApprovalStep[]
+  actions     ApprovalAction[]
+  notifications Notification[]
+  gatePass    GatePass?
+  leaveRequest LeaveRequest?
+  mrfRequest   MRFRequest?
+  purchaseRequest PurchaseRequest?
+
+  @@index([status])
+  @@index([requesterId])
+  @@index([moduleId])
+  @@index([controlNumber])
+  @@map("approval_requests")
+}
+
+model ApprovalStep {
+  id              String    @id @default(uuid())
+  requestId       String    @map("request_id")
+  stepId          String?   @map("step_id")
+  name            String
+  roleId          String    @map("role_id")
+  stepOrder       Int       @map("step_order")
+  status          String    @default("pending") // pending, current, approved, rejected, skipped, escalated
+  actorId         String?   @map("actor_id")
+  note            String?
+  duration        String?   // e.g. "2h 15m"
+  escalated       Boolean   @default(false)
+  escalatedAt     DateTime? @map("escalated_at")
+  originalActor   String?   @map("original_actor")
+  assignedAt      DateTime? @map("assigned_at")
+  actedAt         DateTime? @map("acted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor   User?           @relation("Actor", fields: [actorId], references: [id])
+  role    Role            @relation(fields: [roleId], references: [id])
+
+  @@index([requestId])
+  @@map("approval_steps")
+}
+
+model ApprovalAction {
+  id          String    @id @default(uuid())
+  requestId   String    @map("request_id")
+  stepId      String?   @map("step_id")
+  action      String    // approve, reject, return, delegate, recall
+  actorId     String    @map("actor_id")
+  note        String?
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  request ApprovalRequest @relation(fields: [requestId], references: [id])
+  actor   User            @relation(fields: [actorId], references: [id])
+
+  @@index([requestId])
+  @@map("approval_actions")
+}
+
+model Delegation {
+  id          String    @id @default(uuid())
+  delegatorId String    @map("delegator_id")
+  delegateId  String    @map("delegate_id")
+  moduleId    String?   @map("module_id") // NULL = all modules
+  startDate   DateTime  @db.Date @map("start_date")
+  endDate     DateTime  @db.Date @map("end_date")
+  isActive    Boolean   @default(true) @map("is_active")
+  reason      String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  delegator User @relation("Delegator", fields: [delegatorId], references: [id])
+  delegate User @relation("Delegate", fields: [delegateId], references: [id])
+
+  @@index([delegatorId])
+  @@index([delegateId])
+  @@map("delegations")
+}
+
+model BusinessRule {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  moduleId    String    @map("module_id")
+  priority    Int       @default(0)
+  conditions  Json      // [{field, operator, value}]
+  actions     Json      // [{type, target, value}]
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("business_rules")
+}
+
+// ============================================================
+// Domain: Notifications
+// ============================================================
+
+model NotificationRule {
+  id               String    @id @default(uuid())
+  moduleId         String    @map("module_id")
+  event            String    // submitted, approved, rejected, returned, escalated
+  notifyRoleIds    String[]  @map("notify_role_ids")
+  notifyUserIds    String[]  @map("notify_user_ids")
+  channels         String[]  @default(["in_app"]) // in_app, email, sms
+  templateSubject  String    @map("template_subject")
+  templateBody     String    @map("template_body")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("notification_rules")
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  type          String    // approval_required, approved, rejected, etc.
+  title         String
+  message       String?
+  recipientId   String    @map("recipient_id")
+  requestId     String?   @map("request_id")
+  controlNumber String?   @map("control_number")
+  moduleId      String?   @map("module_id")
+  actionUrl     String?   @map("action_url")
+  isRead        Boolean   @default(false) @map("is_read")
+  readAt        DateTime? @map("read_at")
+  channel       String    @default("in_app") // in_app, email, sms
+  sentAt        DateTime? @map("sent_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  recipient User @relation(fields: [recipientId], references: [id])
+  request   ApprovalRequest? @relation(fields: [requestId], references: [id])
+
+  @@index([recipientId])
+  @@index([recipientId, isRead], name: "idx_notif_unread")
+  @@map("notifications")
+}
+
+// ============================================================
+// Domain: Audit
+// ============================================================
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  actorId     String?   @map("actor_id")
+  actorName   String?   @map("actor_name")
+  action      String    // create, read, update, delete, approve, reject, login, logout
+  entityType  String    @map("entity_type") // gate_pass, leave, approval, user, role, etc.
+  entityId    String?   @map("entity_id")
+  targetId    String?   @map("target_id")
+  changes     Json?     // before/after diff
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent")
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// Domain: Attachments & Comments
+// ============================================================
+
+model Attachment {
+  id          String    @id @default(uuid())
+  entityType  String    @map("entity_type") // gate_pass, leave, approval_request, etc.
+  entityId    String    @map("entity_id")
+  fileName    String    @map("file_name")
+  fileSize    Int       @map("file_size") // bytes
+  mimeType    String    @map("mime_type")
+  storagePath String    @map("storage_path")
+  storageType String    @default("local") @map("storage_type") // local, s3, minio
+  uploadedBy  String?   @map("uploaded_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  uploader User? @relation(fields: [uploadedBy], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("attachments")
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id")
+  parentId    String?   @map("parent_id")
+  authorId    String    @map("author_id")
+  content     String    @db.Text
+  mentions    String[]  // user IDs
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  author User @relation(fields: [authorId], references: [id])
+  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([entityType, entityId])
+  @@map("comments")
+}
+
+// ============================================================
+// Module: Gate Pass
+// ============================================================
+
+model GatePass {
+  id                  String    @id @default(uuid())
+  requestId           String    @unique @map("request_id")
+  purpose             String    @db.Text
+  transportation      String?   // company_vehicle, third_party, personal
+  vehicleId           String?   @map("vehicle_id")
+  driverName          String?   @map("driver_name")
+  items               Json?     // [{description, quantity, unit}]
+  destination         String?
+  expectedReturn      DateTime? @map("expected_return")
+  actualReturn        DateTime? @map("actual_return")
+  qrCode              String?   @map("qr_code")
+  securityReleasedBy  String?   @map("security_released_by")
+  securityReleasedAt  DateTime? @map("security_released_at")
+  printCount          Int       @default(0) @map("print_count")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  vehicle Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@map("gate_passes")
+}
+
+// ============================================================
+// Module: Leave
+// ============================================================
+
+model LeaveRequest {
+  id                  String    @id @default(uuid())
+  requestId           String    @unique @map("request_id")
+  leaveType           String    @map("leave_type") // vacation, sick, emergency, bereavement, maternity, paternity
+  startDate           DateTime  @db.Date @map("start_date")
+  endDate             DateTime  @db.Date @map("end_date")
+  totalDays           Decimal   @db.Decimal(4, 1) @map("total_days")
+  isHalfDay           Boolean   @default(false) @map("is_half_day")
+  halfDayPeriod       String?   @map("half_day_period") // AM, PM
+  reason              String    @db.Text
+  doctorNoteUrl       String?   @map("doctor_note_url")
+  leaveCreditsBefore  Json?     @map("leave_credits_before")
+  leaveCreditsAfter   Json?     @map("leave_credits_after")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("leave_requests")
+}
+
+model LeaveBalance {
+  id            String    @id @default(uuid())
+  employeeId    String    @map("employee_id")
+  leaveType     String    @map("leave_type")
+  totalCredits  Decimal   @default(0) @map("total_credits") @db.Decimal(5, 1)
+  usedCredits   Decimal   @default(0) @map("used_credits") @db.Decimal(5, 1)
+  pendingCredits Decimal  @default(0) @map("pending_credits") @db.Decimal(5, 1)
+  fiscalYear    Int
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, leaveType, fiscalYear])
+  @@map("leave_balances")
+}
+
+// ============================================================
+// Module: MRF (Manpower Request Form)
+// ============================================================
+
+model MRFRequest {
+  id                String    @id @default(uuid())
+  requestId         String    @unique @map("request_id")
+  positionTitle     String    @map("position_title")
+  departmentId      String?   @map("department_id")
+  headcount         Int
+  employmentType    String?   @map("employment_type") // regular, contractual, probationary
+  justification     String    @db.Text
+  requiredSkills    String[]  @map("required_skills")
+  salaryRangeMin    Decimal?  @map("salary_range_min") @db.Decimal(15, 2)
+  salaryRangeMax    Decimal?  @map("salary_range_max") @db.Decimal(15, 2)
+  targetDate        DateTime? @db.Date @map("target_date")
+  recruitmentStatus String    @default("pending") @map("recruitment_status") // pending, sourcing, interviewing, hired, closed
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  request    ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  department Department?     @relation(fields: [departmentId], references: [id])
+
+  @@map("mrf_requests")
+}
+
+// ============================================================
+// Module: Purchase Request
+// ============================================================
+
+model Supplier {
+  id            String    @id @default(uuid())
+  name          String
+  tin           String?
+  address       String?
+  contactPerson String?   @map("contact_person")
+  contactNumber String?   @map("contact_number")
+  email         String?
+  isApproved    Boolean   @default(true) @map("is_approved")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  purchaseRequests PurchaseRequest[]
+
+  @@map("suppliers")
+}
+
+model PurchaseRequest {
+  id                String    @id @default(uuid())
+  requestId         String    @unique @map("request_id")
+  supplierId        String?   @map("supplier_id")
+  departmentId      String?   @map("department_id")
+  costCenter        String?   @map("cost_center")
+  items             Json      // [{item, description, quantity, unit_price, total}]
+  totalAmount       Decimal   @map("total_amount") @db.Decimal(15, 2)
+  budgetCode        String?   @map("budget_code")
+  isCapitalExpense  Boolean   @default(false) @map("is_capital_expense")
+  deliveryDate      DateTime? @db.Date @map("delivery_date")
+  paymentTerms      String?   @map("payment_terms")
+  quotations        String[]  // attachment IDs
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  request     ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  department  Department?     @relation(fields: [departmentId], references: [id])
+
+  @@map("purchase_requests")
+}
+
+// ============================================================
+// Module: Visitors
+// ============================================================
+
+model Visitor {
+  id              String    @id @default(uuid())
+  name            String
+  company         String?
+  contactNumber   String?   @map("contact_number")
+  email           String?
+  hostId          String    @map("host_id")
+  departmentId    String    @map("department_id")
+  purpose         String?
+  vehiclePlate    String?   @map("vehicle_plate")
+  ndaSigned       Boolean   @default(false) @map("nda_signed")
+  ndaFileUrl      String?   @map("nda_file_url")
+  qrCode          String?   @map("qr_code")
+  checkInAt       DateTime? @map("check_in_at")
+  checkOutAt      DateTime? @map("check_out_at")
+  badgeIssued     Boolean   @default(false) @map("badge_issued")
+  status          String    @default("scheduled") // scheduled, checked_in, checked_out, cancelled
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  host       Employee   @relation("VisitorHost", fields: [hostId], references: [id])
+  department Department @relation("VisitorDepartment", fields: [departmentId], references: [id])
+
+  @@map("visitors")
+}
+
+// ============================================================
+// Module: Vehicles
+// ============================================================
+
+model Vehicle {
+  id                  String    @id @default(uuid())
+  plateNumber         String    @unique @map("plate_number")
+  brand               String?
+  model               String?
+  year                Int?
+  color               String?
+  vehicleType         String?   @map("vehicle_type") // sedan, pickup, truck, van, forklift
+  fuelType            String?   @map("fuel_type") // diesel, gasoline, electric
+  status              String    @default("available") // available, in_use, maintenance, retired
+  assignedDriverId    String?   @map("assigned_driver")
+  assignedDepartmentId String?  @map("assigned_department")
+  lastMaintenanceAt   DateTime? @map("last_maintenance_at")
+  nextMaintenanceAt   DateTime? @map("next_maintenance_at")
+  odometerReading     Int?      @map("odometer_reading")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  assignedDriver   Employee? @relation("VehicleDriver", fields: [assignedDriverId], references: [id])
+  assignedDepartment Department? @relation(fields: [assignedDepartmentId], references: [id])
+  gatePasses       GatePass[]
+  reservations     VehicleReservation[]
+  maintenance      VehicleMaintenance[]
+
+  @@map("vehicles")
+}
+
+model VehicleReservation {
+  id              String    @id @default(uuid())
+  vehicleId       String    @map("vehicle_id")
+  reservedBy      String    @map("reserved_by")
+  purpose         String    @db.Text
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime  @map("end_time")
+  destination     String?
+  status          String    @default("pending") // pending, approved, in_use, completed, cancelled
+  actualStart     DateTime? @map("actual_start")
+  actualEnd       DateTime? @map("actual_end")
+  odometerBefore  Int?      @map("odometer_before")
+  odometerAfter   Int?      @map("odometer_after")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_reservations")
+}
+
+model VehicleMaintenance {
+  id              String    @id @default(uuid())
+  vehicleId       String    @map("vehicle_id")
+  type            String    // scheduled, repair, inspection
+  description     String?
+  scheduledAt     DateTime? @db.Date @map("scheduled_at")
+  completedAt     DateTime? @db.Date @map("completed_at")
+  cost            Decimal?  @db.Decimal(15, 2)
+  serviceProvider String?   @map("service_provider")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_maintenance")
+}
+
+// ============================================================
+// Module: Assets
+// ============================================================
+
+model Asset {
+  id                  String    @id @default(uuid())
+  assetTag            String    @unique @map("asset_tag")
+  name                String
+  category            String?   // IT Equipment, Machinery, Furniture, Vehicle, etc.
+  brand               String?
+  model               String?
+  serialNumber        String?   @map("serial_number")
+  barcode             String?   @unique
+  qrCode              String?   @map("qr_code")
+  purchaseDate        DateTime? @db.Date @map("purchase_date")
+  purchaseCost        Decimal?  @map("purchase_cost") @db.Decimal(15, 2)
+  currentValue        Decimal?  @map("current_value") @db.Decimal(15, 2)
+  status              String    @default("available") // available, assigned, maintenance, retired, disposed
+  assignedTo          String?   @map("assigned_to")
+  assignedDepartment  String?   @map("assigned_department")
+  location            String?
+  warrantyExpiry      DateTime? @db.Date @map("warranty_expiry")
+  usefulLifeYears     Int?      @map("useful_life_years")
+  depreciationMethod  String?   @map("depreciation_method")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  assignedToEmployee   Employee? @relation(fields: [assignedTo], references: [id])
+  assignedToDepartment Department? @relation(fields: [assignedDepartment], references: [id])
+  transactions         AssetTransaction[]
+
+  @@map("assets")
+}
+
+model AssetTransaction {
+  id              String    @id @default(uuid())
+  assetId         String    @map("asset_id")
+  transactionType String    @map("transaction_type") // assign, return, transfer, maintenance, dispose
+  fromEmployee    String?   @map("from_employee")
+  toEmployee      String?   @map("to_employee")
+  fromDepartment  String?   @map("from_department")
+  toDepartment    String?   @map("to_department")
+  notes           String?
+  performedBy     String    @map("performed_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("asset_transactions")
+}

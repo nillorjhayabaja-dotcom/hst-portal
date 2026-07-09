@@ -1,8 +1,9 @@
 // Approval Engine Types - Universal Approval & Workflow Engine
+// Version 2.0 - Enhanced with Workflow Builder, Escalation, Conditional Routing
 import type { RoleId, ModuleId } from "@/types";
 
 // ============================================================
-// Workflow Configuration
+// Workflow Configuration (Admin-configurable)
 // ============================================================
 export interface WorkflowStep {
   id: string;
@@ -14,6 +15,21 @@ export interface WorkflowStep {
   description?: string;
   autoApprove?: boolean;
   timeoutHours?: number;
+  // Escalation
+  escalationEnabled?: boolean;
+  escalationToRole?: RoleId;
+  escalationHours?: number;
+  // Conditional routing
+  condition?: WorkflowCondition;
+  // Parallel approval
+  parallelApproval?: boolean;
+  parallelRoles?: RoleId[];
+}
+
+export interface WorkflowCondition {
+  field: string;       // e.g. "amount", "priority", "department"
+  operator: "gt" | "gte" | "lt" | "lte" | "eq" | "neq" | "in";
+  value: string | number | string[];
 }
 
 export interface WorkflowConfig {
@@ -23,6 +39,7 @@ export interface WorkflowConfig {
   description: string;
   steps: WorkflowStep[];
   active: boolean;
+  version: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,9 +47,17 @@ export interface WorkflowConfig {
 // ============================================================
 // Approval Request
 // ============================================================
-export type ApprovalStatus = "draft" | "pending" | "in_review" | "approved" | "rejected" | "returned" | "cancelled" | "completed";
+export type ApprovalStatus =
+  | "draft"
+  | "pending"
+  | "in_review"
+  | "approved"
+  | "rejected"
+  | "returned"
+  | "cancelled"
+  | "completed";
 
-export type StepStatus = "pending" | "current" | "approved" | "rejected" | "skipped";
+export type StepStatus = "pending" | "current" | "approved" | "rejected" | "skipped" | "escalated";
 
 export interface ApprovalStepInstance {
   stepId: string;
@@ -40,11 +65,19 @@ export interface ApprovalStepInstance {
   role: RoleId;
   order: number;
   status: StepStatus;
+  required: boolean;
   actor?: string;
   actorName?: string;
   date?: string;
   note?: string;
   duration?: string;
+  // Escalation tracking
+  escalated?: boolean;
+  escalatedAt?: string;
+  originalActor?: string;
+  // Parallel approval support
+  parallelApproval?: boolean;
+  parallelRoles?: RoleId[];
 }
 
 export interface ApprovalRequest {
@@ -65,6 +98,9 @@ export interface ApprovalRequest {
   updatedAt: string;
   completedAt?: string;
   metadata?: Record<string, unknown>;
+  // Delegation tracking
+  delegatedTo?: string;
+  delegatedByName?: string;
 }
 
 // ============================================================
@@ -76,7 +112,7 @@ export interface DelegationRule {
   delegatorName: string;
   delegateId: string;
   delegateName: string;
-  moduleId?: ModuleId; // undefined = all modules
+  moduleId?: ModuleId;
   startDate: string;
   endDate: string;
   active: boolean;
@@ -92,7 +128,7 @@ export interface ControlNumberConfig {
   moduleId: ModuleId;
   prefix: string;
   year: number;
-  format: string; // e.g. "{PREFIX}-{YEAR}-{SEQUENCE:6}"
+  format: string;
   sequence: number;
   padding: number;
   active: boolean;
@@ -101,7 +137,17 @@ export interface ControlNumberConfig {
 // ============================================================
 // Notification
 // ============================================================
-export type NotificationType = "approval_required" | "approved" | "rejected" | "returned" | "delegated" | "reminder" | "system" | "comment" | "status_change";
+export type NotificationType =
+  | "approval_required"
+  | "approved"
+  | "rejected"
+  | "returned"
+  | "delegated"
+  | "reminder"
+  | "system"
+  | "comment"
+  | "status_change"
+  | "escalated";
 
 export interface ApprovalNotification {
   id: string;
@@ -144,4 +190,61 @@ export interface PermissionRule {
   moduleId: ModuleId;
   actions: GranularAction[];
   scope: "all" | "department" | "own";
+}
+
+// ============================================================
+// Approval Analytics
+// ============================================================
+export interface ApprovalMetrics {
+  totalRequests: number;
+  pendingApprovals: number;
+  approvedToday: number;
+  rejectedToday: number;
+  averageApprovalTime: number; // hours
+  approvalRate: number; // percentage
+  byModule: Record<string, number>;
+  byPriority: Record<string, number>;
+  byDepartment: Record<string, number>;
+  monthlyTrend: { month: string; submitted: number; approved: number; rejected: number }[];
+}
+
+export interface ApproverPerformance {
+  approverId: string;
+  approverName: string;
+  totalDecisions: number;
+  approved: number;
+  rejected: number;
+  averageDecisionTime: number;
+}
+
+// ============================================================
+// Escalation Rules
+// ============================================================
+export interface EscalationRule {
+  id: string;
+  workflowId: string;
+  stepId: string;
+  timeoutHours: number;
+  escalateToRole: RoleId;
+  escalateToUser?: string;
+  notifyBeforeTimeout: boolean;
+  notifyHoursBefore: number;
+}
+
+// ============================================================
+// Approval Summary (for lists/display)
+// ============================================================
+export interface ApprovalSummary {
+  id: string;
+  controlNumber: string;
+  moduleId: ModuleId;
+  title: string;
+  requesterName: string;
+  department: string;
+  status: ApprovalStatus;
+  priority: "low" | "normal" | "high" | "urgent";
+  currentStepName: string;
+  currentStepRole: RoleId;
+  createdAt: string;
+  updatedAt: string;
 }

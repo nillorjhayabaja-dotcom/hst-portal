@@ -28,8 +28,14 @@ export type ModuleId =
   | "audit-logs"
   | "users"
   | "departments"
+  | "positions"
   | "workflows"
+  | "workflow-templates"
   | "control-numbers"
+  | "notification-rules"
+  | "business-rules"
+  | "holiday-calendar"
+  | "company-profile"
   | "delegations"
   | "settings";
 
