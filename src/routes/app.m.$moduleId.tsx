@@ -74,7 +74,7 @@ const descriptions: Partial<Record<ModuleId, string>> = {
   settings: "System preferences",
 };
 
-function ModuleContent({ module, role, label }: { module: ModuleId; role: ReturnType<typeof useAuth>["user"] extends null ? never : any; label: string }) {
+function ModuleContent({ module, role, label }: { module: ModuleId; role: import("@/types").RoleId; label: string }) {
   if (REQUEST_MODULES.includes(module)) {
     return <RequestsModule module={module} role={role} label={label} />;
   }
