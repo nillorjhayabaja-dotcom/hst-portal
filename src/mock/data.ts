@@ -1,0 +1,221 @@
+import type { Employee, NotificationItem, RequestItem } from "@/types";
+
+export const DEPARTMENTS = [
+  { id: "prod", name: "Production", head: "Grace Lim", employees: 342, requests: 58 },
+  { id: "qa", name: "Quality Assurance", head: "Nathan Ong", employees: 76, requests: 21 },
+  { id: "wh", name: "Warehouse & Logistics", head: "Elena Ramos", employees: 124, requests: 34 },
+  { id: "maint", name: "Maintenance", head: "Paolo Garcia", employees: 61, requests: 19 },
+  { id: "hr", name: "Human Resources", head: "Bianca Flores", employees: 22, requests: 12 },
+  { id: "it", name: "Information Technology", head: "Maria Santos", employees: 18, requests: 9 },
+  { id: "gad", name: "General Administration", head: "Andres Villa", employees: 27, requests: 41 },
+  { id: "sec", name: "Security", head: "Marco Diaz", employees: 44, requests: 7 },
+];
+
+export const EMPLOYEES: Employee[] = [
+  { id: "EMP-1042", name: "Liza Mendoza", email: "liza.mendoza@hst-corp.com", title: "Production Associate", department: "Production", status: "Active", role: "employee", joined: "2021-03-14" },
+  { id: "EMP-1043", name: "Jomar Reyes", email: "jomar.reyes@hst-corp.com", title: "Line Supervisor", department: "Production", status: "Active", role: "supervisor", joined: "2018-07-01" },
+  { id: "EMP-1044", name: "Grace Lim", email: "grace.lim@hst-corp.com", title: "Production Manager", department: "Production", status: "Active", role: "manager", joined: "2015-01-20" },
+  { id: "EMP-1050", name: "Bianca Flores", email: "bianca.flores@hst-corp.com", title: "HR Officer", department: "Human Resources", status: "Active", role: "hr", joined: "2019-09-11" },
+  { id: "EMP-1061", name: "Andres Villa", email: "andres.villa@hst-corp.com", title: "GAD Officer", department: "General Administration", status: "Active", role: "gad", joined: "2017-05-03" },
+  { id: "EMP-1077", name: "Marco Diaz", email: "marco.diaz@hst-corp.com", title: "Security Officer", department: "Security", status: "Active", role: "security", joined: "2020-02-18" },
+  { id: "EMP-1088", name: "Nathan Ong", email: "nathan.ong@hst-corp.com", title: "QA Lead", department: "Quality Assurance", status: "Active", role: "supervisor", joined: "2016-11-29" },
+  { id: "EMP-1090", name: "Elena Ramos", email: "elena.ramos@hst-corp.com", title: "Warehouse Manager", department: "Warehouse & Logistics", status: "On Leave", role: "manager", joined: "2014-08-06" },
+  { id: "EMP-1099", name: "Paolo Garcia", email: "paolo.garcia@hst-corp.com", title: "Maintenance Lead", department: "Maintenance", status: "Active", role: "supervisor", joined: "2019-04-22" },
+  { id: "EMP-1105", name: "Carla Mateo", email: "carla.mateo@hst-corp.com", title: "Machine Operator", department: "Production", status: "Active", role: "employee", joined: "2022-06-30" },
+  { id: "EMP-1112", name: "Victor Cruz", email: "victor.cruz@hst-corp.com", title: "Forklift Operator", department: "Warehouse & Logistics", status: "Active", role: "employee", joined: "2021-10-12" },
+  { id: "EMP-1120", name: "Regine Uy", email: "regine.uy@hst-corp.com", title: "QA Inspector", department: "Quality Assurance", status: "Inactive", role: "employee", joined: "2020-12-01" },
+];
+
+const step = (role: string, status: "done" | "current" | "pending" | "rejected", actor?: string, date?: string, note?: string) => ({
+  role,
+  status,
+  actor,
+  date,
+  note,
+});
+
+export const REQUESTS: RequestItem[] = [
+  {
+    id: "req-1",
+    controlNumber: "GP-2026-000482",
+    type: "Gate Pass",
+    title: "Return defective motor to supplier",
+    requester: "Liza Mendoza",
+    department: "Production",
+    status: "In Review",
+    priority: "High",
+    createdAt: "2026-07-08",
+    steps: [
+      step("Employee", "done", "Liza Mendoza", "2026-07-08", "Submitted request"),
+      step("Supervisor", "done", "Jomar Reyes", "2026-07-08", "Recommended"),
+      step("Department Manager", "current", "Grace Lim"),
+      step("General Administration", "pending"),
+      step("Security", "pending"),
+    ],
+  },
+  {
+    id: "req-2",
+    controlNumber: "LV-2026-001204",
+    type: "Leave",
+    title: "Vacation leave — 3 days",
+    requester: "Carla Mateo",
+    department: "Production",
+    status: "Pending",
+    priority: "Normal",
+    createdAt: "2026-07-07",
+    steps: [
+      step("Employee", "done", "Carla Mateo", "2026-07-07"),
+      step("Supervisor", "current", "Jomar Reyes"),
+      step("Manager", "pending"),
+      step("HR", "pending"),
+    ],
+  },
+  {
+    id: "req-3",
+    controlNumber: "MRF-2026-000318",
+    type: "MRF",
+    title: "Manpower request — 4 operators",
+    requester: "Grace Lim",
+    department: "Production",
+    status: "Approved",
+    priority: "Urgent",
+    createdAt: "2026-07-05",
+    steps: [
+      step("Employee", "done", "Grace Lim", "2026-07-05"),
+      step("Supervisor", "done", "Jomar Reyes", "2026-07-05"),
+      step("Manager", "done", "Grace Lim", "2026-07-06"),
+      step("Approver", "done", "Robert Tan", "2026-07-06", "Approved with budget note"),
+    ],
+  },
+  {
+    id: "req-4",
+    controlNumber: "PR-2026-000921",
+    type: "Purchase Request",
+    title: "Hydraulic press spare parts",
+    requester: "Paolo Garcia",
+    department: "Maintenance",
+    status: "In Review",
+    priority: "High",
+    createdAt: "2026-07-08",
+    amount: "₱248,500.00",
+    steps: [
+      step("Employee", "done", "Paolo Garcia", "2026-07-08"),
+      step("Manager", "done", "Grace Lim", "2026-07-08"),
+      step("Purchasing", "current", "Maria Santos"),
+      step("Finance", "pending"),
+    ],
+  },
+  {
+    id: "req-5",
+    controlNumber: "GP-2026-000480",
+    type: "Gate Pass",
+    title: "Deliver finished goods to warehouse B",
+    requester: "Victor Cruz",
+    department: "Warehouse & Logistics",
+    status: "Completed",
+    priority: "Normal",
+    createdAt: "2026-07-04",
+    steps: [
+      step("Employee", "done", "Victor Cruz", "2026-07-04"),
+      step("Supervisor", "done", "Elena Ramos", "2026-07-04"),
+      step("Department Manager", "done", "Elena Ramos", "2026-07-04"),
+      step("General Administration", "done", "Andres Villa", "2026-07-05"),
+      step("Security", "done", "Marco Diaz", "2026-07-05", "Released at Gate 2"),
+    ],
+  },
+  {
+    id: "req-6",
+    controlNumber: "LV-2026-001198",
+    type: "Leave",
+    title: "Sick leave — 1 day",
+    requester: "Regine Uy",
+    department: "Quality Assurance",
+    status: "Rejected",
+    priority: "Low",
+    createdAt: "2026-07-03",
+    steps: [
+      step("Employee", "done", "Regine Uy", "2026-07-03"),
+      step("Supervisor", "rejected", "Nathan Ong", "2026-07-03", "Insufficient documentation"),
+    ],
+  },
+  {
+    id: "req-7",
+    controlNumber: "PR-2026-000918",
+    type: "Purchase Request",
+    title: "Office laptops (5 units)",
+    requester: "Maria Santos",
+    department: "Information Technology",
+    status: "Pending",
+    priority: "Normal",
+    createdAt: "2026-07-08",
+    amount: "₱325,000.00",
+    steps: [
+      step("Employee", "done", "Maria Santos", "2026-07-08"),
+      step("Manager", "current"),
+      step("Purchasing", "pending"),
+      step("Finance", "pending"),
+    ],
+  },
+];
+
+export const NOTIFICATIONS: NotificationItem[] = [
+  { id: "n1", title: "Approval required", message: "Gate Pass GP-2026-000482 is waiting for your action.", time: "5 min ago", type: "approval", read: false },
+  { id: "n2", title: "Request approved", message: "Your MRF-2026-000318 was approved by the Approver.", time: "1 hour ago", type: "info", read: false },
+  { id: "n3", title: "System maintenance", message: "Scheduled maintenance on Sunday 02:00–04:00.", time: "3 hours ago", type: "system", read: true },
+  { id: "n4", title: "Vehicle exit alert", message: "Company vehicle ABC-1234 exited Gate 2.", time: "Yesterday", type: "alert", read: true },
+  { id: "n5", title: "Leave update", message: "Leave LV-2026-001198 was rejected.", time: "Yesterday", type: "info", read: true },
+];
+
+export const VEHICLES = [
+  { id: "V-01", plate: "ABC-1234", type: "Delivery Truck", assignedTo: "Warehouse", status: "In Use", location: "Gate 2" },
+  { id: "V-02", plate: "XYZ-9981", type: "Service Van", assignedTo: "Maintenance", status: "Available", location: "Motorpool" },
+  { id: "V-03", plate: "HST-0007", type: "Executive Car", assignedTo: "Executive Office", status: "In Use", location: "On Route" },
+  { id: "V-04", plate: "DEF-4420", type: "Forklift", assignedTo: "Warehouse", status: "Maintenance", location: "Bay 3" },
+];
+
+export const ASSETS = [
+  { id: "AST-2201", name: 'Dell Latitude 5540', category: "IT Equipment", assignedTo: "Maria Santos", status: "Assigned", value: "₱65,000" },
+  { id: "AST-2202", name: "Hydraulic Press HP-800", category: "Machinery", assignedTo: "Production", status: "Assigned", value: "₱1,250,000" },
+  { id: "AST-2203", name: "Pallet Jack PJ-12", category: "Warehouse", assignedTo: "Warehouse", status: "Available", value: "₱42,000" },
+  { id: "AST-2204", name: "CCTV Camera Set", category: "Security", assignedTo: "Security", status: "Assigned", value: "₱180,000" },
+];
+
+export const VISITORS = [
+  { id: "VIS-501", name: "John Delgado", company: "Acme Supplies", host: "Grace Lim", purpose: "Supplier meeting", status: "Checked In", time: "09:12 AM" },
+  { id: "VIS-502", name: "Sarah Kim", company: "TechParts Inc.", host: "Maria Santos", purpose: "IT audit", status: "Scheduled", time: "01:30 PM" },
+  { id: "VIS-503", name: "Ramon Uy", company: "Freight PH", host: "Elena Ramos", purpose: "Logistics", status: "Checked Out", time: "08:05 AM" },
+];
+
+// Chart datasets
+export const MONTHLY_TRENDS = [
+  { month: "Jan", requests: 420, approved: 380, output: 88 },
+  { month: "Feb", requests: 460, approved: 410, output: 90 },
+  { month: "Mar", requests: 510, approved: 470, output: 92 },
+  { month: "Apr", requests: 480, approved: 445, output: 91 },
+  { month: "May", requests: 560, approved: 520, output: 94 },
+  { month: "Jun", requests: 610, approved: 578, output: 96 },
+  { month: "Jul", requests: 590, approved: 540, output: 95 },
+];
+
+export const REQUEST_BREAKDOWN = [
+  { name: "Gate Pass", value: 42, key: "chart-1" },
+  { name: "Leave", value: 28, key: "chart-2" },
+  { name: "MRF", value: 14, key: "chart-3" },
+  { name: "Purchase", value: 16, key: "chart-4" },
+];
+
+export const DEPT_PERFORMANCE = [
+  { dept: "Production", score: 96 },
+  { dept: "QA", score: 91 },
+  { dept: "Warehouse", score: 88 },
+  { dept: "Maintenance", score: 84 },
+  { dept: "GAD", score: 90 },
+];
+
+export const AUDIT_LOGS = [
+  { id: "a1", actor: "Maria Santos", action: "Updated role permissions", target: "Supervisor role", time: "2026-07-09 08:41" },
+  { id: "a2", actor: "Daniel Cruz", action: "Created control number series", target: "GP-2026", time: "2026-07-09 08:12" },
+  { id: "a3", actor: "Grace Lim", action: "Approved request", target: "MRF-2026-000318", time: "2026-07-08 16:22" },
+  { id: "a4", actor: "Marco Diaz", action: "Released gate pass", target: "GP-2026-000480", time: "2026-07-05 14:03" },
+  { id: "a5", actor: "System", action: "Nightly backup completed", target: "Database", time: "2026-07-09 02:00" },
+];
