@@ -43,7 +43,12 @@ export const userRepository = {
 
   async updateLoginState(
     id: string,
-    state: { loginAttempts: number; isLocked?: boolean; lockedUntil?: Date | null; lastLoginAt?: Date },
+    state: {
+      loginAttempts: number;
+      isLocked?: boolean;
+      lockedUntil?: Date | null;
+      lastLoginAt?: Date;
+    },
   ): Promise<void> {
     await prisma.user.update({ where: { id }, data: state });
   },
@@ -51,7 +56,12 @@ export const userRepository = {
   async setPassword(id: string, passwordHash: string): Promise<void> {
     await prisma.user.update({
       where: { id },
-      data: { passwordHash, passwordChangedAt: new Date(), mustChangePassword: false, loginAttempts: 0 },
+      data: {
+        passwordHash,
+        passwordChangedAt: new Date(),
+        mustChangePassword: false,
+        loginAttempts: 0,
+      },
     });
   },
 };

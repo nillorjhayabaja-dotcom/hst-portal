@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Menu, Search, User as UserIcon, Settings, HelpCircle, Info, Palette } from "lucide-react";
+import {
+  Bell,
+  LogOut,
+  Menu,
+  Search,
+  User as UserIcon,
+  Settings,
+  HelpCircle,
+  Info,
+  Palette,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROLES } from "@/rbac/roles";
@@ -94,7 +104,9 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
             <DropdownMenuLabel>
               <p className="text-sm font-semibold">{user.name}</p>
               <p className="text-xs font-normal text-muted-foreground">{user.email}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground/60">{user.title} · {user.department}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground/60">
+                {user.title} · {user.department}
+              </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -144,11 +156,7 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
       </div>
 
       {/* Logout Confirmation Dialog */}
-      <LogoutDialog
-        open={showLogout}
-        onOpenChange={setShowLogout}
-        onConfirm={handleLogout}
-      />
+      <LogoutDialog open={showLogout} onOpenChange={setShowLogout} onConfirm={handleLogout} />
     </header>
   );
 }

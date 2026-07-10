@@ -13,7 +13,17 @@ export function createApp(): express.Express {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.corsOrigin, credentials: true }));
+  // Reflect the incoming Origin when present to support multi-host dev setups.
+  // This prevents CORS preflight failures when the frontend origin differs (e.g. 10.x.x.x vs localhost).
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        return callback(null, true);
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);

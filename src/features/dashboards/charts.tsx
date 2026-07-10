@@ -53,8 +53,20 @@ export function TrendChart({ title = "Monthly Trends" }: { title?: string }) {
           <XAxis dataKey="month" stroke={AXIS} fontSize={11} tickLine={false} axisLine={false} />
           <YAxis stroke={AXIS} fontSize={11} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={tooltipStyle} />
-          <Area type="monotone" dataKey="requests" stroke="var(--color-chart-1)" fill="url(#gReq)" strokeWidth={2} />
-          <Area type="monotone" dataKey="approved" stroke="var(--color-chart-3)" fill="url(#gApp)" strokeWidth={2} />
+          <Area
+            type="monotone"
+            dataKey="requests"
+            stroke="var(--color-chart-1)"
+            fill="url(#gReq)"
+            strokeWidth={2}
+          />
+          <Area
+            type="monotone"
+            dataKey="approved"
+            stroke="var(--color-chart-3)"
+            fill="url(#gApp)"
+            strokeWidth={2}
+          />
         </AreaChart>
       </ResponsiveContainer>
     </ChartFrame>

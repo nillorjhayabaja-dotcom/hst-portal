@@ -17,9 +17,9 @@ export interface CompanyProfile {
   website: string;
   defaultTimezone: string;
   businessHoursStart: string; // "08:00"
-  businessHoursEnd: string;   // "17:00"
-  workingDays: number[];      // [1,2,3,4,5] Mon-Fri
-  fiscalYearStart: string;    // "01-01"
+  businessHoursEnd: string; // "17:00"
+  workingDays: number[]; // [1,2,3,4,5] Mon-Fri
+  fiscalYearStart: string; // "01-01"
   currency: string;
   currencySymbol: string;
   language: string;
@@ -173,7 +173,8 @@ export interface Holiday {
 // ============================================================
 // 9. Business Rules
 // ============================================================
-export type RuleOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "contains" | "in" | "between";
+export type RuleOperator =
+  "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "contains" | "in" | "between";
 
 export interface BusinessRuleCondition {
   field: string;
@@ -182,7 +183,13 @@ export interface BusinessRuleCondition {
 }
 
 export interface BusinessRuleAction {
-  type: "insert_step" | "skip_step" | "change_approver" | "notify" | "set_priority" | "require_attachment";
+  type:
+    | "insert_step"
+    | "skip_step"
+    | "change_approver"
+    | "notify"
+    | "set_priority"
+    | "require_attachment";
   target: string;
   value: string;
 }

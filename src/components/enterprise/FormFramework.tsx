@@ -1,5 +1,11 @@
 // Form Framework - Reusable form components for all enterprise modules
-import { useState, forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import {
+  useState,
+  forwardRef,
+  type InputHTMLAttributes,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -13,11 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -52,9 +54,7 @@ export function FormField({ label, error, hint, required, children, className }:
           {error}
         </p>
       )}
-      {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
+      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -138,7 +138,9 @@ export function FormSelect({
   return (
     <FormField label={label} error={error} hint={hint} required={required}>
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger className={cn(error && "border-destructive focus-visible:ring-destructive", className)}>
+        <SelectTrigger
+          className={cn(error && "border-destructive focus-visible:ring-destructive", className)}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -196,12 +198,7 @@ export function FormDatePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value}
-            onSelect={onChange}
-            initialFocus
-          />
+          <Calendar mode="single" selected={value} onSelect={onChange} initialFocus />
         </PopoverContent>
       </Popover>
     </FormField>
@@ -273,7 +270,12 @@ export function FormRadioGroup({
 }: FormRadioGroupProps) {
   return (
     <FormField label={label} error={error} hint={hint} required={required}>
-      <RadioGroup value={value} onValueChange={onValueChange} disabled={disabled} className={className}>
+      <RadioGroup
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        className={className}
+      >
         {options.map((opt) => (
           <div key={opt.value} className="flex items-start gap-3">
             <RadioGroupItem value={opt.value} id={`radio-${opt.value}`} className="mt-0.5" />
@@ -523,8 +525,20 @@ export function FormSection({ title, description }: { title: string; description
 // ============================================================
 // Form Row (grid layout helper)
 // ============================================================
-export function FormRow({ children, cols = 2, className }: { children: React.ReactNode; cols?: 1 | 2 | 3; className?: string }) {
-  const gridCols = { 1: "grid-cols-1", 2: "grid-cols-1 md:grid-cols-2", 3: "grid-cols-1 md:grid-cols-3" };
+export function FormRow({
+  children,
+  cols = 2,
+  className,
+}: {
+  children: React.ReactNode;
+  cols?: 1 | 2 | 3;
+  className?: string;
+}) {
+  const gridCols = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 md:grid-cols-2",
+    3: "grid-cols-1 md:grid-cols-3",
+  };
   return <div className={cn("grid gap-4", gridCols[cols], className)}>{children}</div>;
 }
 
@@ -551,7 +565,9 @@ export function FormActions({
   className,
 }: FormActionsProps) {
   return (
-    <div className={cn("flex items-center justify-end gap-3 border-t border-border pt-4", className)}>
+    <div
+      className={cn("flex items-center justify-end gap-3 border-t border-border pt-4", className)}
+    >
       {children ?? (
         <>
           {onCancel && (
@@ -608,11 +624,7 @@ export function WizardSteps({ steps, currentStep, className }: WizardStepsProps)
                     isUpcoming && "bg-muted text-muted-foreground",
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <span>{i + 1}</span>
-                  )}
+                  {isCompleted ? <Check className="size-4" /> : <span>{i + 1}</span>}
                 </div>
                 <span
                   className={cn(

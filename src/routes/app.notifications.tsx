@@ -57,14 +57,16 @@ function NotificationsPage() {
       <Tabs value={tab} onValueChange={setTab} className="mb-4">
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">
-            Unread ({items.filter((n) => !n.read).length})
-          </TabsTrigger>
+          <TabsTrigger value="unread">Unread ({items.filter((n) => !n.read).length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={Bell} title="You're all caught up" description="No notifications to show." />
+        <EmptyState
+          icon={Bell}
+          title="You're all caught up"
+          description="No notifications to show."
+        />
       ) : (
         <div className="space-y-2.5">
           {filtered.map((n) => {
@@ -77,7 +79,12 @@ function NotificationsPage() {
                   !n.read && "border-primary/30 bg-primary/[0.03]",
                 )}
               >
-                <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", TONE[n.type])}>
+                <span
+                  className={cn(
+                    "grid size-10 shrink-0 place-items-center rounded-xl",
+                    TONE[n.type],
+                  )}
+                >
                   <Icon className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">

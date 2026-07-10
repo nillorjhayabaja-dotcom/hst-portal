@@ -1,14 +1,28 @@
 // Gate Pass Module - Uses Enterprise Core Framework
 import { useState } from "react";
-import { RequestListPage, RequestDetailsDrawer, type RequestData, type ModuleConfig } from "@/components/enterprise/RequestFramework";
+import {
+  RequestListPage,
+  RequestDetailsDrawer,
+  type RequestData,
+  type ModuleConfig,
+} from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
 import { useAuth } from "@/contexts/AuthContext";
 import { REQUESTS, VEHICLES } from "@/mock/data";
-import { MOCK_COMMENTS, MOCK_ATTACHMENTS, MOCK_TIMELINE_EVENTS, MOCK_QUICK_ACTIONS } from "@/mock/enterprise-data";
+import {
+  MOCK_COMMENTS,
+  MOCK_ATTACHMENTS,
+  MOCK_TIMELINE_EVENTS,
+  MOCK_QUICK_ACTIONS,
+} from "@/mock/enterprise-data";
 import { DoorOpen, ClipboardList, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
-import { ApproveDialog, RejectDialog, ReturnDialog } from "@/components/enterprise/EnterpriseDialogs";
+import {
+  ApproveDialog,
+  RejectDialog,
+  ReturnDialog,
+} from "@/components/enterprise/EnterpriseDialogs";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
@@ -23,23 +37,61 @@ const MODULE_CONFIG: ModuleConfig = {
 };
 
 const GATE_PASS_ACTIONS = [
-  { id: "qa1", label: "New Gate Pass", description: "Create a gate pass request", icon: "DoorOpen", action: "create", color: "blue" as const },
-  { id: "qa2", label: "Vehicle Log", description: "View vehicle exit records", icon: "Truck", action: "vehicles", color: "teal" as const },
-  { id: "qa3", label: "Gate Reports", description: "Monthly gate pass reports", icon: "BarChart3", action: "reports", color: "orange" as const },
+  {
+    id: "qa1",
+    label: "New Gate Pass",
+    description: "Create a gate pass request",
+    icon: "DoorOpen",
+    action: "create",
+    color: "blue" as const,
+  },
+  {
+    id: "qa2",
+    label: "Vehicle Log",
+    description: "View vehicle exit records",
+    icon: "Truck",
+    action: "vehicles",
+    color: "teal" as const,
+  },
+  {
+    id: "qa3",
+    label: "Gate Reports",
+    description: "Monthly gate pass reports",
+    icon: "BarChart3",
+    action: "reports",
+    color: "orange" as const,
+  },
 ];
 
 const GATE_COLUMNS: Column<RequestData>[] = [
-  { id: "controlNumber", header: "Control No.", accessorKey: "controlNumber", sortable: true, width: "160px",
-    cell: (_, row) => <span className="font-mono text-xs font-medium">{String(row.controlNumber)}</span>
+  {
+    id: "controlNumber",
+    header: "Control No.",
+    accessorKey: "controlNumber",
+    sortable: true,
+    width: "160px",
+    cell: (_, row) => (
+      <span className="font-mono text-xs font-medium">{String(row.controlNumber)}</span>
+    ),
   },
   { id: "title", header: "Purpose", accessorKey: "title", sortable: true, filterable: true },
   { id: "requester", header: "Requester", accessorKey: "requester", sortable: true },
   { id: "department", header: "Department", accessorKey: "department", sortable: true },
-  { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "140px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+  {
+    id: "status",
+    header: "Status",
+    accessorKey: "status",
+    sortable: true,
+    width: "140px",
+    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
   },
-  { id: "priority", header: "Priority", accessorKey: "priority", sortable: true, width: "100px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+  {
+    id: "priority",
+    header: "Priority",
+    accessorKey: "priority",
+    sortable: true,
+    width: "100px",
+    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
   },
   { id: "createdAt", header: "Date", accessorKey: "createdAt", sortable: true, width: "120px" },
 ];
@@ -97,9 +149,26 @@ export function GatePassModule() {
 
   const kpiCards = (
     <>
-      <UniversalKpiCard label="Total Gate Passes" value={stats.total} icon={DoorOpen} tone="primary" />
-      <UniversalKpiCard label="Pending" value={stats.pending} icon={Clock} tone="warning" trend={{ value: "3 new today", up: true }} />
-      <UniversalKpiCard label="Approved" value={stats.approved} icon={CheckCircle} tone="success" trend={{ value: "85% rate", up: true }} />
+      <UniversalKpiCard
+        label="Total Gate Passes"
+        value={stats.total}
+        icon={DoorOpen}
+        tone="primary"
+      />
+      <UniversalKpiCard
+        label="Pending"
+        value={stats.pending}
+        icon={Clock}
+        tone="warning"
+        trend={{ value: "3 new today", up: true }}
+      />
+      <UniversalKpiCard
+        label="Approved"
+        value={stats.approved}
+        icon={CheckCircle}
+        tone="success"
+        trend={{ value: "85% rate", up: true }}
+      />
       <UniversalKpiCard label="Rejected" value={stats.rejected} icon={XCircle} tone="danger" />
     </>
   );
@@ -132,9 +201,24 @@ export function GatePassModule() {
         />
       )}
 
-      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} loading={loading} />
-      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} loading={loading} />
-      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} loading={loading} />
+      <ApproveDialog
+        open={showApprove}
+        onOpenChange={setShowApprove}
+        onConfirm={handleApprove}
+        loading={loading}
+      />
+      <RejectDialog
+        open={showReject}
+        onOpenChange={setShowReject}
+        onConfirm={handleReject}
+        loading={loading}
+      />
+      <ReturnDialog
+        open={showReturn}
+        onOpenChange={setShowReturn}
+        onConfirm={handleReturn}
+        loading={loading}
+      />
     </>
   );
 }

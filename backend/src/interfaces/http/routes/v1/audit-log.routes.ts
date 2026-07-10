@@ -8,7 +8,13 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:entity-type/:entity-id', (req, res) => {
-  res.json({ success: true, message: 'Entity audit logs endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Entity audit logs endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 export default router;

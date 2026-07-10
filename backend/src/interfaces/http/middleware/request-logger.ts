@@ -9,7 +9,13 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
   logger.info({ requestId, method: req.method, url: req.url, ip: req.ip }, 'Incoming request');
   res.on('finish', () => {
     logger.info(
-      { requestId, method: req.method, url: req.url, status: res.statusCode, durationMs: Date.now() - start },
+      {
+        requestId,
+        method: req.method,
+        url: req.url,
+        status: res.statusCode,
+        durationMs: Date.now() - start,
+      },
       'Request completed',
     );
   });

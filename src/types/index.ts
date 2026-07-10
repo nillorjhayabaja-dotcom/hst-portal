@@ -83,13 +83,7 @@ export interface AuthUser {
 export type RequestType = "Gate Pass" | "Leave" | "MRF" | "Purchase Request";
 
 export type RequestStatus =
-  | "Draft"
-  | "Pending"
-  | "In Review"
-  | "Approved"
-  | "Rejected"
-  | "Completed"
-  | "Returned";
+  "Draft" | "Pending" | "In Review" | "Approved" | "Rejected" | "Completed" | "Returned";
 
 export interface ApprovalStep {
   role: string;

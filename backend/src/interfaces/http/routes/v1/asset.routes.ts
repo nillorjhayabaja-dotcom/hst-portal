@@ -12,15 +12,33 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  res.json({ success: true, message: 'Create asset endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Create asset endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.patch('/:id', (req, res) => {
-  res.json({ success: true, message: 'Update asset endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Update asset endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.delete('/:id', (req, res) => {
-  res.json({ success: true, message: 'Delete asset endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Delete asset endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 export default router;

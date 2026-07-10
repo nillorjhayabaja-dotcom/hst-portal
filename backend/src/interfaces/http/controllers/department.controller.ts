@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { departmentRepository } from '../../../infrastructure/database/repositories/department.repository';
+import { departmentService } from '../../../application/services/department.service';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../../../infrastructure/auth/rbac.middleware';
 import { auditService } from '../../../infrastructure/audit/audit.service';
@@ -11,8 +11,8 @@ export const departmentController = {
     requirePermission('departments', 'view'),
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
-        const items = await departmentRepository.list();
-        res.json({ success: true, data: items });
+        const items = await departmentService.getAll();
+        res.json({ success: true, data: items.items });
       } catch (err) {
         next(err);
       }
@@ -24,8 +24,7 @@ export const departmentController = {
     requirePermission('departments', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const dept = await departmentRepository.findById(req.params.id);
-        if (!dept) throw new NotFoundError('Department not found');
+        const dept = await departmentService.getById(req.params.id);
         res.json({ success: true, data: dept });
       } catch (err) {
         next(err);
@@ -38,7 +37,7 @@ export const departmentController = {
     requirePermission('departments', 'create'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const dept = await departmentRepository.create(req.body);
+        const dept = await departmentService.create(req.body);
         await auditService.fromRequest(req, 'create', 'department', { entityId: dept.id });
         res.status(201).json({ success: true, data: dept });
       } catch (err) {
@@ -52,7 +51,7 @@ export const departmentController = {
     requirePermission('departments', 'edit'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const dept = await departmentRepository.update(req.params.id, req.body);
+        const dept = await departmentService.update(req.params.id, req.body);
         await auditService.fromRequest(req, 'update', 'department', { entityId: dept.id });
         res.json({ success: true, data: dept });
       } catch (err) {

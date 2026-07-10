@@ -5,7 +5,6 @@ import { useHydrated } from "@/hooks/useHydrated";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SidebarNav } from "./SidebarNav";
 import { Header } from "./Header";
-import { RoleSwitcher } from "./RoleSwitcher";
 import { AppLogo } from "./AppLogo";
 
 export function AppLayout() {
@@ -62,8 +61,6 @@ export function AppLayout() {
           </div>
         </footer>
       </div>
-
-      <RoleSwitcher />
     </div>
   );
 }

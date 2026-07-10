@@ -17,9 +17,6 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
 
-
-
-
     "paths": {
       "@/*": ["./src/*"],
       "@/domain/*": ["./src/domain/*"],

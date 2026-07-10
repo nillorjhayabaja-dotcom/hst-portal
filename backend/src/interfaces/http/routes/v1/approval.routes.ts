@@ -8,19 +8,43 @@ router.get('/', (req, res) => {
 });
 
 router.get('/pending', (req, res) => {
-  res.json({ success: true, message: 'Pending approvals endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Pending approvals endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.get('/mine', (req, res) => {
-  res.json({ success: true, message: 'My approvals endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'My approvals endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.get('/:id', (req, res) => {
-  res.json({ success: true, message: 'Get approval endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Get approval endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.post('/', (req, res) => {
-  res.json({ success: true, message: 'Create approval endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Create approval endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.post('/:id/approve', (req, res) => {

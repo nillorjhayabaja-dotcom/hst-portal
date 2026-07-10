@@ -96,7 +96,10 @@ export function createDepartment(data: Omit<Department, "id">): Department {
 
 export function updateDepartment(id: string, updates: Partial<Department>): Department | null {
   const dept = departments.find((d) => d.id === id);
-  if (!dept) { toast.error("Department not found"); return null; }
+  if (!dept) {
+    toast.error("Department not found");
+    return null;
+  }
   Object.assign(dept, updates);
   toast.success("Department updated");
   return dept;
@@ -104,7 +107,10 @@ export function updateDepartment(id: string, updates: Partial<Department>): Depa
 
 export function deleteDepartment(id: string): boolean {
   const hasChildren = departments.some((d) => d.parentId === id);
-  if (hasChildren) { toast.error("Cannot delete: has child departments"); return false; }
+  if (hasChildren) {
+    toast.error("Cannot delete: has child departments");
+    return false;
+  }
   departments = departments.filter((d) => d.id !== id);
   toast.success("Department deleted");
   return true;
@@ -130,7 +136,10 @@ export function createPosition(data: Omit<Position, "id">): Position {
 
 export function updatePosition(id: string, updates: Partial<Position>): Position | null {
   const pos = positions.find((p) => p.id === id);
-  if (!pos) { toast.error("Position not found"); return null; }
+  if (!pos) {
+    toast.error("Position not found");
+    return null;
+  }
   Object.assign(pos, updates);
   toast.success("Position updated");
   return pos;
@@ -138,7 +147,10 @@ export function updatePosition(id: string, updates: Partial<Position>): Position
 
 export function deletePosition(id: string): boolean {
   const hasEmployees = employees.some((e) => e.positionId === id);
-  if (hasEmployees) { toast.error("Cannot delete: position is assigned to employees"); return false; }
+  if (hasEmployees) {
+    toast.error("Cannot delete: position is assigned to employees");
+    return false;
+  }
   positions = positions.filter((p) => p.id !== id);
   toast.success("Position deleted");
   return true;
@@ -166,9 +178,15 @@ export function createEmployee(data: Omit<EmployeeExtended, "id">): EmployeeExte
   return emp;
 }
 
-export function updateEmployee(id: string, updates: Partial<EmployeeExtended>): EmployeeExtended | null {
+export function updateEmployee(
+  id: string,
+  updates: Partial<EmployeeExtended>,
+): EmployeeExtended | null {
   const emp = employees.find((e) => e.id === id);
-  if (!emp) { toast.error("Employee not found"); return null; }
+  if (!emp) {
+    toast.error("Employee not found");
+    return null;
+  }
   Object.assign(emp, updates);
   toast.success("Employee updated");
   return emp;
@@ -222,7 +240,9 @@ export function updatePermission(
 
 export function bulkUpdatePermissions(updates: ConfigurablePermission[]): void {
   updates.forEach((u) => {
-    const existing = permissionMatrix.find((p) => p.roleId === u.roleId && p.moduleId === u.moduleId);
+    const existing = permissionMatrix.find(
+      (p) => p.roleId === u.roleId && p.moduleId === u.moduleId,
+    );
     if (existing) {
       existing.actions = u.actions;
       existing.scope = u.scope;
@@ -247,9 +267,15 @@ export function createNotificationRule(data: Omit<NotificationRule, "id">): Noti
   return rule;
 }
 
-export function updateNotificationRule(id: string, updates: Partial<NotificationRule>): NotificationRule | null {
+export function updateNotificationRule(
+  id: string,
+  updates: Partial<NotificationRule>,
+): NotificationRule | null {
   const rule = notificationRules.find((r) => r.id === id);
-  if (!rule) { toast.error("Rule not found"); return null; }
+  if (!rule) {
+    toast.error("Rule not found");
+    return null;
+  }
   Object.assign(rule, updates);
   toast.success("Notification rule updated");
   return rule;
@@ -268,9 +294,15 @@ export function getDocumentFormats(): DocumentNumberFormat[] {
   return docFormats;
 }
 
-export function updateDocumentFormat(id: string, updates: Partial<DocumentNumberFormat>): DocumentNumberFormat | null {
+export function updateDocumentFormat(
+  id: string,
+  updates: Partial<DocumentNumberFormat>,
+): DocumentNumberFormat | null {
   const fmt = docFormats.find((f) => f.id === id);
-  if (!fmt) { toast.error("Format not found"); return null; }
+  if (!fmt) {
+    toast.error("Format not found");
+    return null;
+  }
   Object.assign(fmt, updates);
   toast.success("Document number format updated");
   return fmt;
@@ -320,7 +352,10 @@ export function createHoliday(data: Omit<Holiday, "id">): Holiday {
 
 export function updateHoliday(id: string, updates: Partial<Holiday>): Holiday | null {
   const holiday = holidays.find((h) => h.id === id);
-  if (!holiday) { toast.error("Holiday not found"); return null; }
+  if (!holiday) {
+    toast.error("Holiday not found");
+    return null;
+  }
   Object.assign(holiday, updates);
   toast.success("Holiday updated");
   return holiday;
@@ -335,7 +370,9 @@ export function deleteHoliday(id: string): boolean {
 export function isBusinessDay(date: string): boolean {
   const d = new Date(date);
   const dayOfWeek = d.getDay(); // 0=Sun
-  const isHoliday = holidays.some((h) => h.date === date || (h.recurring && h.date.slice(5) === date.slice(5)));
+  const isHoliday = holidays.some(
+    (h) => h.date === date || (h.recurring && h.date.slice(5) === date.slice(5)),
+  );
   return dayOfWeek !== 0 && !isHoliday;
 }
 
@@ -353,9 +390,15 @@ export function createBusinessRule(data: Omit<BusinessRule, "id">): BusinessRule
   return rule;
 }
 
-export function updateBusinessRule(id: string, updates: Partial<BusinessRule>): BusinessRule | null {
+export function updateBusinessRule(
+  id: string,
+  updates: Partial<BusinessRule>,
+): BusinessRule | null {
   const rule = businessRules.find((r) => r.id === id);
-  if (!rule) { toast.error("Rule not found"); return null; }
+  if (!rule) {
+    toast.error("Rule not found");
+    return null;
+  }
   Object.assign(rule, updates);
   toast.success("Business rule updated");
   return rule;
@@ -368,7 +411,10 @@ export function deleteBusinessRule(id: string): boolean {
 }
 
 // Evaluate business rules for a given module + metadata
-export function evaluateBusinessRules(moduleId: ModuleId, metadata: Record<string, unknown>): BusinessRule[] {
+export function evaluateBusinessRules(
+  moduleId: ModuleId,
+  metadata: Record<string, unknown>,
+): BusinessRule[] {
   return businessRules
     .filter((rule) => rule.moduleId === moduleId && rule.active)
     .filter((rule) => {
@@ -376,19 +422,28 @@ export function evaluateBusinessRules(moduleId: ModuleId, metadata: Record<strin
         const value = metadata[cond.field];
         if (value == null) return false;
         switch (cond.operator) {
-          case "eq": return value === cond.value;
-          case "neq": return value !== cond.value;
-          case "gt": return Number(value) > Number(cond.value);
-          case "gte": return Number(value) >= Number(cond.value);
-          case "lt": return Number(value) < Number(cond.value);
-          case "lte": return Number(value) <= Number(cond.value);
-          case "contains": return String(value).toLowerCase().includes(String(cond.value).toLowerCase());
-          case "in": return (cond.value as string[]).includes(String(value));
+          case "eq":
+            return value === cond.value;
+          case "neq":
+            return value !== cond.value;
+          case "gt":
+            return Number(value) > Number(cond.value);
+          case "gte":
+            return Number(value) >= Number(cond.value);
+          case "lt":
+            return Number(value) < Number(cond.value);
+          case "lte":
+            return Number(value) <= Number(cond.value);
+          case "contains":
+            return String(value).toLowerCase().includes(String(cond.value).toLowerCase());
+          case "in":
+            return (cond.value as string[]).includes(String(value));
           case "between": {
             const [min, max] = (cond.value as string).split(",").map(Number);
             return Number(value) >= min && Number(value) <= max;
           }
-          default: return false;
+          default:
+            return false;
         }
       });
     })
@@ -408,7 +463,10 @@ export function getSystemSetting(key: string): SystemSetting | undefined {
 
 export function updateSystemSetting(key: string, value: string): SystemSetting | null {
   const setting = settings.find((s) => s.key === key);
-  if (!setting) { toast.error("Setting not found"); return null; }
+  if (!setting) {
+    toast.error("Setting not found");
+    return null;
+  }
   setting.value = value;
   toast.success("Setting updated");
   return setting;
@@ -427,7 +485,10 @@ export function getRoleConfigs(): RoleConfig[] {
 
 export function updateRoleConfig(id: RoleId, updates: Partial<RoleConfig>): RoleConfig | null {
   const role = roleConfigs.find((r) => r.id === id);
-  if (!role) { toast.error("Role not found"); return null; }
+  if (!role) {
+    toast.error("Role not found");
+    return null;
+  }
   Object.assign(role, updates);
   toast.success("Role configuration updated");
   return role;

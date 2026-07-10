@@ -5,11 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ROLES, ROLE_ORDER } from "@/rbac/roles";
 import type { RoleId } from "@/types";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export function RoleSwitcher() {

@@ -24,12 +24,12 @@ Use **TanStack Router** (formerly TanStack Router) over React Router or file-bas
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
+| Alternative            | Reason for Rejection                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------- |
 | **React Router v6/v7** | No type-safe routing, limited nested layout support, no built-in data loading pattern. |
-| **Next.js App Router** | Requires full Next.js framework migration; overkill for SPA ERP. |
-| **Remix** | Requires full framework migration; server-centric model not ideal for on-premise SPA. |
-| **wouter** | Too minimal for enterprise routing needs. |
+| **Next.js App Router** | Requires full Next.js framework migration; overkill for SPA ERP.                       |
+| **Remix**              | Requires full framework migration; server-centric model not ideal for on-premise SPA.  |
+| **wouter**             | Too minimal for enterprise routing needs.                                              |
 
 ## Consequences
 

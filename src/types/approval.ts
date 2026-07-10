@@ -27,7 +27,7 @@ export interface WorkflowStep {
 }
 
 export interface WorkflowCondition {
-  field: string;       // e.g. "amount", "priority", "department"
+  field: string; // e.g. "amount", "priority", "department"
   operator: "gt" | "gte" | "lt" | "lte" | "eq" | "neq" | "in";
   value: string | number | string[];
 }
@@ -183,7 +183,8 @@ export interface ApprovalActionLog {
 // ============================================================
 // Permission Matrix (enhanced)
 // ============================================================
-export type GranularAction = "view" | "create" | "edit" | "delete" | "approve" | "reject" | "return" | "manage" | "full";
+export type GranularAction =
+  "view" | "create" | "edit" | "delete" | "approve" | "reject" | "return" | "manage" | "full";
 
 export interface PermissionRule {
   roleId: RoleId;

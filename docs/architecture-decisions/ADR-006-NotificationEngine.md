@@ -22,12 +22,12 @@ Build a **database-driven notification engine** where notification rules are sto
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
-| **Push notifications (WebSocket/SSE)** | Requires persistent connection; overkill for an ERP where polling every 30s is acceptable. |
-| **Third-party service (SendGrid, Twilio)** | Adds recurring cost; on-premise ERP should minimize external dependencies. |
-| **Email-only** | No in-app notification support; users would miss real-time updates. |
-| **Firebase Cloud Messaging** | External dependency; not appropriate for internal on-premise network. |
+| Alternative                                | Reason for Rejection                                                                       |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| **Push notifications (WebSocket/SSE)**     | Requires persistent connection; overkill for an ERP where polling every 30s is acceptable. |
+| **Third-party service (SendGrid, Twilio)** | Adds recurring cost; on-premise ERP should minimize external dependencies.                 |
+| **Email-only**                             | No in-app notification support; users would miss real-time updates.                        |
+| **Firebase Cloud Messaging**               | External dependency; not appropriate for internal on-premise network.                      |
 
 ## Architecture
 

@@ -43,7 +43,11 @@ export function DataTable<T extends object>({
     if (!query.trim() || !searchKeys?.length) return data;
     const q = query.toLowerCase();
     return data.filter((row) =>
-      searchKeys.some((k) => String((row as Record<string, unknown>)[k as string] ?? "").toLowerCase().includes(q)),
+      searchKeys.some((k) =>
+        String((row as Record<string, unknown>)[k as string] ?? "")
+          .toLowerCase()
+          .includes(q),
+      ),
     );
   }, [data, query, searchKeys]);
 
@@ -92,7 +96,9 @@ export function DataTable<T extends object>({
                   >
                     {columns.map((c) => (
                       <TableCell key={c.key} className={c.className}>
-                        {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? "")}
+                        {c.render
+                          ? c.render(row)
+                          : String((row as Record<string, unknown>)[c.key] ?? "")}
                       </TableCell>
                     ))}
                   </TableRow>

@@ -36,7 +36,9 @@ let actionLogs: ApprovalActionLog[] = [];
 // ============================================================
 // Helper: Create Notification
 // ============================================================
-function createNotification(data: Omit<ApprovalNotification, "id" | "createdAt" | "read">): ApprovalNotification {
+function createNotification(
+  data: Omit<ApprovalNotification, "id" | "createdAt" | "read">,
+): ApprovalNotification {
   const notification: ApprovalNotification = {
     ...data,
     id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -122,10 +124,7 @@ export function approveRequest(
   currentStep.actorName = actorName;
   currentStep.date = new Date().toISOString();
   currentStep.note = note;
-  currentStep.duration = calcDuration(
-    currentStep.date || req.createdAt,
-    new Date().toISOString(),
-  );
+  currentStep.duration = calcDuration(currentStep.date || req.createdAt, new Date().toISOString());
 
   logAction(req.id, currentStep.stepId, "approve", actorId, actorName, note);
 
@@ -361,7 +360,14 @@ export function delegateApproval(
   req.delegatedTo = delegateId;
   req.delegatedByName = delegateName;
 
-  logAction(req.id, currentStep.stepId, "delegate", actorId, actorName, `Delegated to ${delegateName}`);
+  logAction(
+    req.id,
+    currentStep.stepId,
+    "delegate",
+    actorId,
+    actorName,
+    `Delegated to ${delegateName}`,
+  );
 
   createNotification({
     type: "delegated",
@@ -422,9 +428,7 @@ export function recallRequest(requestId: string, userId: string): boolean {
 // ============================================================
 // Delegation Management
 // ============================================================
-export function createDelegation(
-  rule: Omit<DelegationRule, "id" | "createdAt">,
-): DelegationRule {
+export function createDelegation(rule: Omit<DelegationRule, "id" | "createdAt">): DelegationRule {
   const newRule: DelegationRule = {
     ...rule,
     id: `del-${Date.now()}`,
@@ -579,10 +583,7 @@ export function toggleWorkflow(id: string): WorkflowConfig | null {
   return workflow;
 }
 
-export function reorderWorkflowSteps(
-  workflowId: string,
-  stepIds: string[],
-): WorkflowConfig | null {
+export function reorderWorkflowSteps(workflowId: string, stepIds: string[]): WorkflowConfig | null {
   const workflow = workflows.find((w) => w.id === workflowId);
   if (!workflow) return null;
   const reordered = stepIds
@@ -647,14 +648,9 @@ export function getApprovalRequest(requestId: string): ApprovalRequest | undefin
   return requests.find((r) => r.id === requestId);
 }
 
-export function getApprovalsForUser(
-  userId: string,
-  roleId: string,
-): ApprovalRequest[] {
+export function getApprovalsForUser(userId: string, roleId: string): ApprovalRequest[] {
   // Check delegations - find requests where user is acting as delegate
-  const activeDelegations = delegations.filter(
-    (d) => d.delegateId === userId && d.active,
-  );
+  const activeDelegations = delegations.filter((d) => d.delegateId === userId && d.active);
   const delegatedIds = activeDelegations.map((d) => d.delegatorId);
 
   return requests.filter((req) => {
@@ -707,10 +703,7 @@ export function getActionLogs(requestId?: string): ApprovalActionLog[] {
 // ============================================================
 // Approval Summaries
 // ============================================================
-export function getApprovalSummaries(
-  userId: string,
-  roleId: string,
-): ApprovalSummary[] {
+export function getApprovalSummaries(userId: string, roleId: string): ApprovalSummary[] {
   return getApprovalsForUser(userId, roleId).map((req) => ({
     id: req.id,
     controlNumber: req.controlNumber,
@@ -747,7 +740,7 @@ export function getControlNumberConfigs() {
 
 export function updateControlNumberConfig(
   moduleId: string,
-  updates: Partial<typeof CONTROL_NUMBERS[0]>,
+  updates: Partial<(typeof CONTROL_NUMBERS)[0]>,
 ) {
   const config = CONTROL_NUMBERS.find((cn) => cn.moduleId === moduleId);
   if (!config) return null;
@@ -891,8 +884,7 @@ export function checkEscalations(): ApprovalRequest[] {
     if (!stepConfig?.escalationEnabled || !stepConfig.escalationHours) return;
 
     const stepStartDate = currentStep.date || req.createdAt;
-    const elapsedHours =
-      (now.getTime() - new Date(stepStartDate).getTime()) / 3600000;
+    const elapsedHours = (now.getTime() - new Date(stepStartDate).getTime()) / 3600000;
 
     if (elapsedHours >= stepConfig.escalationHours && !currentStep.escalated) {
       currentStep.escalated = true;
@@ -923,7 +915,17 @@ export function checkEscalations(): ApprovalRequest[] {
 // Create a new approval request (from any module)
 // ============================================================
 export function createApprovalRequest(
-  data: Omit<ApprovalRequest, "id" | "controlNumber" | "status" | "createdAt" | "updatedAt" | "steps" | "currentStepIndex" | "stepInstances"> & {
+  data: Omit<
+    ApprovalRequest,
+    | "id"
+    | "controlNumber"
+    | "status"
+    | "createdAt"
+    | "updatedAt"
+    | "steps"
+    | "currentStepIndex"
+    | "stepInstances"
+  > & {
     metadata?: Record<string, unknown>;
   },
 ): ApprovalRequest {

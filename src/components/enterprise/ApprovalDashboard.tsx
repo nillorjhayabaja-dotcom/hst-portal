@@ -63,12 +63,18 @@ export function ApprovalDashboard() {
 
   const getToneStyle = (tone: string) => {
     switch (tone) {
-      case "primary": return "bg-primary/10 text-primary";
-      case "warning": return "bg-warning/15 text-warning-foreground";
-      case "success": return "bg-success/10 text-success";
-      case "danger": return "bg-destructive/10 text-destructive";
-      case "info": return "bg-info/10 text-info";
-      default: return "bg-muted text-muted-foreground";
+      case "primary":
+        return "bg-primary/10 text-primary";
+      case "warning":
+        return "bg-warning/15 text-warning-foreground";
+      case "success":
+        return "bg-success/10 text-success";
+      case "danger":
+        return "bg-destructive/10 text-destructive";
+      case "info":
+        return "bg-info/10 text-info";
+      default:
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -86,7 +92,12 @@ export function ApprovalDashboard() {
                     {kpi.value}
                   </p>
                 </div>
-                <div className={cn("grid size-10 place-items-center rounded-xl", getToneStyle(kpi.tone))}>
+                <div
+                  className={cn(
+                    "grid size-10 place-items-center rounded-xl",
+                    getToneStyle(kpi.tone),
+                  )}
+                >
                   <kpi.icon className="size-5" />
                 </div>
               </div>
@@ -125,7 +136,8 @@ export function ApprovalDashboard() {
                           })}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {month.submitted} submitted · {month.approved} approved · {month.rejected} rejected
+                          {month.submitted} submitted · {month.approved} approved · {month.rejected}{" "}
+                          rejected
                         </span>
                       </div>
                       <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-muted">
@@ -164,9 +176,8 @@ export function ApprovalDashboard() {
                 Object.entries(metrics.byModule)
                   .sort(([, a], [, b]) => b - a)
                   .map(([module, count]) => {
-                    const pct = metrics.totalRequests > 0
-                      ? (count / metrics.totalRequests) * 100
-                      : 0;
+                    const pct =
+                      metrics.totalRequests > 0 ? (count / metrics.totalRequests) * 100 : 0;
                     return (
                       <div key={module}>
                         <div className="flex items-center justify-between mb-1">
@@ -216,10 +227,7 @@ export function ApprovalDashboard() {
                   return (
                     <div
                       key={priority}
-                      className={cn(
-                        "rounded-lg border p-3 text-center",
-                        colors[priority],
-                      )}
+                      className={cn("rounded-lg border p-3 text-center", colors[priority])}
                     >
                       <p className="font-display text-2xl font-bold">{count}</p>
                       <p className="mt-0.5 text-xs capitalize">{priority}</p>
@@ -249,9 +257,8 @@ export function ApprovalDashboard() {
                 Object.entries(metrics.byDepartment)
                   .sort(([, a], [, b]) => b - a)
                   .map(([dept, count]) => {
-                    const pct = metrics.totalRequests > 0
-                      ? (count / metrics.totalRequests) * 100
-                      : 0;
+                    const pct =
+                      metrics.totalRequests > 0 ? (count / metrics.totalRequests) * 100 : 0;
                     return (
                       <div key={dept}>
                         <div className="flex items-center justify-between mb-1">
@@ -287,11 +294,21 @@ export function ApprovalDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="pb-2 text-left text-xs font-semibold text-muted-foreground">Approver</th>
-                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">Decisions</th>
-                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">Approved</th>
-                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">Rejected</th>
-                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">Approval Rate</th>
+                    <th className="pb-2 text-left text-xs font-semibold text-muted-foreground">
+                      Approver
+                    </th>
+                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">
+                      Decisions
+                    </th>
+                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">
+                      Approved
+                    </th>
+                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">
+                      Rejected
+                    </th>
+                    <th className="pb-2 text-center text-xs font-semibold text-muted-foreground">
+                      Approval Rate
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

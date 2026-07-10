@@ -5,7 +5,11 @@ import { EnterpriseDataTable, type Column } from "@/components/enterprise/Enterp
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { UniversalTimeline } from "@/components/enterprise/UniversalTimeline";
 import { RequestDetailsDrawer, type RequestData } from "@/components/enterprise/RequestFramework";
-import { ApproveDialog, RejectDialog, ReturnDialog } from "@/components/enterprise/EnterpriseDialogs";
+import {
+  ApproveDialog,
+  RejectDialog,
+  ReturnDialog,
+} from "@/components/enterprise/EnterpriseDialogs";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,14 +48,16 @@ export function ApprovalInbox() {
 
   // Get approvals for current user's role
   const myApprovals = useMemo(() => getApprovalsForUser(user.id, user.role), [user.id, user.role]);
-  
+
   // Get all requests for history view
   const allRequests = useMemo(() => getAllRequests(), []);
-  
+
   // Get requests by current user
   const myRequests = useMemo(() => getRequestsByUser(user.id), [user.id]);
 
-  const pendingCount = myApprovals.filter((r) => r.status === "pending" || r.status === "in_review").length;
+  const pendingCount = myApprovals.filter(
+    (r) => r.status === "pending" || r.status === "in_review",
+  ).length;
   const approvedCount = allRequests.filter((r) => r.status === "approved").length;
   const rejectedCount = allRequests.filter((r) => r.status === "rejected").length;
 
@@ -160,7 +166,9 @@ export function ApprovalInbox() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Approved</p>
-              <p className="mt-2 font-display text-3xl font-bold text-foreground">{approvedCount}</p>
+              <p className="mt-2 font-display text-3xl font-bold text-foreground">
+                {approvedCount}
+              </p>
             </div>
             <div className="grid size-11 place-items-center rounded-xl bg-success/10 text-success">
               <CheckCircle2 className="size-5" />
@@ -173,7 +181,9 @@ export function ApprovalInbox() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Rejected</p>
-              <p className="mt-2 font-display text-3xl font-bold text-foreground">{rejectedCount}</p>
+              <p className="mt-2 font-display text-3xl font-bold text-foreground">
+                {rejectedCount}
+              </p>
             </div>
             <div className="grid size-11 place-items-center rounded-xl bg-destructive/10 text-destructive">
               <XCircle className="size-5" />
@@ -186,7 +196,9 @@ export function ApprovalInbox() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">My Requests</p>
-              <p className="mt-2 font-display text-3xl font-bold text-foreground">{myRequests.length}</p>
+              <p className="mt-2 font-display text-3xl font-bold text-foreground">
+                {myRequests.length}
+              </p>
             </div>
             <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
               <FileText className="size-5" />
@@ -199,15 +211,24 @@ export function ApprovalInbox() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-transparent p-0 border-b border-border w-full justify-start gap-4">
-          <TabsTrigger value="pending" className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+          <TabsTrigger
+            value="pending"
+            className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
             <Inbox className="mr-1.5 size-3.5" />
             My Approvals ({pendingCount})
           </TabsTrigger>
-          <TabsTrigger value="all" className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+          <TabsTrigger
+            value="all"
+            className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
             <FileText className="mr-1.5 size-3.5" />
             All Requests ({allRequests.length})
           </TabsTrigger>
-          <TabsTrigger value="mine" className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+          <TabsTrigger
+            value="mine"
+            className="text-xs data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
             <UserCheck className="mr-1.5 size-3.5" />
             My Requests ({myRequests.length})
           </TabsTrigger>
@@ -229,7 +250,9 @@ export function ApprovalInbox() {
                 <CheckCircle2 className="size-12 text-success/30" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">All caught up!</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">No pending approvals in your queue</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    No pending approvals in your queue
+                  </p>
                 </div>
               </div>
             }
@@ -266,7 +289,9 @@ export function ApprovalInbox() {
                 <FileText className="size-12 text-muted-foreground/30" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">No requests yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Your submitted requests will appear here</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    Your submitted requests will appear here
+                  </p>
                 </div>
               </div>
             }

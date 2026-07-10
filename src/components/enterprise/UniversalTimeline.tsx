@@ -64,9 +64,13 @@ export function UniversalTimeline({ events, className }: UniversalTimelineProps)
                 className={cn(
                   "grid size-8 place-items-center rounded-full border-2 transition-colors",
                   event.completed && "border-primary bg-primary/10 text-primary",
-                  event.current && "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/25",
+                  event.current &&
+                    "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/25",
                   event.rejected && "border-destructive bg-destructive/10 text-destructive",
-                  !event.completed && !event.current && !event.rejected && "border-border bg-muted text-muted-foreground",
+                  !event.completed &&
+                    !event.current &&
+                    !event.rejected &&
+                    "border-border bg-muted text-muted-foreground",
                 )}
               >
                 {event.rejected ? (
@@ -88,7 +92,10 @@ export function UniversalTimeline({ events, className }: UniversalTimelineProps)
                     event.completed && "text-foreground",
                     event.current && "text-primary",
                     event.rejected && "text-destructive",
-                    !event.completed && !event.current && !event.rejected && "text-muted-foreground",
+                    !event.completed &&
+                      !event.current &&
+                      !event.rejected &&
+                      "text-muted-foreground",
                   )}
                 >
                   {event.status}
@@ -105,7 +112,9 @@ export function UniversalTimeline({ events, className }: UniversalTimelineProps)
                 )}
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                {event.actor && <span className="font-medium text-foreground/80">{event.actor}</span>}
+                {event.actor && (
+                  <span className="font-medium text-foreground/80">{event.actor}</span>
+                )}
                 {event.role && <span>({event.role})</span>}
                 {event.date && (
                   <>

@@ -33,7 +33,11 @@ export const jwtService = {
     const options: SignOptions = {
       expiresIn: env.jwt.refreshExpiry as any,
     };
-    return jwt.sign({ ...payload, type: 'refresh' } as RefreshTokenPayload, env.jwt.refreshSecret, options);
+    return jwt.sign(
+      { ...payload, type: 'refresh' } as RefreshTokenPayload,
+      env.jwt.refreshSecret,
+      options,
+    );
   },
 
   verifyAccess(token: string): AccessTokenPayload {

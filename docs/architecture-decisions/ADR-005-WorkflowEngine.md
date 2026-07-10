@@ -23,12 +23,12 @@ Build a **custom workflow engine** with a dedicated database schema (`workflows`
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
-| **Camunda BPMN** | Heavy Java-based engine; overkill for ERP approval flows; requires separate server. |
-| **Temporal.io** | Excellent for microservice orchestration but too complex for simple approval chains. |
-| **BullMQ job chains** | No built-in support for role-based routing, parallel steps, or business rule evaluation. |
-| **State machines (XState)** | Good for frontend state but doesn't handle persistence, role resolution, or escalation. |
+| Alternative                 | Reason for Rejection                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| **Camunda BPMN**            | Heavy Java-based engine; overkill for ERP approval flows; requires separate server.      |
+| **Temporal.io**             | Excellent for microservice orchestration but too complex for simple approval chains.     |
+| **BullMQ job chains**       | No built-in support for role-based routing, parallel steps, or business rule evaluation. |
+| **State machines (XState)** | Good for frontend state but doesn't handle persistence, role resolution, or escalation.  |
 
 ## Consequences
 

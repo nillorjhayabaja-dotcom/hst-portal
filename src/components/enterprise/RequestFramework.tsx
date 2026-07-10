@@ -14,7 +14,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, FileText, Clock, User, Building2, Hash, ArrowUpRight, CalendarDays } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  Clock,
+  User,
+  Building2,
+  Hash,
+  ArrowUpRight,
+  CalendarDays,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_QUICK_ACTIONS } from "@/mock/enterprise-data";
 import type { CommentItem, AttachmentItem } from "@/types/enterprise";
@@ -74,7 +83,13 @@ export function RequestListPage({
   filename,
 }: RequestListPageProps) {
   const defaultColumns: Column<RequestData>[] = [
-    { id: "controlNumber", header: "Control No.", accessorKey: "controlNumber", sortable: true, width: "160px" },
+    {
+      id: "controlNumber",
+      header: "Control No.",
+      accessorKey: "controlNumber",
+      sortable: true,
+      width: "160px",
+    },
     { id: "title", header: "Title", accessorKey: "title", sortable: true, filterable: true },
     { id: "requester", header: "Requester", accessorKey: "requester", sortable: true },
     { id: "department", header: "Department", accessorKey: "department", sortable: true },
@@ -94,7 +109,13 @@ export function RequestListPage({
       width: "100px",
       cell: (value) => <StatusBadgeEnhanced status={String(value)} />,
     },
-    { id: "createdAt", header: "Date Created", accessorKey: "createdAt", sortable: true, width: "130px" },
+    {
+      id: "createdAt",
+      header: "Date Created",
+      accessorKey: "createdAt",
+      sortable: true,
+      width: "130px",
+    },
   ];
 
   return (
@@ -113,7 +134,9 @@ export function RequestListPage({
         }
       />
 
-      {kpiCards && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{kpiCards}</div>}
+      {kpiCards && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{kpiCards}</div>
+      )}
 
       {quickActions && (
         <div>
@@ -135,7 +158,11 @@ export function RequestListPage({
         onRowClick={onRowClick}
         selectable
         bulkActions={[
-          { label: "Export Selected", action: (ids) => console.log("Export", ids), variant: "outline" },
+          {
+            label: "Export Selected",
+            action: (ids) => console.log("Export", ids),
+            variant: "outline",
+          },
         ]}
         emptyState={<NoRequests />}
       />
@@ -153,7 +180,18 @@ interface RequestDetailsProps {
   onApprove?: () => void;
   onReject?: () => void;
   onReturn?: () => void;
-  timeline: { id: string; status: string; actor: string; role: string; date: string; note?: string; icon: string; completed: boolean; current: boolean; rejected: boolean }[];
+  timeline: {
+    id: string;
+    status: string;
+    actor: string;
+    role: string;
+    date: string;
+    note?: string;
+    icon: string;
+    completed: boolean;
+    current: boolean;
+    rejected: boolean;
+  }[];
   comments: CommentItem[];
   attachments: AttachmentItem[];
 }
@@ -197,9 +235,18 @@ export function RequestDetailsDrawer({
             <>
               <Separator />
               <div className="flex gap-2">
-                <Button onClick={onReturn} variant="outline" className="flex-1">Return</Button>
-                <Button onClick={onReject} variant="destructive" className="flex-1">Reject</Button>
-                <Button onClick={onApprove} className="flex-1 bg-success hover:bg-success/90 text-success-foreground">Approve</Button>
+                <Button onClick={onReturn} variant="outline" className="flex-1">
+                  Return
+                </Button>
+                <Button onClick={onReject} variant="destructive" className="flex-1">
+                  Reject
+                </Button>
+                <Button
+                  onClick={onApprove}
+                  className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                >
+                  Approve
+                </Button>
               </div>
             </>
           )}
@@ -248,4 +295,3 @@ function DetailField({ icon: Icon, label, value }: { icon: any; label: string; v
     </div>
   );
 }
-

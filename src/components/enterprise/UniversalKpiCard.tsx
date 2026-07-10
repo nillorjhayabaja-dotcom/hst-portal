@@ -81,12 +81,12 @@ export function UniversalKpiCard({
           <p className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground">
             {value}
           </p>
-          {subtitle && (
-            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-          )}
+          {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
         {Icon && (
-          <div className={cn("grid size-11 shrink-0 place-items-center rounded-xl", TONE_MAP[tone])}>
+          <div
+            className={cn("grid size-11 shrink-0 place-items-center rounded-xl", TONE_MAP[tone])}
+          >
             <Icon className="size-5" />
           </div>
         )}

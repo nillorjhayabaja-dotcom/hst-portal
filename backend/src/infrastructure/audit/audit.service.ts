@@ -33,7 +33,12 @@ export const auditService = {
     });
   },
 
-  fromRequest(req: Request, action: string, entityType: string, extra: Record<string, unknown> = {}) {
+  fromRequest(
+    req: Request,
+    action: string,
+    entityType: string,
+    extra: Record<string, unknown> = {},
+  ) {
     return this.record(action, entityType, {
       actorId: req.user?.id,
       actorName: req.user?.displayName,

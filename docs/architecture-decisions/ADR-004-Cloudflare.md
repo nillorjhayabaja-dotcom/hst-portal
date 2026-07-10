@@ -23,12 +23,12 @@ Use **Cloudflare Free Plan** for DNS management, SSL/TLS termination, and DDoS m
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
-| **AWS Route 53** | Paid service; adds cloud dependency to an on-premise architecture. |
-| **Let's Encrypt** | Requires certbot renewal automation; no DDoS protection. |
-| **Self-managed DNS** | No DDoS protection, manual SSL management, higher maintenance burden. |
-| **Namecheap/GoDaddy DNS** | No DDoS protection, no CDN, paid SSL certificates. |
+| Alternative               | Reason for Rejection                                                  |
+| ------------------------- | --------------------------------------------------------------------- |
+| **AWS Route 53**          | Paid service; adds cloud dependency to an on-premise architecture.    |
+| **Let's Encrypt**         | Requires certbot renewal automation; no DDoS protection.              |
+| **Self-managed DNS**      | No DDoS protection, manual SSL management, higher maintenance burden. |
+| **Namecheap/GoDaddy DNS** | No DDoS protection, no CDN, paid SSL certificates.                    |
 
 ## Consequences
 

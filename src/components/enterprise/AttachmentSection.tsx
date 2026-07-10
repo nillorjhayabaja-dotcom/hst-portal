@@ -1,7 +1,17 @@
 // Attachment Section - Reusable file uploader with preview, download, and remove
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, Trash2, FileText, Image, FileArchive, File, X, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  Download,
+  Trash2,
+  FileText,
+  Image,
+  FileArchive,
+  File,
+  X,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { AttachmentItem } from "@/types/enterprise";
@@ -195,9 +205,7 @@ export function AttachmentSection({
         <div className="flex flex-col items-center gap-2 py-8 text-center">
           <FileText className="size-8 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">No attachments</p>
-          <p className="text-xs text-muted-foreground/60">
-            Upload files to attach to this request
-          </p>
+          <p className="text-xs text-muted-foreground/60">Upload files to attach to this request</p>
         </div>
       ) : (
         <div className="space-y-2">

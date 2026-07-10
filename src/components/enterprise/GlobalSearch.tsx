@@ -137,15 +137,30 @@ export function GlobalSearch() {
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup heading="Quick Navigation">
-                <CommandItem onSelect={() => { setOpen(false); navigate({ to: "/app/dashboard" }); }}>
+                <CommandItem
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/app/dashboard" });
+                  }}
+                >
                   <LayoutDashboard className="size-4" />
                   <span>Dashboard</span>
                 </CommandItem>
-                <CommandItem onSelect={() => { setOpen(false); navigate({ to: "/app/notifications" }); }}>
+                <CommandItem
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/app/notifications" });
+                  }}
+                >
                   <FileText className="size-4" />
                   <span>Notifications</span>
                 </CommandItem>
-                <CommandItem onSelect={() => { setOpen(false); navigate({ to: "/app/profile" }); }}>
+                <CommandItem
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/app/profile" });
+                  }}
+                >
                   <User className="size-4" />
                   <span>My Profile</span>
                 </CommandItem>
@@ -156,58 +171,68 @@ export function GlobalSearch() {
           {results.length > 0 && (
             <>
               {/* Group results by type */}
-              {(["module", "request", "employee", "department", "control-number"] as const).map((type) => {
-                const typeResults = results.filter((r) => r.type === type);
-                if (typeResults.length === 0) return null;
-                return (
-                  <CommandGroup key={type} heading={getTypeLabel(type)}>
-                    {typeResults.map((result) => (
-                      <CommandItem
-                        key={result.id}
-                        onSelect={() => handleSelect(result)}
-                        className="flex items-center gap-3"
-                      >
-                        <span className="grid size-7 place-items-center rounded-md bg-muted">
-                          {getIcon(result.icon)}
-                        </span>
-                        <div className="flex flex-1 flex-col">
-                          <span className="text-sm font-medium">{result.label}</span>
-                          <span className="text-xs text-muted-foreground">{result.description}</span>
-                        </div>
-                        {result.badge && (
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                              result.badge === "In Review" || result.badge === "Pending"
-                                ? "bg-warning/15 text-warning-foreground"
-                                : result.badge === "Approved" || result.badge === "Completed"
-                                  ? "bg-success/15 text-success"
-                                  : "bg-muted text-muted-foreground",
-                            )}
-                          >
-                            {result.badge}
+              {(["module", "request", "employee", "department", "control-number"] as const).map(
+                (type) => {
+                  const typeResults = results.filter((r) => r.type === type);
+                  if (typeResults.length === 0) return null;
+                  return (
+                    <CommandGroup key={type} heading={getTypeLabel(type)}>
+                      {typeResults.map((result) => (
+                        <CommandItem
+                          key={result.id}
+                          onSelect={() => handleSelect(result)}
+                          className="flex items-center gap-3"
+                        >
+                          <span className="grid size-7 place-items-center rounded-md bg-muted">
+                            {getIcon(result.icon)}
                           </span>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                );
-              })}
+                          <div className="flex flex-1 flex-col">
+                            <span className="text-sm font-medium">{result.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {result.description}
+                            </span>
+                          </div>
+                          {result.badge && (
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                result.badge === "In Review" || result.badge === "Pending"
+                                  ? "bg-warning/15 text-warning-foreground"
+                                  : result.badge === "Approved" || result.badge === "Completed"
+                                    ? "bg-success/15 text-success"
+                                    : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {result.badge}
+                            </span>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  );
+                },
+              )}
             </>
           )}
 
           <CommandSeparator />
           <div className="flex items-center gap-4 px-3 py-2 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">↑↓</kbd>
+              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">
+                ↑↓
+              </kbd>
               Navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">↵</kbd>
+              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">
+                ↵
+              </kbd>
               Open
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">Esc</kbd>
+              <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">
+                Esc
+              </kbd>
               Close
             </span>
           </div>

@@ -1,4 +1,5 @@
 # HST Enterprise Portal — Backend Architecture Blueprint
+
 ## Phase 6 — Enterprise Backend & Database Design
 
 > **Status:** Planning / Blueprint  
@@ -32,54 +33,54 @@
 
 #### Frontend
 
-| Technology | Purpose |
-|------------|---------|
-| React 19 | Frontend Framework |
-| TypeScript | Type Safety |
-| Vite | Development & Build Tool |
+| Technology      | Purpose                                                     |
+| --------------- | ----------------------------------------------------------- |
+| React 19        | Frontend Framework                                          |
+| TypeScript      | Type Safety                                                 |
+| Vite            | Development & Build Tool                                    |
 | TanStack Router | File-based routing, nested layouts, route protection (RBAC) |
-| TanStack Query | API state management, caching, optimistic updates |
-| Tailwind CSS | Styling |
-| shadcn/ui | Enterprise UI Components |
-| React Hook Form | Form handling |
-| Zod | Form and API validation |
-| Lucide React | Icons |
-| Recharts | Analytics dashboards |
-| Sonner | Toast notifications |
-| date-fns | Date utilities |
+| TanStack Query  | API state management, caching, optimistic updates           |
+| Tailwind CSS    | Styling                                                     |
+| shadcn/ui       | Enterprise UI Components                                    |
+| React Hook Form | Form handling                                               |
+| Zod             | Form and API validation                                     |
+| Lucide React    | Icons                                                       |
+| Recharts        | Analytics dashboards                                        |
+| Sonner          | Toast notifications                                         |
+| date-fns        | Date utilities                                              |
 
 #### Backend
 
-| Technology | Purpose |
-|------------|---------|
-| Node.js (LTS) | Runtime |
-| Express.js (or Fastify if performance becomes a priority) | REST API |
-| TypeScript | Backend language |
-| Prisma ORM | PostgreSQL ORM and migrations |
-| JWT | Authentication |
-| bcrypt | Password hashing |
-| Multer | File uploads |
-| Nodemailer | Email notifications |
-| node-cron | Scheduled jobs (escalations, reminders, cleanup) |
+| Technology                                                | Purpose                                          |
+| --------------------------------------------------------- | ------------------------------------------------ |
+| Node.js (LTS)                                             | Runtime                                          |
+| Express.js (or Fastify if performance becomes a priority) | REST API                                         |
+| TypeScript                                                | Backend language                                 |
+| Prisma ORM                                                | PostgreSQL ORM and migrations                    |
+| JWT                                                       | Authentication                                   |
+| bcrypt                                                    | Password hashing                                 |
+| Multer                                                    | File uploads                                     |
+| Nodemailer                                                | Email notifications                              |
+| node-cron                                                 | Scheduled jobs (escalations, reminders, cleanup) |
 
 #### Database
 
-| Technology | Purpose |
-|------------|---------|
-| PostgreSQL | Main ERP database |
-| pgAdmin 4 | Database administration |
-| Local Server | On-premises hosting |
+| Technology   | Purpose                 |
+| ------------ | ----------------------- |
+| PostgreSQL   | Main ERP database       |
+| pgAdmin 4    | Database administration |
+| Local Server | On-premises hosting     |
 
 #### Infrastructure
 
-| Technology | Purpose |
-|------------|---------|
-| Cloudflare (Free) | Domain, DNS, HTTPS, DDoS protection |
-| Nginx | Reverse proxy for React and Node.js |
-| Local Windows Server or Ubuntu Server | Application hosting |
-| Local File Storage | Attachments and uploaded documents |
-| Git | Version control |
-| GitHub | Source code repository |
+| Technology                            | Purpose                             |
+| ------------------------------------- | ----------------------------------- |
+| Cloudflare (Free)                     | Domain, DNS, HTTPS, DDoS protection |
+| Nginx                                 | Reverse proxy for React and Node.js |
+| Local Windows Server or Ubuntu Server | Application hosting                 |
+| Local File Storage                    | Attachments and uploaded documents  |
+| Git                                   | Version control                     |
+| GitHub                                | Source code repository              |
 
 #### Authentication & Security
 
@@ -1061,23 +1062,23 @@ comments     (polymorphic via entity_type + entity_id)
 
 ### 2.10 Index Strategy
 
-| Table | Index | Type | Rationale |
-|-------|-------|------|-----------|
-| `approval_requests` | `(status)` | B-tree | Filter by status (pending/in_review) |
-| `approval_requests` | `(requester_id)` | B-tree | My Requests query |
-| `approval_requests` | `(module_id)` | B-tree | Module-specific listing |
-| `approval_requests` | `(control_number)` | Unique B-tree | Fast lookup |
-| `approval_steps` | `(request_id, actor_id)` | Composite B-tree | Find approvals for user |
-| `notifications` | `(recipient_id, is_read)` | Partial index | Unread count |
-| `audit_logs` | `(entity_type, entity_id)` | Composite B-tree | Entity audit trail |
-| `audit_logs` | `(created_at)` | BRIN | Time-range queries |
-| `attachments` | `(entity_type, entity_id)` | Composite B-tree | Entity attachments |
-| `comments` | `(entity_type, entity_id)` | Composite B-tree | Entity comments |
-| `employee` | `(department_id)` | B-tree | Department lookup |
-| `employee` | `(supervisor_id)` | B-tree | Team lookup |
-| `users` | `(email)` | Unique B-tree | Login |
-| `vehicles` | `(plate_number)` | Unique B-tree | Lookup |
-| `assets` | `(asset_tag)` | Unique B-tree | Scan |
+| Table               | Index                      | Type             | Rationale                            |
+| ------------------- | -------------------------- | ---------------- | ------------------------------------ |
+| `approval_requests` | `(status)`                 | B-tree           | Filter by status (pending/in_review) |
+| `approval_requests` | `(requester_id)`           | B-tree           | My Requests query                    |
+| `approval_requests` | `(module_id)`              | B-tree           | Module-specific listing              |
+| `approval_requests` | `(control_number)`         | Unique B-tree    | Fast lookup                          |
+| `approval_steps`    | `(request_id, actor_id)`   | Composite B-tree | Find approvals for user              |
+| `notifications`     | `(recipient_id, is_read)`  | Partial index    | Unread count                         |
+| `audit_logs`        | `(entity_type, entity_id)` | Composite B-tree | Entity audit trail                   |
+| `audit_logs`        | `(created_at)`             | BRIN             | Time-range queries                   |
+| `attachments`       | `(entity_type, entity_id)` | Composite B-tree | Entity attachments                   |
+| `comments`          | `(entity_type, entity_id)` | Composite B-tree | Entity comments                      |
+| `employee`          | `(department_id)`          | B-tree           | Department lookup                    |
+| `employee`          | `(supervisor_id)`          | B-tree           | Team lookup                          |
+| `users`             | `(email)`                  | Unique B-tree    | Login                                |
+| `vehicles`          | `(plate_number)`           | Unique B-tree    | Lookup                               |
+| `assets`            | `(asset_tag)`              | Unique B-tree    | Scan                                 |
 
 ---
 
@@ -1108,21 +1109,21 @@ comments     (polymorphic via entity_type + entity_id)
 ```typescript
 // Access Token (short-lived)
 interface AccessTokenPayload {
-  sub: string;           // user UUID
-  emp: string;           // employee number
-  role: string;          // primary role ID
-  roles: string[];       // all roles
-  dept: string;          // department ID
+  sub: string; // user UUID
+  emp: string; // employee number
+  role: string; // primary role ID
+  roles: string[]; // all roles
+  dept: string; // department ID
   iat: number;
-  exp: number;           // 15 minutes
+  exp: number; // 15 minutes
 }
 
 // Refresh Token (long-lived, rotated)
 interface RefreshTokenPayload {
   sub: string;
-  jti: string;           // unique token ID
+  jti: string; // unique token ID
   iat: number;
-  exp: number;           // 7 days
+  exp: number; // 7 days
 }
 ```
 
@@ -1162,8 +1163,8 @@ const PASSWORD_POLICY = {
   maxLoginAttempts: 5,
   lockoutDurationMinutes: 15,
   passwordExpiryDays: 90,
-  preventReuseCount: 5,     // last N hashes stored
-  hashRounds: 12,           // bcrypt
+  preventReuseCount: 5, // last N hashes stored
+  hashRounds: 12, // bcrypt
 };
 ```
 
@@ -1439,19 +1440,17 @@ export class ApproveRequestUseCase {
     return this.prisma.$transaction(async (tx) => {
       // 1. Load the request with lock
       const request = await this.approvalRepo.findByIdForUpdate(dto.requestId, tx);
-      if (!request) throw new NotFoundError('Approval request not found');
+      if (!request) throw new NotFoundError("Approval request not found");
 
       // 2. Validate current step
       const step = request.getCurrentStep();
-      if (!step || step.status !== 'current') {
-        throw new ValidationError('Step is not awaiting approval');
+      if (!step || step.status !== "current") {
+        throw new ValidationError("Step is not awaiting approval");
       }
 
       // 3. Validate actor permissions
-      const hasPermission = await this.workflowRepo.canUserApproveStep(
-        dto.actorId, step.id, tx
-      );
-      if (!hasPermission) throw new ForbiddenError('Not authorized to approve this step');
+      const hasPermission = await this.workflowRepo.canUserApproveStep(dto.actorId, step.id, tx);
+      if (!hasPermission) throw new ForbiddenError("Not authorized to approve this step");
 
       // 4. Approve the step
       step.approve(dto.actorId, dto.note);
@@ -1459,7 +1458,9 @@ export class ApproveRequestUseCase {
 
       // 5. Check business rules for dynamic routing
       const rules = await this.workflowRepo.evaluateBusinessRules(
-        request.moduleId, request.metadata, tx
+        request.moduleId,
+        request.metadata,
+        tx,
       );
       if (rules.length > 0) {
         request.applyBusinessRules(rules);
@@ -1467,30 +1468,34 @@ export class ApproveRequestUseCase {
 
       // 6. Save
       await this.approvalRepo.save(request, tx);
-      await this.approvalRepo.logAction({
-        requestId: request.id,
-        stepId: step.id,
-        action: 'approve',
-        actorId: dto.actorId,
-        note: dto.note,
-      }, tx);
+      await this.approvalRepo.logAction(
+        {
+          requestId: request.id,
+          stepId: step.id,
+          action: "approve",
+          actorId: dto.actorId,
+          note: dto.note,
+        },
+        tx,
+      );
 
       // 7. Notify next approver (async, non-blocking)
       const nextStep = request.getCurrentStep();
       if (nextStep) {
-        await this.notificationService.notifyApprovalRequired(
-          nextStep, request, tx
-        );
+        await this.notificationService.notifyApprovalRequired(nextStep, request, tx);
       }
 
       // 8. Audit
-      await this.auditService.log({
-        actorId: dto.actorId,
-        action: 'approve',
-        entityType: 'approval_request',
-        entityId: request.id,
-        changes: { step: step.name, status: 'approved' },
-      }, tx);
+      await this.auditService.log(
+        {
+          actorId: dto.actorId,
+          action: "approve",
+          entityType: "approval_request",
+          entityId: request.id,
+          changes: { step: step.name, status: "approved" },
+        },
+        tx,
+      );
 
       return request;
     });
@@ -1503,12 +1508,10 @@ export class ApproveRequestUseCase {
 ```typescript
 // src/infrastructure/database/prisma.service.ts
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' 
-    ? ['query', 'info', 'warn', 'error'] 
-    : ['error'],
+  log: process.env.NODE_ENV === "development" ? ["query", "info", "warn", "error"] : ["error"],
 });
 
 // Usage in repositories:
@@ -1549,11 +1552,12 @@ Controller → Use Case → Audit Service → Database
 ```typescript
 // Every mutation records:
 interface AuditEntry {
-  actorId: string;        // Who did it
-  action: string;         // What: create, update, delete, approve, reject, login
-  entityType: string;     // What kind: gate_pass, approval, user, role
-  entityId: string;       // Which record
-  changes?: {             // Before/after diff
+  actorId: string; // Who did it
+  action: string; // What: create, update, delete, approve, reject, login
+  entityType: string; // What kind: gate_pass, approval, user, role
+  entityId: string; // Which record
+  changes?: {
+    // Before/after diff
     before: Record<string, unknown>;
     after: Record<string, unknown>;
     diff: Record<string, { from: unknown; to: unknown }>;
@@ -1563,7 +1567,7 @@ interface AuditEntry {
 }
 
 // Sensitive fields masked in audit:
-const SENSITIVE_FIELDS = ['password_hash', 'two_factor_secret', 'token'];
+const SENSITIVE_FIELDS = ["password_hash", "two_factor_secret", "token"];
 // These are excluded from diff or stored as '[REDACTED]'
 ```
 
@@ -1675,7 +1679,7 @@ POST /attachments/upload
       ├── file (binary)
       ├── entity_type: "gate_pass"
       └── entity_id: "uuid-or-null"
-  
+
   1. Validate file type & size (max 10MB)
   2. Scan for malware (future)
   3. Generate storage path
@@ -1710,12 +1714,12 @@ POST /attachments/upload
 ```typescript
 // Queue definitions
 const queues = {
-  escalations: new Queue('escalations'),       // Check timed-out approvals
-  reminders: new Queue('reminders'),           // Send approval reminders
-  notifications: new Queue('notifications'),   // Process notification delivery
-  email: new Queue('email'),                   // Send emails
-  audit: new Queue('audit'),                   // Bulk audit log writes
-  controlNumbers: new Queue('control-numbers'), // Sequence number generation
+  escalations: new Queue("escalations"), // Check timed-out approvals
+  reminders: new Queue("reminders"), // Send approval reminders
+  notifications: new Queue("notifications"), // Process notification delivery
+  email: new Queue("email"), // Send emails
+  audit: new Queue("audit"), // Bulk audit log writes
+  controlNumbers: new Queue("control-numbers"), // Sequence number generation
 };
 ```
 
@@ -1756,16 +1760,16 @@ async function sendReminders() {
 
 ### 9.4 Scheduled Jobs Summary
 
-| Job | Interval | Purpose |
-|-----|----------|---------|
-| `escalations` | 5 min | Check and process step timeouts |
-| `reminders` | 60 min | Send approval reminders |
-| `email-queue` | continuous | Process email delivery queue |
-| `notification-cleanup` | 24 h | Archive old notifications (>90 days) |
-| `audit-archive` | 24 h | Archive audit logs (>365 days) |
-| `token-cleanup` | 24 h | Remove expired refresh tokens |
-| `leave-credit-accrual` | 24 h | Accrue leave credits (monthly) |
-| `backup` | 24 h | Database backup |
+| Job                    | Interval   | Purpose                              |
+| ---------------------- | ---------- | ------------------------------------ |
+| `escalations`          | 5 min      | Check and process step timeouts      |
+| `reminders`            | 60 min     | Send approval reminders              |
+| `email-queue`          | continuous | Process email delivery queue         |
+| `notification-cleanup` | 24 h       | Archive old notifications (>90 days) |
+| `audit-archive`        | 24 h       | Archive audit logs (>365 days)       |
+| `token-cleanup`        | 24 h       | Remove expired refresh tokens        |
+| `leave-credit-accrual` | 24 h       | Accrue leave credits (monthly)       |
+| `backup`               | 24 h       | Database backup                      |
 
 ---
 
@@ -1783,38 +1787,38 @@ class AppError extends Error {
     public readonly details?: unknown[],
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
 
 // Specific errors
 class NotFoundError extends AppError {
   constructor(entity: string, id?: string) {
-    super(404, 'NOT_FOUND', `${entity}${id ? ` ${id}` : ''} not found`);
+    super(404, "NOT_FOUND", `${entity}${id ? ` ${id}` : ""} not found`);
   }
 }
 
 class ValidationError extends AppError {
   constructor(details: { field: string; reason: string }[]) {
-    super(400, 'VALIDATION_ERROR', 'Validation failed', details);
+    super(400, "VALIDATION_ERROR", "Validation failed", details);
   }
 }
 
 class UnauthorizedError extends AppError {
-  constructor(message = 'Authentication required') {
-    super(401, 'UNAUTHORIZED', message);
+  constructor(message = "Authentication required") {
+    super(401, "UNAUTHORIZED", message);
   }
 }
 
 class ForbiddenError extends AppError {
-  constructor(message = 'Insufficient permissions') {
-    super(403, 'FORBIDDEN', message);
+  constructor(message = "Insufficient permissions") {
+    super(403, "FORBIDDEN", message);
   }
 }
 
 class ConflictError extends AppError {
   constructor(message: string) {
-    super(409, 'CONFLICT', message);
+    super(409, "CONFLICT", message);
   }
 }
 ```
@@ -1926,11 +1930,11 @@ components:
           type: string
           enum: [draft, pending, in_review, approved, rejected, returned, cancelled]
         currentStep:
-          $ref: '#/components/schemas/ApprovalStep'
+          $ref: "#/components/schemas/ApprovalStep"
         steps:
           type: array
           items:
-            $ref: '#/components/schemas/ApprovalStep'
+            $ref: "#/components/schemas/ApprovalStep"
         createdAt:
           type: string
           format: date-time
@@ -1953,7 +1957,7 @@ paths:
             type: integer
             default: 25
       responses:
-        '200':
+        "200":
           description: List of pending approvals
           content:
             application/json:
@@ -1963,9 +1967,9 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApprovalRequest'
+                      $ref: "#/components/schemas/ApprovalRequest"
                   meta:
-                    $ref: '#/components/schemas/PaginationMeta'
+                    $ref: "#/components/schemas/PaginationMeta"
 
   /approvals/{id}/approve:
     post:
@@ -1990,7 +1994,7 @@ paths:
                   type: string
                   maxLength: 1000
       responses:
-        '200':
+        "200":
           description: Step approved
           content:
             application/json:
@@ -1998,17 +2002,17 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/ApprovalRequest'
-        '400':
+                    $ref: "#/components/schemas/ApprovalRequest"
+        "400":
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 ```
 
 ---
@@ -2018,6 +2022,7 @@ paths:
 Each module needs unique business logic beyond the shared approval framework:
 
 ### Gate Pass
+
 - Company Vehicle → Vehicle Coordinator step (business rule)
 - QR Code generation for security scanning
 - Security release flow (guard scans QR, confirms items match)
@@ -2027,6 +2032,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Vehicle log auto-population
 
 ### Leave
+
 - Leave balance tracking per employee per fiscal year
 - Leave credit accrual rules (monthly/annually)
 - Holiday exclusion from leave days
@@ -2036,6 +2042,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Sick leave doctor's note requirement
 
 ### MRF
+
 - Position & department selection
 - Required skills (tag-based)
 - Headcount vs. budget validation
@@ -2044,6 +2051,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Employment type determination
 
 ### Purchase Request
+
 - Supplier management
 - Budget validation against cost center
 - Quotation attachment requirement
@@ -2053,6 +2061,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Delivery scheduling
 
 ### Visitors
+
 - Visitor badge/QR code generation
 - Host employee notification
 - NDA acknowledgment workflow
@@ -2062,6 +2071,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Pre-registration approval
 
 ### Vehicles
+
 - Reservation calendar
 - Maintenance scheduling & alerts
 - Fuel log tracking
@@ -2071,6 +2081,7 @@ Each module needs unique business logic beyond the shared approval framework:
 - Cost per kilometer
 
 ### Assets
+
 - Barcode / QR code generation
 - Asset lifecycle tracking (acquire → assign → maintain → dispose)
 - Borrow & Return workflow
@@ -2085,34 +2096,34 @@ Each module needs unique business logic beyond the shared approval framework:
 
 ### A. Technology Choices
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| Runtime | Node.js 20 LTS | Team familiarity, async I/O |
-| Framework | Express.js (Fastify if performance needed) | Large ecosystem, easy to maintain |
-| Database | PostgreSQL 16 | Mature, JSONB, array types, full-text search |
-| ORM | Prisma ORM | Type-safe, auto-generated client, migrations, integrates well with TypeScript |
-| Validation | `zod` | TypeScript-first, composable schemas |
-| Auth | `jsonwebtoken` + `bcrypt` | Standard JWT, bcrypt for passwords |
-| Queue | BullMQ (Redis) | Persistent, scheduled, retry |
-| Email | Nodemailer | SMTP, template support |
-| File Upload | Multer | Multipart form handling |
-| File Storage | Local filesystem (`/uploads`) | On-premise, no cloud dependency |
-| Scheduled Jobs | node-cron | Lightweight, no Redis dependency for basic scheduling |
-| API Docs | Swagger/OpenAPI 3.x | Auto-generated from zod schemas |
-| Testing | Vitest + Supertest | Fast, TypeScript-native |
-| Monitoring | Application logs + Audit logs | Built-in, no external dependency |
+| Component      | Choice                                     | Rationale                                                                     |
+| -------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| Runtime        | Node.js 20 LTS                             | Team familiarity, async I/O                                                   |
+| Framework      | Express.js (Fastify if performance needed) | Large ecosystem, easy to maintain                                             |
+| Database       | PostgreSQL 16                              | Mature, JSONB, array types, full-text search                                  |
+| ORM            | Prisma ORM                                 | Type-safe, auto-generated client, migrations, integrates well with TypeScript |
+| Validation     | `zod`                                      | TypeScript-first, composable schemas                                          |
+| Auth           | `jsonwebtoken` + `bcrypt`                  | Standard JWT, bcrypt for passwords                                            |
+| Queue          | BullMQ (Redis)                             | Persistent, scheduled, retry                                                  |
+| Email          | Nodemailer                                 | SMTP, template support                                                        |
+| File Upload    | Multer                                     | Multipart form handling                                                       |
+| File Storage   | Local filesystem (`/uploads`)              | On-premise, no cloud dependency                                               |
+| Scheduled Jobs | node-cron                                  | Lightweight, no Redis dependency for basic scheduling                         |
+| API Docs       | Swagger/OpenAPI 3.x                        | Auto-generated from zod schemas                                               |
+| Testing        | Vitest + Supertest                         | Fast, TypeScript-native                                                       |
+| Monitoring     | Application logs + Audit logs              | Built-in, no external dependency                                              |
 
 ### B. Performance Targets
 
-| Metric | Target |
-|--------|--------|
-| API response time (p95) | < 200ms |
-| Approval action latency | < 500ms |
-| Database query time (p99) | < 100ms |
-| Concurrent connections | 500 |
-| Daily request capacity | 100,000 |
-| Upload max file size | 10 MB |
-| Eventual consistency delay | < 5s |
+| Metric                     | Target  |
+| -------------------------- | ------- |
+| API response time (p95)    | < 200ms |
+| Approval action latency    | < 500ms |
+| Database query time (p99)  | < 100ms |
+| Concurrent connections     | 500     |
+| Daily request capacity     | 100,000 |
+| Upload max file size       | 10 MB   |
+| Eventual consistency delay | < 5s    |
 
 ### C. Security Checklist
 
@@ -2133,27 +2144,27 @@ Each module needs unique business logic beyond the shared approval framework:
 
 ### D. Infrastructure Summary
 
-| Component | Configuration |
-|-----------|---------------|
-| Domain & DNS | Cloudflare (Free) — DNS management, HTTPS, DDoS protection |
-| Reverse Proxy | Nginx — SSL termination, compression, routing |
-| Hosting | Local Windows Server or Ubuntu Server (On-Premise) |
-| Network | Local LAN + VPN (Optional for remote access) |
-| SSL | Cloudflare Origin Certificate |
-| Database Host | Local PostgreSQL server |
-| File Storage | Local `/uploads` directory |
-| Backup | Daily PostgreSQL backup scripts |
+| Component     | Configuration                                              |
+| ------------- | ---------------------------------------------------------- |
+| Domain & DNS  | Cloudflare (Free) — DNS management, HTTPS, DDoS protection |
+| Reverse Proxy | Nginx — SSL termination, compression, routing              |
+| Hosting       | Local Windows Server or Ubuntu Server (On-Premise)         |
+| Network       | Local LAN + VPN (Optional for remote access)               |
+| SSL           | Cloudflare Origin Certificate                              |
+| Database Host | Local PostgreSQL server                                    |
+| File Storage  | Local `/uploads` directory                                 |
+| Backup        | Daily PostgreSQL backup scripts                            |
 
 ### E. Suggested Server Specifications (100–300 users)
 
-| Component | Recommended |
-|-----------|-------------|
-| CPU | Intel Xeon / Intel Core i7 (8+ cores) |
-| RAM | 32 GB |
-| Storage | 1 TB NVMe SSD |
-| Database Drive | Separate SSD if possible |
-| Backup Drive | External HDD or NAS |
-| Network | Gigabit Ethernet |
+| Component      | Recommended                           |
+| -------------- | ------------------------------------- |
+| CPU            | Intel Xeon / Intel Core i7 (8+ cores) |
+| RAM            | 32 GB                                 |
+| Storage        | 1 TB NVMe SSD                         |
+| Database Drive | Separate SSD if possible              |
+| Backup Drive   | External HDD or NAS                   |
+| Network        | Gigabit Ethernet                      |
 
 ---
 
@@ -2161,12 +2172,12 @@ Each module needs unique business logic beyond the shared approval framework:
 
 The HST Enterprise Portal follows a four-environment deployment model:
 
-| Environment | Purpose | URL Pattern | Data |
-|-------------|---------|-------------|------|
-| **Development** | Developer machines | `localhost:5173` | Local PostgreSQL, seeded test data |
-| **Local Server Testing** | Internal QA, power users | `http://hst-portal-test.local` | Test database, anonymized production-like data |
-| **UAT (User Acceptance Testing)** | Department testing, training | `https://uat.hst-corp.com` | Staging database, production-like data |
-| **Production** | Live ERP for all employees | `https://hst-corp.com` | Production PostgreSQL, live data |
+| Environment                       | Purpose                      | URL Pattern                    | Data                                           |
+| --------------------------------- | ---------------------------- | ------------------------------ | ---------------------------------------------- |
+| **Development**                   | Developer machines           | `localhost:5173`               | Local PostgreSQL, seeded test data             |
+| **Local Server Testing**          | Internal QA, power users     | `http://hst-portal-test.local` | Test database, anonymized production-like data |
+| **UAT (User Acceptance Testing)** | Department testing, training | `https://uat.hst-corp.com`     | Staging database, production-like data         |
+| **Production**                    | Live ERP for all employees   | `https://hst-corp.com`         | Production PostgreSQL, live data               |
 
 ### Environment Configuration
 
@@ -2190,12 +2201,12 @@ Development → Local Testing → UAT → Production
 
 ### Branching Strategy
 
-| Branch | Environment | Purpose |
-|--------|-------------|---------|
-| `main` | Production | Stable, deployable code |
-| `develop` | UAT | Integration branch for upcoming release |
-| `feature/*` | Development | New features |
-| `hotfix/*` | Production | Emergency fixes |
+| Branch      | Environment | Purpose                                 |
+| ----------- | ----------- | --------------------------------------- |
+| `main`      | Production  | Stable, deployable code                 |
+| `develop`   | UAT         | Integration branch for upcoming release |
+| `feature/*` | Development | New features                            |
+| `hotfix/*`  | Production  | Emergency fixes                         |
 
 ---
 
@@ -2203,11 +2214,11 @@ Development → Local Testing → UAT → Production
 
 ### 14.1 PostgreSQL Backup Strategy
 
-| Frequency | Method | Retention | Purpose |
-|-----------|--------|-----------|---------|
-| **Daily** | `pg_dump` (custom format) | 7 days | Point-in-time recovery for recent data loss |
-| **Weekly** | Full base backup + WAL archiving | 4 weeks | Recovery from logical corruption |
-| **Monthly** | Compressed archive | 12 months | Compliance, long-term retention |
+| Frequency   | Method                           | Retention | Purpose                                     |
+| ----------- | -------------------------------- | --------- | ------------------------------------------- |
+| **Daily**   | `pg_dump` (custom format)        | 7 days    | Point-in-time recovery for recent data loss |
+| **Weekly**  | Full base backup + WAL archiving | 4 weeks   | Recovery from logical corruption            |
+| **Monthly** | Compressed archive               | 12 months | Compliance, long-term retention             |
 
 ### 14.2 Backup Script Example
 
@@ -2240,20 +2251,20 @@ fi
 
 ### 14.3 File Upload Backup
 
-| Frequency | Method | Retention |
-|-----------|--------|-----------|
-| **Daily** | `robocopy` / `rsync` to backup drive | 7 days |
-| **Weekly** | Full `/uploads` copy | 4 weeks |
-| **Monthly** | Compressed archive | 12 months |
+| Frequency   | Method                               | Retention |
+| ----------- | ------------------------------------ | --------- |
+| **Daily**   | `robocopy` / `rsync` to backup drive | 7 days    |
+| **Weekly**  | Full `/uploads` copy                 | 4 weeks   |
+| **Monthly** | Compressed archive                   | 12 months |
 
 ### 14.4 Disaster Recovery Plan
 
-| Scenario | Recovery Steps | RTO | RPO |
-|----------|----------------|-----|-----|
-| **Single table corruption** | Restore from daily backup + replay WAL | 1 hour | 24 hours |
-| **Full database loss** | Restore from weekly backup + daily WAL replay | 4 hours | 1 week |
-| **Server hardware failure** | Restore from latest backup to new server | 8 hours | 24 hours |
-| **File storage loss** | Restore from weekly file backup | 4 hours | 1 week |
+| Scenario                    | Recovery Steps                                | RTO     | RPO      |
+| --------------------------- | --------------------------------------------- | ------- | -------- |
+| **Single table corruption** | Restore from daily backup + replay WAL        | 1 hour  | 24 hours |
+| **Full database loss**      | Restore from weekly backup + daily WAL replay | 4 hours | 1 week   |
+| **Server hardware failure** | Restore from latest backup to new server      | 8 hours | 24 hours |
+| **File storage loss**       | Restore from weekly file backup               | 4 hours | 1 week   |
 
 **RTO** = Recovery Time Objective  
 **RPO** = Recovery Point Objective
@@ -2275,11 +2286,11 @@ All API endpoints are versioned via the URL path:
 
 ### 15.2 Version Lifecycle
 
-| Version | Status | Support |
-|---------|--------|---------|
-| `/api/v1` | Current | Full support, active development |
+| Version            | Status     | Support                                          |
+| ------------------ | ---------- | ------------------------------------------------ |
+| `/api/v1`          | Current    | Full support, active development                 |
 | `/api/v1` (legacy) | Deprecated | Security fixes only for 6 months after v2 launch |
-| `/api/v2` | Future | Planned for major breaking changes |
+| `/api/v2`          | Future     | Planned for major breaking changes               |
 
 ### 15.3 Versioning Rules
 
@@ -2290,14 +2301,14 @@ All API endpoints are versioned via the URL path:
 
 ### 15.4 Example Breaking vs. Non-Breaking
 
-| Change | Version Bump? |
-|--------|---------------|
-| Add new optional field to response | No |
-| Add new endpoint | No |
-| Remove field from response | Yes |
-| Rename field | Yes |
-| Change field type | Yes |
-| Change authentication mechanism | Yes |
+| Change                             | Version Bump? |
+| ---------------------------------- | ------------- |
+| Add new optional field to response | No            |
+| Add new endpoint                   | No            |
+| Remove field from response         | Yes           |
+| Rename field                       | Yes           |
+| Change field type                  | Yes           |
+| Change authentication mechanism    | Yes           |
 
 ---
 
@@ -2305,13 +2316,13 @@ All API endpoints are versioned via the URL path:
 
 ### 16.1 Log Types
 
-| Log Type | Destination | Purpose | Retention |
-|----------|-------------|---------|-----------|
-| **Application Logs** | File system (`/logs/app/`) | Startup, shutdown, errors, warnings | 30 days |
-| **API Logs** | File system (`/logs/api/`) | Request/response metadata (method, path, status, duration) | 30 days |
-| **Database Logs** | PostgreSQL `log_directory` | Slow queries, connection errors, deadlocks | 7 days |
-| **Audit Logs** | PostgreSQL `audit_logs` table | User actions (create, update, delete, approve, reject, login) | 7 years (compliance) |
-| **Security Logs** | File system (`/logs/security/`) | Failed logins, RBAC denials, rate limit hits | 1 year |
+| Log Type             | Destination                     | Purpose                                                       | Retention            |
+| -------------------- | ------------------------------- | ------------------------------------------------------------- | -------------------- |
+| **Application Logs** | File system (`/logs/app/`)      | Startup, shutdown, errors, warnings                           | 30 days              |
+| **API Logs**         | File system (`/logs/api/`)      | Request/response metadata (method, path, status, duration)    | 30 days              |
+| **Database Logs**    | PostgreSQL `log_directory`      | Slow queries, connection errors, deadlocks                    | 7 days               |
+| **Audit Logs**       | PostgreSQL `audit_logs` table   | User actions (create, update, delete, approve, reject, login) | 7 years (compliance) |
+| **Security Logs**    | File system (`/logs/security/`) | Failed logins, RBAC denials, rate limit hits                  | 1 year               |
 
 ### 16.2 Log Format (Structured JSON)
 
@@ -2334,18 +2345,21 @@ All API endpoints are versioned via the URL path:
 ### 16.3 What to Log
 
 **Application Logs:**
+
 - Server startup/shutdown
 - Unhandled exceptions
 - Configuration errors
 - External service failures (email, SMS)
 
 **API Logs:**
+
 - HTTP method, path, status code
 - Response time (p95, p99 monitoring)
 - Request size, response size
 - User ID (if authenticated)
 
 **Audit Logs (Database):**
+
 - All CRUD operations on business entities
 - Approval actions (approve, reject, return, delegate, recall)
 - Authentication events (login, logout, password change)
@@ -2353,6 +2367,7 @@ All API endpoints are versioned via the URL path:
 - Before/after values for updates
 
 **Security Logs:**
+
 - Failed login attempts (with IP)
 - RBAC denials (user, resource, action)
 - Rate limit triggers
@@ -2381,34 +2396,34 @@ All API endpoints are versioned via the URL path:
 
 ### 17.2 Error Code Registry
 
-| Code | Meaning | HTTP Status |
-|------|---------|-------------|
-| **AUTH-001** | Invalid credentials | 401 |
-| **AUTH-002** | Account locked | 403 |
-| **AUTH-003** | Token expired | 401 |
-| **AUTH-004** | Invalid refresh token | 401 |
-| **AUTH-005** | Password policy violation | 400 |
-| **GP-001** | Gate Pass not found | 404 |
-| **GP-002** | Workflow not configured for Gate Pass | 400 |
-| **GP-003** | Security release already completed | 400 |
-| **LV-001** | Insufficient leave credits | 400 |
-| **LV-002** | Leave overlaps with holiday | 400 |
-| **LV-003** | Leave balance not found | 404 |
-| **MRF-001** | Position not found | 404 |
-| **MRF-002** | Budget validation failed | 400 |
-| **PR-001** | Supplier not approved | 400 |
-| **PR-002** | Budget exceeded | 400 |
-| **VIS-001** | Visitor not found | 404 |
-| **VIS-002** | NDA not signed | 400 |
-| **VEH-001** | Vehicle not available | 400 |
-| **VEH-002** | Maintenance overdue | 400 |
-| **AST-001** | Asset not found | 404 |
-| **AST-002** | Asset already assigned | 400 |
-| **WF-001** | Invalid workflow step | 400 |
-| **WF-002** | Workflow version mismatch | 409 |
-| **SYS-001** | Internal server error | 500 |
-| **SYS-002** | Database connection error | 503 |
-| **SYS-003** | Service unavailable | 503 |
+| Code         | Meaning                               | HTTP Status |
+| ------------ | ------------------------------------- | ----------- |
+| **AUTH-001** | Invalid credentials                   | 401         |
+| **AUTH-002** | Account locked                        | 403         |
+| **AUTH-003** | Token expired                         | 401         |
+| **AUTH-004** | Invalid refresh token                 | 401         |
+| **AUTH-005** | Password policy violation             | 400         |
+| **GP-001**   | Gate Pass not found                   | 404         |
+| **GP-002**   | Workflow not configured for Gate Pass | 400         |
+| **GP-003**   | Security release already completed    | 400         |
+| **LV-001**   | Insufficient leave credits            | 400         |
+| **LV-002**   | Leave overlaps with holiday           | 400         |
+| **LV-003**   | Leave balance not found               | 404         |
+| **MRF-001**  | Position not found                    | 404         |
+| **MRF-002**  | Budget validation failed              | 400         |
+| **PR-001**   | Supplier not approved                 | 400         |
+| **PR-002**   | Budget exceeded                       | 400         |
+| **VIS-001**  | Visitor not found                     | 404         |
+| **VIS-002**  | NDA not signed                        | 400         |
+| **VEH-001**  | Vehicle not available                 | 400         |
+| **VEH-002**  | Maintenance overdue                   | 400         |
+| **AST-001**  | Asset not found                       | 404         |
+| **AST-002**  | Asset already assigned                | 400         |
+| **WF-001**   | Invalid workflow step                 | 400         |
+| **WF-002**   | Workflow version mismatch             | 409         |
+| **SYS-001**  | Internal server error                 | 500         |
+| **SYS-002**  | Database connection error             | 503         |
+| **SYS-003**  | Service unavailable                   | 503         |
 
 ### 17.3 Usage in Responses
 
@@ -2647,43 +2662,43 @@ The following integrations are reserved for future phases. They are documented h
 
 ### 20.1 Identity & Access
 
-| Integration | Purpose | Priority | Notes |
-|-------------|---------|----------|-------|
-| **Active Directory / LDAP** | Sync users, departments, positions from corporate directory | High | Add `external_id` column to `users` table; support LDAP bind authentication |
-| **Microsoft 365** | Calendar integration for leave scheduling, email via Graph API | Medium | Add `m365_*` columns to `users` table |
-| **Google Workspace** | Alternative to M365 for email/calendar | Low | Same as M365 — abstract email service behind interface |
+| Integration                 | Purpose                                                        | Priority | Notes                                                                       |
+| --------------------------- | -------------------------------------------------------------- | -------- | --------------------------------------------------------------------------- |
+| **Active Directory / LDAP** | Sync users, departments, positions from corporate directory    | High     | Add `external_id` column to `users` table; support LDAP bind authentication |
+| **Microsoft 365**           | Calendar integration for leave scheduling, email via Graph API | Medium   | Add `m365_*` columns to `users` table                                       |
+| **Google Workspace**        | Alternative to M365 for email/calendar                         | Low      | Same as M365 — abstract email service behind interface                      |
 
 ### 20.2 Hardware & IoT
 
-| Integration | Purpose | Priority | Notes |
-|-------------|---------|----------|-------|
-| **Biometric Attendance** | Sync leave balances with biometric logs | Medium | Add `attendance_device_id` to `employees` table |
-| **Barcode / QR Scanners** | Asset tracking, gate pass security release | High | QR codes already in schema; scanner API endpoint needed |
-| **GPS Tracking** | Vehicle location, geofencing for gate pass destinations | Low | Add `gps_device_id` to `vehicles` table; async location updates |
+| Integration               | Purpose                                                 | Priority | Notes                                                           |
+| ------------------------- | ------------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| **Biometric Attendance**  | Sync leave balances with biometric logs                 | Medium   | Add `attendance_device_id` to `employees` table                 |
+| **Barcode / QR Scanners** | Asset tracking, gate pass security release              | High     | QR codes already in schema; scanner API endpoint needed         |
+| **GPS Tracking**          | Vehicle location, geofencing for gate pass destinations | Low      | Add `gps_device_id` to `vehicles` table; async location updates |
 
 ### 20.3 Communication
 
-| Integration | Purpose | Priority | Notes |
-|-------------|---------|----------|-------|
-| **SMS Gateway** | OTP, approval reminders, escalation alerts | Medium | Extend `notifications` table with `sms` channel; add SMS adapter |
-| **Email SMTP** | Transactional emails (approval notifications, payslips) | High | Already planned via Nodemailer |
-| **Push Notifications** | Mobile app notifications (future) | Low | Requires mobile app; add `push_token` to `users` table |
+| Integration            | Purpose                                                 | Priority | Notes                                                            |
+| ---------------------- | ------------------------------------------------------- | -------- | ---------------------------------------------------------------- |
+| **SMS Gateway**        | OTP, approval reminders, escalation alerts              | Medium   | Extend `notifications` table with `sms` channel; add SMS adapter |
+| **Email SMTP**         | Transactional emails (approval notifications, payslips) | High     | Already planned via Nodemailer                                   |
+| **Push Notifications** | Mobile app notifications (future)                       | Low      | Requires mobile app; add `push_token` to `users` table           |
 
 ### 20.4 ERP Integrations
 
-| Integration | Purpose | Priority | Notes |
-|-------------|---------|----------|-------|
-| **SAP Export** | Financial data sync (purchase requests, assets) | Medium | Add `sap_sync_status` to relevant tables; scheduled export job |
-| **Excel Import/Export** | Bulk data operations (employee import, asset inventory) | High | Add `/api/v1/import` and `/api/v1/export` endpoints |
-| **Payroll System** | Leave deductions, overtime calculations | Low | Add `payroll_sync_status` to `leave_requests` table |
+| Integration             | Purpose                                                 | Priority | Notes                                                          |
+| ----------------------- | ------------------------------------------------------- | -------- | -------------------------------------------------------------- |
+| **SAP Export**          | Financial data sync (purchase requests, assets)         | Medium   | Add `sap_sync_status` to relevant tables; scheduled export job |
+| **Excel Import/Export** | Bulk data operations (employee import, asset inventory) | High     | Add `/api/v1/import` and `/api/v1/export` endpoints            |
+| **Payroll System**      | Leave deductions, overtime calculations                 | Low      | Add `payroll_sync_status` to `leave_requests` table            |
 
 ### 20.5 Infrastructure
 
-| Integration | Purpose | Priority | Notes |
-|-------------|---------|----------|-------|
-| **Redis** | Caching, session storage, BullMQ queue backend | Medium | Add when concurrent users exceed 200 or email queue grows |
-| **Elasticsearch** | Full-text search across all modules | Low | Add `/api/v1/search` endpoint with Elasticsearch backend |
-| **Prometheus + Grafana** | Metrics, dashboards, alerting | Low | Export application metrics for monitoring |
+| Integration              | Purpose                                        | Priority | Notes                                                     |
+| ------------------------ | ---------------------------------------------- | -------- | --------------------------------------------------------- |
+| **Redis**                | Caching, session storage, BullMQ queue backend | Medium   | Add when concurrent users exceed 200 or email queue grows |
+| **Elasticsearch**        | Full-text search across all modules            | Low      | Add `/api/v1/search` endpoint with Elasticsearch backend  |
+| **Prometheus + Grafana** | Metrics, dashboards, alerting                  | Low      | Export application metrics for monitoring                 |
 
 ---
 
@@ -2704,14 +2719,14 @@ v2.0.0 — Breaking API changes
 
 ### 21.2 Release Phases
 
-| Phase | Version | Purpose | Duration | Audience |
-|-------|---------|---------|----------|----------|
-| **Prototype** | v0.1.x | Core workflow proof-of-concept | 2-4 weeks | Development team |
-| **Internal Testing** | v0.5.x | Single module (Gate Pass) tested internally | 4-6 weeks | QA, Power users |
-| **User Acceptance Testing** | v0.9.x | All modules, UAT environment | 6-8 weeks | Department heads |
-| **Production** | v1.0.0 | Live ERP for all employees | Ongoing | All employees |
-| **Maintenance** | v1.x.x | Bug fixes, minor features | Ongoing | All employees |
-| **Major Release** | v2.0.0 | New architecture, breaking changes | As needed | All employees |
+| Phase                       | Version | Purpose                                     | Duration  | Audience         |
+| --------------------------- | ------- | ------------------------------------------- | --------- | ---------------- |
+| **Prototype**               | v0.1.x  | Core workflow proof-of-concept              | 2-4 weeks | Development team |
+| **Internal Testing**        | v0.5.x  | Single module (Gate Pass) tested internally | 4-6 weeks | QA, Power users  |
+| **User Acceptance Testing** | v0.9.x  | All modules, UAT environment                | 6-8 weeks | Department heads |
+| **Production**              | v1.0.0  | Live ERP for all employees                  | Ongoing   | All employees    |
+| **Maintenance**             | v1.x.x  | Bug fixes, minor features                   | Ongoing   | All employees    |
+| **Major Release**           | v2.0.0  | New architecture, breaking changes          | As needed | All employees    |
 
 ### 21.3 Release Checklist
 
@@ -2739,19 +2754,19 @@ If a production release fails:
 
 ## Final Architecture Maturity Assessment
 
-| Area | Maturity | Notes |
-|------|----------|-------|
-| UI/UX | ⭐⭐⭐⭐⭐ | Enterprise-grade with TanStack Router, shadcn/ui, Recharts |
-| Design System | ⭐⭐⭐⭐⭐ | Consistent, reusable components |
-| RBAC | ⭐⭐⭐⭐⭐ | Full permission matrix, role hierarchy, delegation |
-| Workflow Engine | ⭐⭐⭐⭐⭐ | Custom, database-driven, business rule integration |
-| Approval Engine | ⭐⭐⭐⭐⭐ | Multi-step, escalation, delegation, audit trail |
-| Configuration Platform | ⭐⭐⭐⭐⭐ | Company profile, holidays, business rules, control numbers |
-| Backend Blueprint | ⭐⭐⭐⭐⭐ | Complete with ADRs, standards, and strategies |
-| Technology Stack | ⭐⭐⭐⭐⭐ | Finalized with Prisma, Express, PostgreSQL, Cloudflare |
-| Database Planning | ⭐⭐⭐⭐⭐ | 3NF schema, indexes, relationships documented |
-| Scalability | ⭐⭐⭐⭐⭐ | On-premise with room to grow (Redis, Elasticsearch reserved) |
-| Maintainability | ⭐⭐⭐⭐⭐ | Clean architecture, comprehensive documentation |
+| Area                   | Maturity   | Notes                                                        |
+| ---------------------- | ---------- | ------------------------------------------------------------ |
+| UI/UX                  | ⭐⭐⭐⭐⭐ | Enterprise-grade with TanStack Router, shadcn/ui, Recharts   |
+| Design System          | ⭐⭐⭐⭐⭐ | Consistent, reusable components                              |
+| RBAC                   | ⭐⭐⭐⭐⭐ | Full permission matrix, role hierarchy, delegation           |
+| Workflow Engine        | ⭐⭐⭐⭐⭐ | Custom, database-driven, business rule integration           |
+| Approval Engine        | ⭐⭐⭐⭐⭐ | Multi-step, escalation, delegation, audit trail              |
+| Configuration Platform | ⭐⭐⭐⭐⭐ | Company profile, holidays, business rules, control numbers   |
+| Backend Blueprint      | ⭐⭐⭐⭐⭐ | Complete with ADRs, standards, and strategies                |
+| Technology Stack       | ⭐⭐⭐⭐⭐ | Finalized with Prisma, Express, PostgreSQL, Cloudflare       |
+| Database Planning      | ⭐⭐⭐⭐⭐ | 3NF schema, indexes, relationships documented                |
+| Scalability            | ⭐⭐⭐⭐⭐ | On-premise with room to grow (Redis, Elasticsearch reserved) |
+| Maintainability        | ⭐⭐⭐⭐⭐ | Clean architecture, comprehensive documentation              |
 
 ---
 
@@ -2772,6 +2787,6 @@ Once these documents are in place, the team has a clear contract for implementat
 
 ---
 
-*Document Version: 1.0*  
-*Last Updated: July 2026*  
-*Status: Approved for Implementation*
+_Document Version: 1.0_  
+_Last Updated: July 2026_  
+_Status: Approved for Implementation_

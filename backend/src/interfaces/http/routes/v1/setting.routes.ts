@@ -8,11 +8,23 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:category', (req, res) => {
-  res.json({ success: true, message: 'Settings by category endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Settings by category endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.patch('/:key', (req, res) => {
-  res.json({ success: true, message: 'Update setting endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Update setting endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 export default router;

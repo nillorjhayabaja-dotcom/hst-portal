@@ -32,22 +32,46 @@ async function main() {
   const superAdmin = await prisma.role.upsert({
     where: { id: 'super_admin' },
     update: {},
-    create: { id: 'super_admin', name: 'Super Admin', shortName: 'SA', level: 1, description: 'Full system access' },
+    create: {
+      id: 'super_admin',
+      name: 'Super Admin',
+      shortName: 'SA',
+      level: 1,
+      description: 'Full system access',
+    },
   });
   const admin = await prisma.role.upsert({
     where: { id: 'admin' },
     update: {},
-    create: { id: 'admin', name: 'Administrator', shortName: 'ADM', level: 2, description: 'Administrative access' },
+    create: {
+      id: 'admin',
+      name: 'Administrator',
+      shortName: 'ADM',
+      level: 2,
+      description: 'Administrative access',
+    },
   });
   const manager = await prisma.role.upsert({
     where: { id: 'manager' },
     update: {},
-    create: { id: 'manager', name: 'Manager', shortName: 'MGR', level: 4, description: 'Department manager' },
+    create: {
+      id: 'manager',
+      name: 'Manager',
+      shortName: 'MGR',
+      level: 4,
+      description: 'Department manager',
+    },
   });
   const employee = await prisma.role.upsert({
     where: { id: 'employee' },
     update: {},
-    create: { id: 'employee', name: 'Employee', shortName: 'EMP', level: 9, description: 'Standard employee' },
+    create: {
+      id: 'employee',
+      name: 'Employee',
+      shortName: 'EMP',
+      level: 9,
+      description: 'Standard employee',
+    },
   });
 
   // Permissions: super_admin gets full on all modules
@@ -65,7 +89,12 @@ async function main() {
   await prisma.permission.createMany({
     data: [
       { roleId: employee.id, moduleId: 'employees', actions: ['view'], scope: 'own' },
-      { roleId: employee.id, moduleId: 'gate-pass', actions: ['create', 'view', 'edit'], scope: 'own' },
+      {
+        roleId: employee.id,
+        moduleId: 'gate-pass',
+        actions: ['create', 'view', 'edit'],
+        scope: 'own',
+      },
       { roleId: employee.id, moduleId: 'leave', actions: ['create', 'view', 'edit'], scope: 'own' },
     ],
   });
@@ -74,7 +103,13 @@ async function main() {
   const dept = await prisma.department.upsert({
     where: { code: 'HQ' },
     update: {},
-    create: { name: 'Headquarters', code: 'HQ', level: 1, sortOrder: 1, description: 'Main office' },
+    create: {
+      name: 'Headquarters',
+      code: 'HQ',
+      level: 1,
+      sortOrder: 1,
+      description: 'Main office',
+    },
   });
 
   // Super admin user
@@ -115,10 +150,42 @@ async function main() {
 
   // Control number series for modules
   const series = [
-    { moduleId: 'gate-pass', prefix: 'GP', separator: '-', includeYear: true, includeMonth: false, sequenceLength: 5, formatPattern: '{PREFIX}-{YEAR}-{SEQ}' },
-    { moduleId: 'leave', prefix: 'LV', separator: '-', includeYear: true, includeMonth: false, sequenceLength: 5, formatPattern: '{PREFIX}-{YEAR}-{SEQ}' },
-    { moduleId: 'mrf', prefix: 'MRF', separator: '-', includeYear: true, includeMonth: false, sequenceLength: 5, formatPattern: '{PREFIX}-{YEAR}-{SEQ}' },
-    { moduleId: 'purchase', prefix: 'PR', separator: '-', includeYear: true, includeMonth: false, sequenceLength: 5, formatPattern: '{PREFIX}-{YEAR}-{SEQ}' },
+    {
+      moduleId: 'gate-pass',
+      prefix: 'GP',
+      separator: '-',
+      includeYear: true,
+      includeMonth: false,
+      sequenceLength: 5,
+      formatPattern: '{PREFIX}-{YEAR}-{SEQ}',
+    },
+    {
+      moduleId: 'leave',
+      prefix: 'LV',
+      separator: '-',
+      includeYear: true,
+      includeMonth: false,
+      sequenceLength: 5,
+      formatPattern: '{PREFIX}-{YEAR}-{SEQ}',
+    },
+    {
+      moduleId: 'mrf',
+      prefix: 'MRF',
+      separator: '-',
+      includeYear: true,
+      includeMonth: false,
+      sequenceLength: 5,
+      formatPattern: '{PREFIX}-{YEAR}-{SEQ}',
+    },
+    {
+      moduleId: 'purchase',
+      prefix: 'PR',
+      separator: '-',
+      includeYear: true,
+      includeMonth: false,
+      sequenceLength: 5,
+      formatPattern: '{PREFIX}-{YEAR}-{SEQ}',
+    },
   ];
   for (const s of series) {
     await prisma.controlNumberSeries.upsert({

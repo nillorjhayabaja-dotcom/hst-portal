@@ -30,8 +30,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const COLOR_MAP: Record<string, string> = {
   blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:border-blue-500/40",
   green: "bg-success/10 text-success border-success/20 hover:border-success/40",
-  purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:border-purple-500/40",
-  orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:border-orange-500/40",
+  purple:
+    "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:border-purple-500/40",
+  orange:
+    "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:border-orange-500/40",
   red: "bg-destructive/10 text-destructive border-destructive/20 hover:border-destructive/40",
   teal: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20 hover:border-teal-500/40",
 };

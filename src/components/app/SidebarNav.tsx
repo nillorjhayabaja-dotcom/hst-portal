@@ -68,9 +68,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-sidebar-border px-4 py-3">
-        <p className="text-[10px] text-sidebar-foreground/40">
-          HST Enterprise Portal · v1.0.0
-        </p>
+        <p className="text-[10px] text-sidebar-foreground/40">HST Enterprise Portal · v1.0.0</p>
       </div>
     </div>
   );

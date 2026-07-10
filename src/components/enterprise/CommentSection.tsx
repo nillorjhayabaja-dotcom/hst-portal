@@ -52,10 +52,7 @@ export function CommentSection({
   const renderComment = (comment: CommentItem, isReply = false) => (
     <div
       key={comment.id}
-      className={cn(
-        "group flex gap-3",
-        isReply ? "ml-10 mt-3" : "mt-4 first:mt-0",
-      )}
+      className={cn("group flex gap-3", isReply ? "ml-10 mt-3" : "mt-4 first:mt-0")}
     >
       <Avatar className="size-8 shrink-0">
         <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
@@ -170,9 +167,7 @@ export function CommentSection({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">
-          Comments ({comments.length})
-        </h3>
+        <h3 className="text-sm font-semibold text-foreground">Comments ({comments.length})</h3>
       </div>
 
       {/* New comment input */}

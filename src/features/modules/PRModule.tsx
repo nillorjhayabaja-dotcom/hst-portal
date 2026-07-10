@@ -1,13 +1,22 @@
 // Purchase Request Module - Uses Enterprise Core Framework
 import { useState } from "react";
-import { RequestListPage, RequestDetailsDrawer, type RequestData, type ModuleConfig } from "@/components/enterprise/RequestFramework";
+import {
+  RequestListPage,
+  RequestDetailsDrawer,
+  type RequestData,
+  type ModuleConfig,
+} from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
 import { REQUESTS } from "@/mock/data";
 import { MOCK_COMMENTS, MOCK_ATTACHMENTS, MOCK_TIMELINE_EVENTS } from "@/mock/enterprise-data";
 import { ShoppingCart, Clock, CheckCircle, XCircle, DollarSign, TrendingUp } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
-import { ApproveDialog, RejectDialog, ReturnDialog } from "@/components/enterprise/EnterpriseDialogs";
+import {
+  ApproveDialog,
+  RejectDialog,
+  ReturnDialog,
+} from "@/components/enterprise/EnterpriseDialogs";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,23 +32,61 @@ const MODULE_CONFIG: ModuleConfig = {
 };
 
 const PR_ACTIONS = [
-  { id: "qa1", label: "New PR", description: "Submit a purchase request", icon: "ShoppingCart", action: "create", color: "orange" as const },
-  { id: "qa2", label: "Vendors", description: "Approved vendor list", icon: "Users", action: "vendors", color: "blue" as const },
-  { id: "qa3", label: "Budget Reports", description: "Procurement budget analytics", icon: "BarChart3", action: "reports", color: "green" as const },
+  {
+    id: "qa1",
+    label: "New PR",
+    description: "Submit a purchase request",
+    icon: "ShoppingCart",
+    action: "create",
+    color: "orange" as const,
+  },
+  {
+    id: "qa2",
+    label: "Vendors",
+    description: "Approved vendor list",
+    icon: "Users",
+    action: "vendors",
+    color: "blue" as const,
+  },
+  {
+    id: "qa3",
+    label: "Budget Reports",
+    description: "Procurement budget analytics",
+    icon: "BarChart3",
+    action: "reports",
+    color: "green" as const,
+  },
 ];
 
 const PR_COLUMNS: Column<RequestData>[] = [
-  { id: "controlNumber", header: "PR No.", accessorKey: "controlNumber", sortable: true, width: "160px",
-    cell: (_, row) => <span className="font-mono text-xs font-medium">{String(row.controlNumber)}</span>
+  {
+    id: "controlNumber",
+    header: "PR No.",
+    accessorKey: "controlNumber",
+    sortable: true,
+    width: "160px",
+    cell: (_, row) => (
+      <span className="font-mono text-xs font-medium">{String(row.controlNumber)}</span>
+    ),
   },
   { id: "title", header: "Item", accessorKey: "title", sortable: true, filterable: true },
   { id: "requester", header: "Requested By", accessorKey: "requester", sortable: true },
   { id: "department", header: "Department", accessorKey: "department", sortable: true },
-  { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "140px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+  {
+    id: "status",
+    header: "Status",
+    accessorKey: "status",
+    sortable: true,
+    width: "140px",
+    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
   },
-  { id: "priority", header: "Priority", accessorKey: "priority", sortable: true, width: "100px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+  {
+    id: "priority",
+    header: "Priority",
+    accessorKey: "priority",
+    sortable: true,
+    width: "100px",
+    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
   },
   { id: "createdAt", header: "Date", accessorKey: "createdAt", sortable: true, width: "120px" },
 ];
@@ -52,7 +99,10 @@ export function PRModule() {
   const [showReturn, setShowReturn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const prs = REQUESTS.filter((r) => r.type === "Purchase Request").map((r) => ({ ...r, type: r.type }));
+  const prs = REQUESTS.filter((r) => r.type === "Purchase Request").map((r) => ({
+    ...r,
+    type: r.type,
+  }));
 
   const stats = {
     total: prs.length,
@@ -90,7 +140,13 @@ export function PRModule() {
     <>
       <UniversalKpiCard label="Total PRs" value={stats.total} icon={ShoppingCart} tone="primary" />
       <UniversalKpiCard label="Pending" value={stats.pending} icon={Clock} tone="warning" />
-      <UniversalKpiCard label="Approved" value={stats.approved} icon={CheckCircle} tone="success" trend={{ value: "₱573,500 total", up: true }} />
+      <UniversalKpiCard
+        label="Approved"
+        value={stats.approved}
+        icon={CheckCircle}
+        tone="success"
+        trend={{ value: "₱573,500 total", up: true }}
+      />
       <UniversalKpiCard label="Rejected" value={stats.rejected} icon={XCircle} tone="danger" />
     </>
   );
@@ -122,9 +178,24 @@ export function PRModule() {
         />
       )}
 
-      <ApproveDialog open={showApprove} onOpenChange={setShowApprove} onConfirm={handleApprove} loading={loading} />
-      <RejectDialog open={showReject} onOpenChange={setShowReject} onConfirm={handleReject} loading={loading} />
-      <ReturnDialog open={showReturn} onOpenChange={setShowReturn} onConfirm={handleReturn} loading={loading} />
+      <ApproveDialog
+        open={showApprove}
+        onOpenChange={setShowApprove}
+        onConfirm={handleApprove}
+        loading={loading}
+      />
+      <RejectDialog
+        open={showReject}
+        onOpenChange={setShowReject}
+        onConfirm={handleReject}
+        loading={loading}
+      />
+      <ReturnDialog
+        open={showReturn}
+        onOpenChange={setShowReturn}
+        onConfirm={handleReturn}
+        loading={loading}
+      />
     </>
   );
 }

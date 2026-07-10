@@ -21,7 +21,9 @@ export function RecentRequests({
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/app/m/$moduleId" params={{ moduleId: "approvals" }}>View all</Link>
+          <Link to="/app/m/$moduleId" params={{ moduleId: "approvals" }}>
+            View all
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-1">
@@ -44,11 +46,7 @@ export function RecentRequests({
   );
 }
 
-export function ApprovalQueueCard({
-  title = "Pending Approvals",
-}: {
-  title?: string;
-}) {
+export function ApprovalQueueCard({ title = "Pending Approvals" }: { title?: string }) {
   const rows = REQUESTS.filter((r) => ["Pending", "In Review"].includes(r.status)).slice(0, 4);
   return (
     <Card className="shadow-card">
@@ -85,7 +83,11 @@ export function ApprovalQueueCard({
   );
 }
 
-export function QuickActions({ actions }: { actions: { label: string; icon: LucideIcon; to: string; tone?: string }[] }) {
+export function QuickActions({
+  actions,
+}: {
+  actions: { label: string; icon: LucideIcon; to: string; tone?: string }[];
+}) {
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-2">

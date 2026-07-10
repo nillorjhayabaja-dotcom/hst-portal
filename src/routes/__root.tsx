@@ -90,8 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "HST Enterprise Portal — Manufacturing ERP" },
       {
         property: "og:description",
-        content:
-          "Secure, modular, role-based ERP for manufacturing operations and approvals.",
+        content: "Secure, modular, role-based ERP for manufacturing operations and approvals.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

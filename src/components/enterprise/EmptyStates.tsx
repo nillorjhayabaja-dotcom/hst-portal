@@ -1,5 +1,15 @@
 // Empty States - Reusable illustrations for empty data scenarios
-import { type LucideIcon, Inbox, Search, Bell, Paperclip, FileText, ClipboardList, Users, Package } from "lucide-react";
+import {
+  type LucideIcon,
+  Inbox,
+  Search,
+  Bell,
+  Paperclip,
+  FileText,
+  ClipboardList,
+  Users,
+  Package,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
@@ -17,10 +27,24 @@ const SIZE_MAP = {
   lg: { icon: "size-16", title: "text-lg", desc: "text-sm", gap: "gap-4", py: "py-16" },
 };
 
-function EmptyStateBase({ icon: Icon, title, description, action, className, size = "md" }: EmptyStateProps) {
+function EmptyStateBase({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className,
+  size = "md",
+}: EmptyStateProps) {
   const s = SIZE_MAP[size];
   return (
-    <div className={cn("flex flex-col items-center justify-center text-center", s.gap, s.py, className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center text-center",
+        s.gap,
+        s.py,
+        className,
+      )}
+    >
       {Icon && (
         <div className="grid place-items-center rounded-full bg-muted/50 p-4">
           <Icon className={cn(s.icon, "text-muted-foreground/30")} />
@@ -36,7 +60,13 @@ function EmptyStateBase({ icon: Icon, title, description, action, className, siz
 }
 
 // Pre-configured empty states
-export function NoRequests({ action, size = "md" }: { action?: React.ReactNode; size?: "sm" | "md" | "lg" }) {
+export function NoRequests({
+  action,
+  size = "md",
+}: {
+  action?: React.ReactNode;
+  size?: "sm" | "md" | "lg";
+}) {
   return (
     <EmptyStateBase
       icon={Inbox}
@@ -48,7 +78,13 @@ export function NoRequests({ action, size = "md" }: { action?: React.ReactNode; 
   );
 }
 
-export function NoNotifications({ action, size = "md" }: { action?: React.ReactNode; size?: "sm" | "md" | "lg" }) {
+export function NoNotifications({
+  action,
+  size = "md",
+}: {
+  action?: React.ReactNode;
+  size?: "sm" | "md" | "lg";
+}) {
   return (
     <EmptyStateBase
       icon={Bell}
@@ -60,7 +96,13 @@ export function NoNotifications({ action, size = "md" }: { action?: React.ReactN
   );
 }
 
-export function NoSearchResults({ query, size = "md" }: { query?: string; size?: "sm" | "md" | "lg" }) {
+export function NoSearchResults({
+  query,
+  size = "md",
+}: {
+  query?: string;
+  size?: "sm" | "md" | "lg";
+}) {
   return (
     <EmptyStateBase
       icon={Search}
@@ -71,7 +113,13 @@ export function NoSearchResults({ query, size = "md" }: { query?: string; size?:
   );
 }
 
-export function NoAttachments({ action, size = "md" }: { action?: React.ReactNode; size?: "sm" | "md" | "lg" }) {
+export function NoAttachments({
+  action,
+  size = "md",
+}: {
+  action?: React.ReactNode;
+  size?: "sm" | "md" | "lg";
+}) {
   return (
     <EmptyStateBase
       icon={Paperclip}

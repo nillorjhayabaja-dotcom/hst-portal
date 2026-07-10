@@ -35,6 +35,8 @@ export const authenticate: RequestHandler = async (
     req.user = authUser;
     next();
   } catch (err) {
-    next(err instanceof UnauthorizedError ? err : new UnauthorizedError('Invalid or expired token'));
+    next(
+      err instanceof UnauthorizedError ? err : new UnauthorizedError('Invalid or expired token'),
+    );
   }
 };

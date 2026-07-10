@@ -19,7 +19,14 @@ const TONE: Record<string, string> = {
   info: "text-info bg-info/10",
 };
 
-export function StatCard({ label, value, icon: Icon, trend, hint, tone = "primary" }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  hint,
+  tone = "primary",
+}: StatCardProps) {
   return (
     <Card className="relative overflow-hidden p-5 shadow-card transition-shadow hover:shadow-elegant">
       <div className="flex items-start justify-between gap-3">
@@ -41,7 +48,11 @@ export function StatCard({ label, value, icon: Icon, trend, hint, tone = "primar
               trend.up ? "text-success" : "text-destructive",
             )}
           >
-            {trend.up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
+            {trend.up ? (
+              <ArrowUpRight className="size-3.5" />
+            ) : (
+              <ArrowDownRight className="size-3.5" />
+            )}
             {trend.value}
           </span>
         )}

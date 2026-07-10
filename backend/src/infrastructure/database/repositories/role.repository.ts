@@ -9,7 +9,13 @@ export const roleRepository = {
     return prisma.role.findUnique({ where: { id }, include: { permissions: true } });
   },
 
-  async create(data: { id: string; name: string; shortName?: string; level: number; description?: string }) {
+  async create(data: {
+    id: string;
+    name: string;
+    shortName?: string;
+    level: number;
+    description?: string;
+  }) {
     return prisma.role.create({ data });
   },
 

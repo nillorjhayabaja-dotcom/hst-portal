@@ -26,7 +26,11 @@ export interface AuthResult {
 }
 
 export const authService = {
-  async login(identifier: string, password: string, ctx: { ip?: string; userAgent?: string }): Promise<AuthResult> {
+  async login(
+    identifier: string,
+    password: string,
+    ctx: { ip?: string; userAgent?: string },
+  ): Promise<AuthResult> {
     const user = await userRepository.findByLogin(identifier);
     if (!user || !user.isActive) {
       throw new UnauthorizedError('Invalid credentials');
@@ -51,7 +55,12 @@ export const authService = {
       lockedUntil: null,
       lastLoginAt: new Date(),
     });
-    await auditService.record('login', 'auth', { actorId: user.id, actorName: user.displayName, ipAddress: ctx.ip, userAgent: ctx.userAgent });
+    await auditService.record('login', 'auth', {
+      actorId: user.id,
+      actorName: user.displayName,
+      ipAddress: ctx.ip,
+      userAgent: ctx.userAgent,
+    });
     return this.issueTokens(user);
   },
 
@@ -67,12 +76,17 @@ export const authService = {
     await auditService.record('logout', 'auth', { actorId: _userId });
   },
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await userRepository.findById(userId);
     if (!user) throw new UnauthorizedError();
     const ok = await bcryptService.compare(currentPassword, user.passwordHash);
     if (!ok) throw new ValidationError('Current password is incorrect');
-    if (currentPassword === newPassword) throw new ValidationError('New password must differ from current');
+    if (currentPassword === newPassword)
+      throw new ValidationError('New password must differ from current');
     const hash = await bcryptService.hash(newPassword);
     await userRepository.setPassword(user.id, hash);
     await auditService.record('update', 'user', { actorId: userId, entityId: user.id });
@@ -88,7 +102,11 @@ export const authService = {
       data: { metadata: { resetToken: token, resetExpiry: expiry.toISOString() } } as any,
     });
     const link = `${env.app.frontendUrl}/reset-password?token=${token}`;
-    await emailService.send(user.email, 'Password Reset', `<p>Reset your password: <a href="${link}">${link}</a></p>`);
+    await emailService.send(
+      user.email,
+      'Password Reset',
+      `<p>Reset your password: <a href="${link}">${link}</a></p>`,
+    );
   },
 
   issueTokens(user: {

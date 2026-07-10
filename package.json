@@ -4,6 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "dev:all": "npx concurrently -n frontend,backend -c green,cyan \"npm run dev\" \"npm --prefix backend run dev\"",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",

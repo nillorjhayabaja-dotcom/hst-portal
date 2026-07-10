@@ -159,7 +159,9 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
     setSelected((prev) => {
       const allIds = pagedData.map(keyExtractor);
       const allSelected = allIds.every((id) => prev.includes(id));
-      const next = allSelected ? prev.filter((s) => !allIds.includes(s)) : [...prev, ...allIds.filter((id) => !prev.includes(id))];
+      const next = allSelected
+        ? prev.filter((s) => !allIds.includes(s))
+        : [...prev, ...allIds.filter((id) => !prev.includes(id))];
       onSelectionChange?.(next);
       return next;
     });
@@ -186,8 +188,13 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
   }, [title, filename]);
 
   const getSortIcon = (columnId: string) => {
-    if (sortColumn !== columnId) return <ChevronsUpDown className="size-3.5 text-muted-foreground/50" />;
-    return sortDirection === "asc" ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />;
+    if (sortColumn !== columnId)
+      return <ChevronsUpDown className="size-3.5 text-muted-foreground/50" />;
+    return sortDirection === "asc" ? (
+      <ChevronUp className="size-3.5" />
+    ) : (
+      <ChevronDown className="size-3.5" />
+    );
   };
 
   // Loading skeleton
@@ -239,7 +246,10 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
               <Input
                 placeholder={searchPlaceholder}
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
                 className="pl-9 h-9"
               />
             </div>
@@ -329,7 +339,10 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
               {selectable && (
                 <th className="w-10 px-4 py-3">
                   <Checkbox
-                    checked={pagedData.length > 0 && pagedData.every((r) => selected.includes(keyExtractor(r)))}
+                    checked={
+                      pagedData.length > 0 &&
+                      pagedData.every((r) => selected.includes(keyExtractor(r)))
+                    }
                     onCheckedChange={toggleSelectAll}
                   />
                 </th>
@@ -355,10 +368,7 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
           <tbody className="divide-y divide-border">
             {pagedData.length === 0 ? (
               <tr>
-                <td
-                  colSpan={displayColumns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-12"
-                >
+                <td colSpan={displayColumns.length + (selectable ? 1 : 0)} className="px-4 py-12">
                   {emptyState ?? (
                     <div className="flex flex-col items-center gap-2 text-center">
                       <Search className="size-8 text-muted-foreground/30" />
@@ -386,17 +396,18 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
                   >
                     {selectable && (
                       <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelect(id)}
-                        />
+                        <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(id)} />
                       </td>
                     )}
                     {displayColumns.map((col) => {
                       const value = row[col.accessorKey as keyof T];
                       return (
                         <td key={col.id} className="px-4 py-3 text-sm">
-                          {col.cell ? col.cell(value, row) : <span className="text-foreground">{String(value ?? "")}</span>}
+                          {col.cell ? (
+                            col.cell(value, row)
+                          ) : (
+                            <span className="text-foreground">{String(value ?? "")}</span>
+                          )}
                         </td>
                       );
                     })}

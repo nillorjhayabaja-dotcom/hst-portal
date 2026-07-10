@@ -68,9 +68,7 @@ export function RequestsModule({
 
   const decide = (r: RequestItem, approve: boolean) => {
     setRows((prev) =>
-      prev.map((x) =>
-        x.id === r.id ? { ...x, status: approve ? "Approved" : "Rejected" } : x,
-      ),
+      prev.map((x) => (x.id === r.id ? { ...x, status: approve ? "Approved" : "Rejected" } : x)),
     );
     setSelected(null);
     toast[approve ? "success" : "error"](
@@ -92,7 +90,11 @@ export function RequestsModule({
       header: "Control No.",
       render: (r) => <span className="font-mono text-xs font-medium">{r.controlNumber}</span>,
     },
-    { key: "title", header: "Title", render: (r) => <span className="font-medium">{r.title}</span> },
+    {
+      key: "title",
+      header: "Title",
+      render: (r) => <span className="font-medium">{r.title}</span>,
+    },
     ...(isApprovals ? [{ key: "type", header: "Type" } as Column<RequestItem>] : []),
     { key: "requester", header: "Requester" },
     { key: "priority", header: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
@@ -197,21 +199,20 @@ export function RequestsModule({
                   <ApprovalStepper steps={selected.steps} />
                 </div>
 
-                {canApprove(role, module) &&
-                  ["Pending", "In Review"].includes(selected.status) && (
-                    <div className="flex gap-2 border-t border-border pt-4">
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-1.5 text-destructive hover:text-destructive"
-                        onClick={() => decide(selected, false)}
-                      >
-                        <X className="size-4" /> Reject
-                      </Button>
-                      <Button className="flex-1 gap-1.5" onClick={() => decide(selected, true)}>
-                        <Check className="size-4" /> Approve
-                      </Button>
-                    </div>
-                  )}
+                {canApprove(role, module) && ["Pending", "In Review"].includes(selected.status) && (
+                  <div className="flex gap-2 border-t border-border pt-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-1.5 text-destructive hover:text-destructive"
+                      onClick={() => decide(selected, false)}
+                    >
+                      <X className="size-4" /> Reject
+                    </Button>
+                    <Button className="flex-1 gap-1.5" onClick={() => decide(selected, true)}>
+                      <Check className="size-4" /> Approve
+                    </Button>
+                  </div>
+                )}
               </div>
             </>
           )}

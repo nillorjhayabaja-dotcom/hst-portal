@@ -8,19 +8,43 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  res.json({ success: true, message: 'Get vehicle endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Get vehicle endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.post('/', (req, res) => {
-  res.json({ success: true, message: 'Create vehicle endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Create vehicle endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.patch('/:id', (req, res) => {
-  res.json({ success: true, message: 'Update vehicle endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Update vehicle endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.delete('/:id', (req, res) => {
-  res.json({ success: true, message: 'Delete vehicle endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Delete vehicle endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 export default router;

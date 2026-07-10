@@ -1,4 +1,7 @@
-import { notificationRepository, notificationRuleRepository } from '../database/repositories/notification.repository';
+import {
+  notificationRepository,
+  notificationRuleRepository,
+} from '../database/repositories/notification.repository';
 import { emailService } from './email.service';
 import { prisma } from '../database/prisma.service';
 import { logger } from '../logging/logger';
@@ -15,7 +18,11 @@ export interface NotifyInput {
 }
 
 export const notificationService = {
-  async notifyUser(recipientId: string, input: Omit<NotifyInput, 'moduleId' | 'event'>, email?: string) {
+  async notifyUser(
+    recipientId: string,
+    input: Omit<NotifyInput, 'moduleId' | 'event'>,
+    email?: string,
+  ) {
     const created = await notificationRepository.create({
       type: input.title,
       title: input.title,
@@ -46,7 +53,10 @@ export const notificationService = {
       }
       rule.notifyUserIds.forEach((uid: string) => recipients.add(uid));
       for (const recipientId of recipients) {
-        const user = await prisma.user.findUnique({ where: { id: recipientId }, select: { email: true } });
+        const user = await prisma.user.findUnique({
+          where: { id: recipientId },
+          select: { email: true },
+        });
         await this.notifyUser(
           recipientId,
           {

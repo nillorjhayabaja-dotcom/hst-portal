@@ -8,7 +8,6 @@ import type { ModuleId } from "@/types";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-
 export const Route = createFileRoute("/app/profile")({
   component: ProfilePage,
 });

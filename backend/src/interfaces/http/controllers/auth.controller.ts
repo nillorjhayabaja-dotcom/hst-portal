@@ -1,6 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import { authService } from '../../../application/services/auth.service';
-import { loginSchema, refreshSchema, changePasswordSchema, forgotPasswordSchema } from '../dto/auth.dto';
+import {
+  loginSchema,
+  refreshSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+} from '../dto/auth.dto';
 import { validateBody } from '../middleware/validator';
 import { authenticate } from '../middleware/auth';
 import type { AuthUser } from '../../../shared/types';

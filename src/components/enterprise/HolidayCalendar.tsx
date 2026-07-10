@@ -6,8 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CalendarDays } from "lucide-react";
 import { getHolidays, createHoliday, deleteHoliday } from "@/services/config-engine";
@@ -49,29 +62,67 @@ export function HolidayCalendar() {
   };
 
   const columns: Column<Holiday>[] = [
-    { id: "name", header: "Holiday", accessorKey: "name", sortable: true, filterable: true,
-      cell: (val) => <span className="font-medium">{String(val)}</span>
+    {
+      id: "name",
+      header: "Holiday",
+      accessorKey: "name",
+      sortable: true,
+      filterable: true,
+      cell: (val) => <span className="font-medium">{String(val)}</span>,
     },
-    { id: "date", header: "Date", accessorKey: "date", sortable: true, width: "140px",
-      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+    {
+      id: "date",
+      header: "Date",
+      accessorKey: "date",
+      sortable: true,
+      width: "140px",
+      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
     },
-    { id: "type", header: "Type", accessorKey: "type", sortable: true, width: "180px",
+    {
+      id: "type",
+      header: "Type",
+      accessorKey: "type",
+      sortable: true,
+      width: "180px",
       cell: (val) => (
         <Badge variant="secondary" className={cn("text-xs", typeColors[String(val)] || "")}>
           {String(val).replace(/_/g, " ")}
         </Badge>
-      )
+      ),
     },
-    { id: "recurring", header: "Recurring", accessorKey: "recurring", width: "100px",
-      cell: (val) => val ? <Badge variant="outline" className="text-xs text-success">Yes</Badge> : <span className="text-xs text-muted-foreground">No</span>
+    {
+      id: "recurring",
+      header: "Recurring",
+      accessorKey: "recurring",
+      width: "100px",
+      cell: (val) =>
+        val ? (
+          <Badge variant="outline" className="text-xs text-success">
+            Yes
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">No</span>
+        ),
     },
     { id: "description", header: "Description", accessorKey: "description" },
-    { id: "actions", header: "", accessorKey: "id", width: "60px",
+    {
+      id: "actions",
+      header: "",
+      accessorKey: "id",
+      width: "60px",
       cell: (_, row) => (
-        <Button variant="ghost" size="icon" className="size-7 text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(row.id);
+          }}
+        >
           <Trash2 className="size-3.5" />
         </Button>
-      )
+      ),
     },
   ];
 
@@ -80,14 +131,21 @@ export function HolidayCalendar() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Holiday Calendar</h3>
-          <p className="text-sm text-muted-foreground">Manage company holidays and special non-working days</p>
+          <p className="text-sm text-muted-foreground">
+            Manage company holidays and special non-working days
+          </p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="size-4" />Add Holiday</Button>
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              Add Holiday
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Add Holiday</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Add Holiday</DialogTitle>
+            </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-1.5">
                 <Label>Holiday Name</Label>
@@ -100,7 +158,9 @@ export function HolidayCalendar() {
               <div className="space-y-1.5">
                 <Label>Type</Label>
                 <Select name="type" defaultValue="regular">
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="regular">Regular Holiday</SelectItem>
                     <SelectItem value="special_non_working">Special Non-Working</SelectItem>
@@ -110,15 +170,25 @@ export function HolidayCalendar() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" name="recurring" value="true" id="recurring" className="rounded border-border" />
-                <Label htmlFor="recurring" className="text-sm">Recurring annually</Label>
+                <input
+                  type="checkbox"
+                  name="recurring"
+                  value="true"
+                  id="recurring"
+                  className="rounded border-border"
+                />
+                <Label htmlFor="recurring" className="text-sm">
+                  Recurring annually
+                </Label>
               </div>
               <div className="space-y-1.5">
                 <Label>Description (optional)</Label>
                 <Input name="description" placeholder="Additional notes..." />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit">Add Holiday</Button>
               </DialogFooter>
             </form>
@@ -140,8 +210,12 @@ export function HolidayCalendar() {
               <div className="flex flex-col items-center gap-3 py-16 text-center">
                 <CalendarDays className="size-12 text-muted-foreground/30" />
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">No holidays configured</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Add holidays for leave and SLA calculations</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No holidays configured
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    Add holidays for leave and SLA calculations
+                  </p>
                 </div>
               </div>
             }

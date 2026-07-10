@@ -25,17 +25,22 @@ import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboard
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Check, Minus, TrendingUp, Clock, CheckCircle2, XCircle, Users, GitBranch, Hash, Settings, Activity } from "lucide-react";
+import {
+  Check,
+  Minus,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Users,
+  GitBranch,
+  Hash,
+  Settings,
+  Activity,
+} from "lucide-react";
 import { getApprovalMetrics } from "@/services/approval-engine";
 import type { ApprovalMetrics } from "@/types/approval";
-import {
-  EMPLOYEES,
-  DEPARTMENTS,
-  VISITORS,
-  VEHICLES,
-  ASSETS,
-  AUDIT_LOGS,
-} from "@/mock/data";
+import { EMPLOYEES, DEPARTMENTS, VISITORS, VEHICLES, ASSETS, AUDIT_LOGS } from "@/mock/data";
 
 export const Route = createFileRoute("/app/m/$moduleId")({
   component: ModuleRoute,
@@ -59,7 +64,11 @@ function ModuleRoute() {
       <PageHeader
         title={meta.label}
         description={descriptions[module] ?? "Module workspace"}
-        crumbs={[{ label: "Home", to: "/app/dashboard" }, { label: meta.group }, { label: meta.label }]}
+        crumbs={[
+          { label: "Home", to: "/app/dashboard" },
+          { label: meta.group },
+          { label: meta.label },
+        ]}
       />
       <ModuleContent module={module} role={user.role} label={meta.label} />
     </>
@@ -91,7 +100,15 @@ const descriptions: Partial<Record<ModuleId, string>> = {
   settings: "System preferences",
 };
 
-function ModuleContent({ module, role, label }: { module: ModuleId; role: import("@/types").RoleId; label: string }) {
+function ModuleContent({
+  module,
+  role,
+  label,
+}: {
+  module: ModuleId;
+  role: import("@/types").RoleId;
+  label: string;
+}) {
   // Use new enterprise modules for request-based modules
   if (module === "gate-pass") return <GatePassModule />;
   if (module === "leave") return <LeaveModule />;
@@ -106,16 +123,31 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
   switch (module) {
     case "employees": {
       const cols: Column[] = [
-        { id: "id", header: "ID", accessorKey: "id", sortable: true, width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        {
+          id: "id",
+          header: "ID",
+          accessorKey: "id",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
         },
-        { id: "name", header: "Name", accessorKey: "name", sortable: true, filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>
+        {
+          id: "name",
+          header: "Name",
+          accessorKey: "name",
+          sortable: true,
+          filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>,
         },
         { id: "title", header: "Title", accessorKey: "title", sortable: true },
         { id: "department", header: "Department", accessorKey: "department", sortable: true },
-        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
         },
       ];
       return (
@@ -141,7 +173,9 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
                 <CardTitle className="text-base">{d.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1.5 text-sm">
-                <p className="text-muted-foreground">Head: <span className="text-foreground">{d.head}</span></p>
+                <p className="text-muted-foreground">
+                  Head: <span className="text-foreground">{d.head}</span>
+                </p>
                 <div className="flex justify-between pt-2">
                   <span className="text-muted-foreground">Employees</span>
                   <span className="font-semibold text-foreground">{d.employees}</span>
@@ -157,18 +191,33 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
       );
     case "visitors": {
       const cols: Column[] = [
-        { id: "id", header: "ID", accessorKey: "id", sortable: true, width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        {
+          id: "id",
+          header: "ID",
+          accessorKey: "id",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
         },
-        { id: "name", header: "Visitor", accessorKey: "name", sortable: true, filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>
+        {
+          id: "name",
+          header: "Visitor",
+          accessorKey: "name",
+          sortable: true,
+          filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>,
         },
         { id: "company", header: "Company", accessorKey: "company", sortable: true },
         { id: "host", header: "Host", accessorKey: "host", sortable: true },
         { id: "purpose", header: "Purpose", accessorKey: "purpose" },
         { id: "time", header: "Time", accessorKey: "time", sortable: true },
-        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
         },
       ];
       return (
@@ -186,14 +235,24 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
     }
     case "vehicles": {
       const cols: Column[] = [
-        { id: "plate", header: "Plate No.", accessorKey: "plate", sortable: true, width: "140px",
-          cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>
+        {
+          id: "plate",
+          header: "Plate No.",
+          accessorKey: "plate",
+          sortable: true,
+          width: "140px",
+          cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>,
         },
         { id: "type", header: "Type", accessorKey: "type", sortable: true },
         { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
         { id: "location", header: "Location", accessorKey: "location", sortable: true },
-        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
         },
       ];
       return (
@@ -211,17 +270,32 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
     }
     case "assets": {
       const cols: Column[] = [
-        { id: "id", header: "Asset ID", accessorKey: "id", sortable: true, width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        {
+          id: "id",
+          header: "Asset ID",
+          accessorKey: "id",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
         },
-        { id: "name", header: "Name", accessorKey: "name", sortable: true, filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>
+        {
+          id: "name",
+          header: "Name",
+          accessorKey: "name",
+          sortable: true,
+          filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>,
         },
         { id: "category", header: "Category", accessorKey: "category", sortable: true },
         { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
         { id: "value", header: "Value", accessorKey: "value", sortable: true },
-        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          sortable: true,
+          width: "120px",
+          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
         },
       ];
       return (
@@ -239,11 +313,21 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
     }
     case "audit-logs": {
       const cols: Column[] = [
-        { id: "time", header: "Timestamp", accessorKey: "time", sortable: true, width: "180px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+        {
+          id: "time",
+          header: "Timestamp",
+          accessorKey: "time",
+          sortable: true,
+          width: "180px",
+          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
         },
-        { id: "actor", header: "Actor", accessorKey: "actor", sortable: true, filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>
+        {
+          id: "actor",
+          header: "Actor",
+          accessorKey: "actor",
+          sortable: true,
+          filterable: true,
+          cell: (val) => <span className="font-medium">{String(val)}</span>,
         },
         { id: "action", header: "Action", accessorKey: "action", sortable: true },
         { id: "target", header: "Target", accessorKey: "target", sortable: true },
@@ -265,8 +349,13 @@ function ModuleContent({ module, role, label }: { module: ModuleId; role: import
       return (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2"><TrendChart title="Requests vs Approvals" /></div>
-            <div className="space-y-4"><RequestPie /><PieLegend /></div>
+            <div className="lg:col-span-2">
+              <TrendChart title="Requests vs Approvals" />
+            </div>
+            <div className="space-y-4">
+              <RequestPie />
+              <PieLegend />
+            </div>
           </div>
           <DeptBar />
         </div>
@@ -302,7 +391,9 @@ function RbacMatrix() {
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="text-base">Role-Based Access Matrix</CardTitle>
-        <p className="text-sm text-muted-foreground">Module access per role across the organization.</p>
+        <p className="text-sm text-muted-foreground">
+          Module access per role across the organization.
+        </p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto scrollbar-thin">
@@ -311,7 +402,9 @@ function RbacMatrix() {
               <tr>
                 <th className="sticky left-0 bg-card p-2 text-left font-semibold">Module</th>
                 {ROLE_ORDER.map((r) => (
-                  <th key={r} className="p-2 text-center text-xs font-semibold">{ROLES[r].shortName}</th>
+                  <th key={r} className="p-2 text-center text-xs font-semibold">
+                    {ROLES[r].shortName}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -342,10 +435,23 @@ function RbacMatrix() {
 }
 
 const FLOWS = [
-  { name: "Gate Pass", steps: ["Employee", "Supervisor", "Department Manager", "General Administration", "Security", "Completed"] },
+  {
+    name: "Gate Pass",
+    steps: [
+      "Employee",
+      "Supervisor",
+      "Department Manager",
+      "General Administration",
+      "Security",
+      "Completed",
+    ],
+  },
   { name: "Leave", steps: ["Employee", "Supervisor", "Manager", "HR", "Completed"] },
   { name: "MRF", steps: ["Employee", "Supervisor", "Manager", "Approver", "Completed"] },
-  { name: "Purchase Request", steps: ["Employee", "Manager", "Purchasing", "Finance", "Completed"] },
+  {
+    name: "Purchase Request",
+    steps: ["Employee", "Manager", "Purchasing", "Finance", "Completed"],
+  },
 ];
 
 function WorkflowsView() {
@@ -378,15 +484,28 @@ function ControlNumbers() {
     { prefix: "PR-2026", label: "Purchase Request", current: 921, format: "PR-YYYY-000000" },
   ];
   const cols: Column[] = [
-    { id: "prefix", header: "Series", accessorKey: "prefix", sortable: true, width: "140px",
-      cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>
+    {
+      id: "prefix",
+      header: "Series",
+      accessorKey: "prefix",
+      sortable: true,
+      width: "140px",
+      cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>,
     },
     { id: "label", header: "Document", accessorKey: "label", sortable: true },
-    { id: "format", header: "Format", accessorKey: "format", sortable: true,
-      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>
+    {
+      id: "format",
+      header: "Format",
+      accessorKey: "format",
+      sortable: true,
+      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
     },
-    { id: "current", header: "Current No.", accessorKey: "current", sortable: true,
-      cell: (val) => <span className="font-semibold">{String(val)}</span>
+    {
+      id: "current",
+      header: "Current No.",
+      accessorKey: "current",
+      sortable: true,
+      cell: (val) => <span className="font-semibold">{String(val)}</span>,
     },
   ];
   return (
@@ -416,12 +535,18 @@ function SettingsView() {
       </CardHeader>
       <CardContent className="space-y-1">
         {options.map((o) => (
-          <div key={o.label} className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0">
+          <div
+            key={o.label}
+            className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0"
+          >
             <div>
               <p className="text-sm font-medium text-foreground">{o.label}</p>
               <p className="text-xs text-muted-foreground">{o.desc}</p>
             </div>
-            <Switch defaultChecked={o.on} onCheckedChange={() => toast.success("Preference updated")} />
+            <Switch
+              defaultChecked={o.on}
+              onCheckedChange={() => toast.success("Preference updated")}
+            />
           </div>
         ))}
       </CardContent>

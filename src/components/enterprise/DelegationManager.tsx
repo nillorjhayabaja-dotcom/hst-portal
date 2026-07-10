@@ -5,8 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +36,7 @@ export function DelegationManager() {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
-    
+
     createDelegation({
       delegatorId: user?.id || "",
       delegatorName: user?.name || "",
@@ -35,7 +48,7 @@ export function DelegationManager() {
       active: true,
       reason: formData.get("reason") as string,
     });
-    
+
     setDelegations(getDelegations());
     setOpen(false);
     form.reset();
@@ -44,10 +57,26 @@ export function DelegationManager() {
   const columns: Column<DelegationRule>[] = [
     { id: "delegatorName", header: "Delegator", accessorKey: "delegatorName", sortable: true },
     { id: "delegateName", header: "Delegate", accessorKey: "delegateName", sortable: true },
-    { id: "moduleId", header: "Module", accessorKey: "moduleId", sortable: true, width: "160px",
-      cell: (val) => val ? <span className="capitalize">{String(val).replace("-", " ")}</span> : <span className="text-muted-foreground">All modules</span>
+    {
+      id: "moduleId",
+      header: "Module",
+      accessorKey: "moduleId",
+      sortable: true,
+      width: "160px",
+      cell: (val) =>
+        val ? (
+          <span className="capitalize">{String(val).replace("-", " ")}</span>
+        ) : (
+          <span className="text-muted-foreground">All modules</span>
+        ),
     },
-    { id: "startDate", header: "Start Date", accessorKey: "startDate", sortable: true, width: "120px" },
+    {
+      id: "startDate",
+      header: "Start Date",
+      accessorKey: "startDate",
+      sortable: true,
+      width: "120px",
+    },
     { id: "endDate", header: "End Date", accessorKey: "endDate", sortable: true, width: "120px" },
     { id: "reason", header: "Reason", accessorKey: "reason" },
   ];
@@ -57,7 +86,9 @@ export function DelegationManager() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Delegation Rules</h3>
-          <p className="text-sm text-muted-foreground">Temporarily transfer approval authority to another user</p>
+          <p className="text-sm text-muted-foreground">
+            Temporarily transfer approval authority to another user
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -105,7 +136,9 @@ export function DelegationManager() {
                 <Input name="reason" placeholder="e.g., On vacation" required />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit">Create Delegation</Button>
               </DialogFooter>
             </form>
@@ -128,7 +161,9 @@ export function DelegationManager() {
                 <UserCheck className="size-12 text-muted-foreground/30" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">No delegations</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Create a delegation rule to transfer approval authority</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    Create a delegation rule to transfer approval authority
+                  </p>
                 </div>
               </div>
             }

@@ -1,19 +1,26 @@
 // Notification Center - Enterprise Notification Drawer
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, CheckCheck, ChevronRight, AlertCircle, Info, Megaphone, Clock, ExternalLink } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  ChevronRight,
+  AlertCircle,
+  Info,
+  Megaphone,
+  Clock,
+  ExternalLink,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_APPROVAL_NOTIFICATIONS, MOCK_ANNOUNCEMENTS, MOCK_REMINDERS } from "@/mock/enterprise-data";
+import {
+  MOCK_APPROVAL_NOTIFICATIONS,
+  MOCK_ANNOUNCEMENTS,
+  MOCK_REMINDERS,
+} from "@/mock/enterprise-data";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -30,15 +37,15 @@ interface NotificationItem {
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_APPROVAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    MOCK_APPROVAL_NOTIFICATIONS,
+  );
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   const markAllAsRead = () => {
@@ -69,7 +76,12 @@ export function NotificationCenter() {
       info: "bg-muted text-muted-foreground",
     };
     return (
-      <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", styles[type] ?? styles.info)}>
+      <span
+        className={cn(
+          "rounded-full px-2 py-0.5 text-[10px] font-medium",
+          styles[type] ?? styles.info,
+        )}
+      >
         {type}
       </span>
     );
@@ -125,7 +137,10 @@ export function NotificationCenter() {
               <TabsTrigger value="system" className="text-xs data-[state=active]:shadow-none">
                 System
               </TabsTrigger>
-              <TabsTrigger value="announcements" className="text-xs data-[state=active]:shadow-none">
+              <TabsTrigger
+                value="announcements"
+                className="text-xs data-[state=active]:shadow-none"
+              >
                 Announcements
               </TabsTrigger>
             </TabsList>
@@ -211,7 +226,12 @@ export function NotificationCenter() {
                     >
                       <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn("text-sm", !n.read ? "font-semibold" : "text-muted-foreground")}>
+                        <p
+                          className={cn(
+                            "text-sm",
+                            !n.read ? "font-semibold" : "text-muted-foreground",
+                          )}
+                        >
                           {n.title}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
@@ -252,11 +272,18 @@ export function NotificationCenter() {
                     >
                       <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn("text-sm", !n.read ? "font-semibold" : "text-muted-foreground")}>
+                        <p
+                          className={cn(
+                            "text-sm",
+                            !n.read ? "font-semibold" : "text-muted-foreground",
+                          )}
+                        >
                           {n.title}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
-                        <span className="mt-1 block text-[10px] text-muted-foreground/60">{n.time}</span>
+                        <span className="mt-1 block text-[10px] text-muted-foreground/60">
+                          {n.time}
+                        </span>
                       </div>
                     </button>
                   ))}

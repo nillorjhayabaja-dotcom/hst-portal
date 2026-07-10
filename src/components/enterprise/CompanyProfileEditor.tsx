@@ -10,7 +10,11 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Building, Globe, Clock, DollarSign, Save, RotateCcw } from "lucide-react";
-import { getCompanyProfile, updateCompanyProfile, resetConfiguration } from "@/services/config-engine";
+import {
+  getCompanyProfile,
+  updateCompanyProfile,
+  resetConfiguration,
+} from "@/services/config-engine";
 import type { CompanyProfile } from "@/types/configuration";
 
 const DAYS = [
@@ -49,7 +53,9 @@ export function CompanyProfileEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Company Profile</h3>
-          <p className="text-sm text-muted-foreground">Configure your organization's profile and preferences</p>
+          <p className="text-sm text-muted-foreground">
+            Configure your organization's profile and preferences
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleReset} className="gap-2">
@@ -65,10 +71,22 @@ export function CompanyProfileEditor() {
 
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="general"><Building className="size-3.5 mr-1.5" />General</TabsTrigger>
-          <TabsTrigger value="regional"><Globe className="size-3.5 mr-1.5" />Regional</TabsTrigger>
-          <TabsTrigger value="business"><Clock className="size-3.5 mr-1.5" />Business Hours</TabsTrigger>
-          <TabsTrigger value="financial"><DollarSign className="size-3.5 mr-1.5" />Financial</TabsTrigger>
+          <TabsTrigger value="general">
+            <Building className="size-3.5 mr-1.5" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="regional">
+            <Globe className="size-3.5 mr-1.5" />
+            Regional
+          </TabsTrigger>
+          <TabsTrigger value="business">
+            <Clock className="size-3.5 mr-1.5" />
+            Business Hours
+          </TabsTrigger>
+          <TabsTrigger value="financial">
+            <DollarSign className="size-3.5 mr-1.5" />
+            Financial
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -80,35 +98,58 @@ export function CompanyProfileEditor() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Company Name</Label>
-                  <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+                  <Input
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Legal Name</Label>
-                  <Input value={profile.legalName} onChange={(e) => setProfile({ ...profile, legalName: e.target.value })} />
+                  <Input
+                    value={profile.legalName}
+                    onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label>Address</Label>
-                <Textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} rows={2} />
+                <Textarea
+                  value={profile.address}
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                  rows={2}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>TIN</Label>
-                  <Input value={profile.tin} onChange={(e) => setProfile({ ...profile, tin: e.target.value })} />
+                  <Input
+                    value={profile.tin}
+                    onChange={(e) => setProfile({ ...profile, tin: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Contact Number</Label>
-                  <Input value={profile.contactNumber} onChange={(e) => setProfile({ ...profile, contactNumber: e.target.value })} />
+                  <Input
+                    value={profile.contactNumber}
+                    onChange={(e) => setProfile({ ...profile, contactNumber: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Email</Label>
-                  <Input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+                  <Input
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Website</Label>
-                  <Input value={profile.website} onChange={(e) => setProfile({ ...profile, website: e.target.value })} />
+                  <Input
+                    value={profile.website}
+                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -235,11 +276,17 @@ export function CompanyProfileEditor() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Currency</Label>
-                  <Input value={profile.currency} onChange={(e) => setProfile({ ...profile, currency: e.target.value })} />
+                  <Input
+                    value={profile.currency}
+                    onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Currency Symbol</Label>
-                  <Input value={profile.currencySymbol} onChange={(e) => setProfile({ ...profile, currencySymbol: e.target.value })} />
+                  <Input
+                    value={profile.currencySymbol}
+                    onChange={(e) => setProfile({ ...profile, currencySymbol: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -250,7 +297,9 @@ export function CompanyProfileEditor() {
                   onChange={(e) => setProfile({ ...profile, fiscalYearStart: e.target.value })}
                   placeholder="MM-DD"
                 />
-                <p className="text-xs text-muted-foreground">Format: MM-DD (e.g., 01-01 for January 1)</p>
+                <p className="text-xs text-muted-foreground">
+                  Format: MM-DD (e.g., 01-01 for January 1)
+                </p>
               </div>
             </CardContent>
           </Card>

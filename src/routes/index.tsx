@@ -1,19 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Mail,
-  Lock,
-  ArrowRight,
-  ShieldCheck,
-  Boxes,
-  Workflow,
-  BarChart3,
-  ChevronRight,
-} from "lucide-react";
+import { Mail, Lock, ArrowRight, ShieldCheck, Boxes, Workflow, BarChart3 } from "lucide-react";
+
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { ROLES, ROLE_ORDER } from "@/rbac/roles";
-import type { RoleId } from "@/types";
 import { AppLogo } from "@/components/app/AppLogo";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -36,15 +26,30 @@ const FEATURES = [
 function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
 
-  const signIn = (role: RoleId) => {
-    login(role);
-    toast.success(`Welcome, ${ROLES[role].demoUser.name}`, {
-      description: `Signed in as ${ROLES[role].name}`,
-    });
-    navigate({ to: "/app/dashboard" });
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employeeId || !password) {
+      toast.error("Employee ID and password are required.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await login({ identifier: employeeId, password });
+
+      toast.success("Signed in successfully");
+      navigate({ to: "/app/dashboard" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Login failed";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -67,8 +72,8 @@ function LoginPage() {
               The central portal for every HST department.
             </h1>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
-              A secure, modular and scalable manufacturing ERP. Manage requests, approvals,
-              people and operations — built to serve 1,000+ employees.
+              A secure, modular and scalable manufacturing ERP. Manage requests, approvals, people
+              and operations — built to serve 1,000+ employees.
             </p>
             <div className="mt-8 grid max-w-lg grid-cols-2 gap-4">
               {FEATURES.map((f) => (
@@ -105,31 +110,27 @@ function LoginPage() {
               Sign in to your account
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Enter your credentials or choose a demo role below.
+              Enter your credentials to continue.
             </p>
           </div>
 
-          <form
-            className="mt-7 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              signIn("employee");
-            }}
-          >
+          <form className="mt-7 space-y-4" onSubmit={onSubmit}>
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="employeeId">Employee ID</Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@hst-corp.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="employeeId"
+                  type="text"
+                  placeholder="HS0001-0001"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
                   className="pl-9"
+                  autoComplete="username"
                 />
               </div>
             </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -141,9 +142,11 @@ function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-9"
+                  autoComplete="current-password"
                 />
               </div>
             </div>
+
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Checkbox defaultChecked /> Remember me
@@ -151,49 +154,16 @@ function LoginPage() {
               <button
                 type="button"
                 className="text-sm font-medium text-primary hover:underline"
-                onClick={() => toast.info("Password reset is disabled in this prototype.")}
+                onClick={() => toast.info("Password reset is not configured in this UI.")}
               >
                 Forgot password?
               </button>
             </div>
-            <Button type="submit" className="w-full gap-2">
-              Sign in <ArrowRight className="size-4" />
+
+            <Button type="submit" className="w-full gap-2" disabled={submitting}>
+              {submitting ? "Signing in…" : "Sign in"} <ArrowRight className="size-4" />
             </Button>
           </form>
-
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Demo Users
-            </span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {ROLE_ORDER.map((id) => {
-              const r = ROLES[id];
-              return (
-                <button
-                  key={id}
-                  onClick={() => signIn(id)}
-                  className="group flex items-center gap-2.5 rounded-xl border border-border bg-card p-2.5 text-left transition-all hover:border-primary/40 hover:shadow-card"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">
-                    {r.demoUser.avatarInitials}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-semibold text-foreground">
-                      {r.name}
-                    </span>
-                    <span className="block truncate text-[10px] text-muted-foreground">
-                      Level {r.level}
-                    </span>
-                  </span>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
     </div>

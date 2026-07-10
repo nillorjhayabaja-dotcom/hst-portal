@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { roleRepository, permissionRepository } from '../../../infrastructure/database/repositories/role.repository';
+import { roleService } from '../../../application/services/role.service';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../../../infrastructure/auth/rbac.middleware';
 import { auditService } from '../../../infrastructure/audit/audit.service';
@@ -11,7 +11,8 @@ export const roleController = {
     requirePermission('roles', 'view'),
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
-        res.json({ success: true, data: await roleRepository.list() });
+        const result = await roleService.getAll();
+        res.json({ success: true, data: result.items });
       } catch (err) {
         next(err);
       }
@@ -23,8 +24,7 @@ export const roleController = {
     requirePermission('roles', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const role = await roleRepository.findById(req.params.id);
-        if (!role) throw new NotFoundError('Role not found');
+        const role = await roleService.getById(req.params.id);
         res.json({ success: true, data: role });
       } catch (err) {
         next(err);
@@ -37,7 +37,7 @@ export const roleController = {
     requirePermission('roles', 'create'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const role = await roleRepository.create(req.body);
+        const role = await roleService.create(req.body);
         await auditService.fromRequest(req, 'create', 'role', { entityId: role.id });
         res.status(201).json({ success: true, data: role });
       } catch (err) {
@@ -51,7 +51,7 @@ export const roleController = {
     requirePermission('roles', 'edit'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        await roleRepository.setPermissions(req.params.id, req.body.permissions);
+        await roleService.setPermissions(req.params.id, req.body.permissions);
         await auditService.fromRequest(req, 'update', 'role', { entityId: req.params.id });
         res.json({ success: true, data: { updated: true } });
       } catch (err) {
@@ -65,7 +65,8 @@ export const roleController = {
     requirePermission('roles', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        res.json({ success: true, data: await permissionRepository.listByRole(req.params.id) });
+        const permissions = await roleService.getPermissions(req.params.id);
+        res.json({ success: true, data: permissions });
       } catch (err) {
         next(err);
       }

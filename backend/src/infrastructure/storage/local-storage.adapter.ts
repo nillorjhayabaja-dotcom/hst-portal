@@ -7,7 +7,11 @@ import { generateId } from '../../shared/utils';
 import { logger } from '../logging/logger';
 
 export const localStorageAdapter = {
-  async save(file: { originalname: string; mimetype: string; size: number; stream: Readable }, entityType: string, entityId: string) {
+  async save(
+    file: { originalname: string; mimetype: string; size: number; stream: Readable },
+    entityType: string,
+    entityId: string,
+  ) {
     const base = join(process.cwd(), env.upload.path, entityType, entityId);
     if (!existsSync(base)) mkdirSync(base, { recursive: true });
     const storedName = `${generateId()}${extname(file.originalname)}`;

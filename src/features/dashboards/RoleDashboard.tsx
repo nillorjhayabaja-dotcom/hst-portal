@@ -20,12 +20,7 @@ import {
 import type { RoleId } from "@/types";
 import { StatCard } from "@/components/app/StatCard";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "./charts";
-import {
-  RecentRequests,
-  ApprovalQueueCard,
-  QuickActions,
-  ActivityFeed,
-} from "./widgets";
+import { RecentRequests, ApprovalQueueCard, QuickActions, ActivityFeed } from "./widgets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function StatGrid({ children }: { children: React.ReactNode }) {
@@ -43,10 +38,35 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Total Employees" value="714" icon={Users} tone="primary" trend={{ value: "+18", up: true }} hint="this month" />
-            <StatCard label="Pending Approvals" value="27" icon={FileClock} tone="warning" hint="across modules" />
-            <StatCard label="Completed Today" value="142" icon={CheckCircle2} tone="success" trend={{ value: "+12%", up: true }} />
-            <StatCard label="Users Online" value="63" icon={Activity} tone="info" hint="live sessions" />
+            <StatCard
+              label="Total Employees"
+              value="714"
+              icon={Users}
+              tone="primary"
+              trend={{ value: "+18", up: true }}
+              hint="this month"
+            />
+            <StatCard
+              label="Pending Approvals"
+              value="27"
+              icon={FileClock}
+              tone="warning"
+              hint="across modules"
+            />
+            <StatCard
+              label="Completed Today"
+              value="142"
+              icon={CheckCircle2}
+              tone="success"
+              trend={{ value: "+12%", up: true }}
+            />
+            <StatCard
+              label="Users Online"
+              value="63"
+              icon={Activity}
+              tone="info"
+              hint="live sessions"
+            />
           </StatGrid>
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -80,8 +100,21 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Production Output" value="95%" icon={Factory} tone="success" trend={{ value: "+3%", up: true }} hint="vs target" />
-            <StatCard label="Monthly Requests" value="590" icon={ClipboardList} tone="primary" trend={{ value: "+30", up: true }} />
+            <StatCard
+              label="Production Output"
+              value="95%"
+              icon={Factory}
+              tone="success"
+              trend={{ value: "+3%", up: true }}
+              hint="vs target"
+            />
+            <StatCard
+              label="Monthly Requests"
+              value="590"
+              icon={ClipboardList}
+              tone="primary"
+              trend={{ value: "+30", up: true }}
+            />
             <StatCard label="Approval Rate" value="91.5%" icon={CheckCircle2} tone="info" />
             <StatCard label="Departments" value="8" icon={Building2} tone="accent" hint="active" />
           </StatGrid>
@@ -113,7 +146,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
                       <span className="font-semibold text-muted-foreground">{r.pct}%</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-gradient-brand" style={{ width: `${r.pct}%` }} />
+                      <div
+                        className="h-full rounded-full bg-gradient-brand"
+                        style={{ width: `${r.pct}%` }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -129,8 +165,20 @@ export function RoleDashboard({ role }: { role: RoleId }) {
           <StatGrid>
             <StatCard label="Department Staff" value="342" icon={Users} tone="primary" />
             <StatCard label="Pending Team Requests" value="9" icon={FileClock} tone="warning" />
-            <StatCard label="Approved This Week" value="41" icon={CheckCircle2} tone="success" trend={{ value: "+7", up: true }} />
-            <StatCard label="Dept. Performance" value="96%" icon={TrendingUp} tone="info" trend={{ value: "+2%", up: true }} />
+            <StatCard
+              label="Approved This Week"
+              value="41"
+              icon={CheckCircle2}
+              tone="success"
+              trend={{ value: "+7", up: true }}
+            />
+            <StatCard
+              label="Dept. Performance"
+              value="96%"
+              icon={TrendingUp}
+              tone="info"
+              trend={{ value: "+2%", up: true }}
+            />
           </StatGrid>
           <TwoCol>
             <div className="lg:col-span-2">
@@ -140,7 +188,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
           </TwoCol>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <DeptBar title="Team Performance" />
-            <RecentRequests title="Department Requests" filter={(r) => r.department === "Production"} />
+            <RecentRequests
+              title="Department Requests"
+              filter={(r) => r.department === "Production"}
+            />
           </div>
         </>
       );
@@ -201,7 +252,13 @@ export function RoleDashboard({ role }: { role: RoleId }) {
           <StatGrid>
             <StatCard label="Gate Pass Queue" value="14" icon={DoorOpen} tone="warning" />
             <StatCard label="Vehicles Assigned" value="9" icon={Car} tone="primary" />
-            <StatCard label="Meal Allowance" value="52" icon={Utensils} tone="info" hint="to process" />
+            <StatCard
+              label="Meal Allowance"
+              value="52"
+              icon={Utensils}
+              tone="info"
+              hint="to process"
+            />
             <StatCard label="Final Approved Today" value="23" icon={CheckCircle2} tone="success" />
           </StatGrid>
           <TwoCol>
@@ -224,7 +281,13 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Released Gate Pass" value="23" icon={DoorOpen} tone="success" hint="today" />
+            <StatCard
+              label="Released Gate Pass"
+              value="23"
+              icon={DoorOpen}
+              tone="success"
+              hint="today"
+            />
             <StatCard label="Vehicle Exits" value="11" icon={LogOut} tone="warning" />
             <StatCard label="Vehicle Entries" value="9" icon={LogIn} tone="info" />
             <StatCard label="Visitor Check-Ins" value="7" icon={UserCheck} tone="primary" />
@@ -267,7 +330,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
           </div>
           <TwoCol>
             <div className="lg:col-span-2">
-              <RecentRequests title="My Recent Requests" filter={(r) => r.requester === "Liza Mendoza" || r.department === "Production"} />
+              <RecentRequests
+                title="My Recent Requests"
+                filter={(r) => r.requester === "Liza Mendoza" || r.department === "Production"}
+              />
             </div>
             <ActivityFeed title="Notifications" />
           </TwoCol>

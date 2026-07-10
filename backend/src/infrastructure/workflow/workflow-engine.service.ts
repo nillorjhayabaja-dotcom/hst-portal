@@ -50,52 +50,54 @@ export const workflowEngine = {
     const workflow = await this.resolveWorkflow(input.moduleId, input.workflowId);
     const controlNumber = await this.nextControlNumber(input.moduleId);
 
-    const result = await prisma.$transaction(async (tx: import('@prisma/client').Prisma.TransactionClient) => {
-      const request = await tx.approvalRequest.create({
-        data: {
-          controlNumber,
-          moduleId: input.moduleId,
-          title: input.title,
-          description: input.description,
-          requesterId: input.requesterId,
-          departmentId: input.departmentId,
-          status: 'pending',
-          workflowId: workflow.id,
-          currentStepIndex: 0,
-          submittedAt: new Date(),
-          metadata: input.metadata as any,
-        },
-      });
+    const result = await prisma.$transaction(
+      async (tx: import('@prisma/client').Prisma.TransactionClient) => {
+        const request = await tx.approvalRequest.create({
+          data: {
+            controlNumber,
+            moduleId: input.moduleId,
+            title: input.title,
+            description: input.description,
+            requesterId: input.requesterId,
+            departmentId: input.departmentId,
+            status: 'pending',
+            workflowId: workflow.id,
+            currentStepIndex: 0,
+            submittedAt: new Date(),
+            metadata: input.metadata as any,
+          },
+        });
 
-      const steps = (workflow.steps as WorkflowStepDef[])
-        .filter((s) => this.conditionMet(s, input.metadata))
-        .sort((a, b) => a.stepOrder - b.stepOrder);
+        const steps = (workflow.steps as WorkflowStepDef[])
+          .filter((s) => this.conditionMet(s, input.metadata))
+          .sort((a, b) => a.stepOrder - b.stepOrder);
 
-      if (!steps.length) throw new ValidationError('Workflow has no applicable steps');
+        if (!steps.length) throw new ValidationError('Workflow has no applicable steps');
 
-      await tx.approvalStep.createMany({
-        data: steps.map((s) => ({
-          requestId: request.id,
-          stepId: s.id,
-          name: s.name,
-          roleId: s.roleId,
-          stepOrder: s.stepOrder,
-          status: 'current',
-          assignedAt: new Date(),
-        })),
-      });
+        await tx.approvalStep.createMany({
+          data: steps.map((s) => ({
+            requestId: request.id,
+            stepId: s.id,
+            name: s.name,
+            roleId: s.roleId,
+            stepOrder: s.stepOrder,
+            status: 'current',
+            assignedAt: new Date(),
+          })),
+        });
 
-      for (const s of steps) {
-        if (s.autoApprove) {
-          await tx.approvalStep.update({
-            where: { requestId_stepId: { requestId: request.id, stepId: s.id } },
-            data: { status: 'approved', actedAt: new Date() },
-          });
+        for (const s of steps) {
+          if (s.autoApprove) {
+            await tx.approvalStep.update({
+              where: { requestId_stepId: { requestId: request.id, stepId: s.id } },
+              data: { status: 'approved', actedAt: new Date() },
+            });
+          }
         }
-      }
 
-      return request;
-    });
+        return request;
+      },
+    );
 
     return {
       id: result.id,

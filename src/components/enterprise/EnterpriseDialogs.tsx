@@ -43,9 +43,18 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const variantStyles = {
     default: { icon: null, button: "" },
-    destructive: { icon: Trash2, button: "bg-destructive hover:bg-destructive/90 text-destructive-foreground" },
-    warning: { icon: AlertTriangle, button: "bg-warning hover:bg-warning/90 text-warning-foreground" },
-    success: { icon: CheckCircle, button: "bg-success hover:bg-success/90 text-success-foreground" },
+    destructive: {
+      icon: Trash2,
+      button: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+    },
+    warning: {
+      icon: AlertTriangle,
+      button: "bg-warning hover:bg-warning/90 text-warning-foreground",
+    },
+    success: {
+      icon: CheckCircle,
+      button: "bg-success hover:bg-success/90 text-success-foreground",
+    },
   };
 
   const v = variantStyles[variant];
@@ -57,7 +66,14 @@ export function ConfirmDialog({
         <AlertDialogHeader>
           {Icon && (
             <div className="mb-2 grid size-10 place-items-center rounded-full bg-muted">
-              <Icon className={cn("size-5", variant === "destructive" && "text-destructive", variant === "warning" && "text-warning-foreground", variant === "success" && "text-success")} />
+              <Icon
+                className={cn(
+                  "size-5",
+                  variant === "destructive" && "text-destructive",
+                  variant === "warning" && "text-warning-foreground",
+                  variant === "success" && "text-success",
+                )}
+              />
             </div>
           )}
           <AlertDialogTitle>{title}</AlertDialogTitle>

@@ -3,38 +3,129 @@ import { canAccess } from "@/rbac/permissions";
 
 // Master module registry. Route target: dashboard/notifications/profile are
 // explicit routes; the rest render through the generic /app/m/$moduleId route.
-export const MODULES: Record<ModuleId, { label: string; icon: string; group: string; to: string }> = {
-  dashboard: { label: "Dashboard", icon: "LayoutDashboard", group: "Overview", to: "/app/dashboard" },
-  notifications: { label: "Notifications", icon: "Bell", group: "Overview", to: "/app/notifications" },
-  approvals: { label: "Approvals", icon: "CheckCircle2", group: "Overview", to: "/app/m/approvals" },
+export const MODULES: Record<ModuleId, { label: string; icon: string; group: string; to: string }> =
+  {
+    dashboard: {
+      label: "Dashboard",
+      icon: "LayoutDashboard",
+      group: "Overview",
+      to: "/app/dashboard",
+    },
+    notifications: {
+      label: "Notifications",
+      icon: "Bell",
+      group: "Overview",
+      to: "/app/notifications",
+    },
+    approvals: {
+      label: "Approvals",
+      icon: "CheckCircle2",
+      group: "Overview",
+      to: "/app/m/approvals",
+    },
 
-  "gate-pass": { label: "Gate Pass", icon: "DoorOpen", group: "Operations", to: "/app/m/gate-pass" },
-  leave: { label: "Leave", icon: "CalendarDays", group: "Operations", to: "/app/m/leave" },
-  mrf: { label: "MRF", icon: "ClipboardList", group: "Operations", to: "/app/m/mrf" },
-  visitors: { label: "Visitors", icon: "UserCheck", group: "Operations", to: "/app/m/visitors" },
-  vehicles: { label: "Vehicles", icon: "Car", group: "Operations", to: "/app/m/vehicles" },
-  assets: { label: "Assets", icon: "Package", group: "Operations", to: "/app/m/assets" },
-  "purchase-request": { label: "Purchase Request", icon: "ShoppingCart", group: "Operations", to: "/app/m/purchase-request" },
+    "gate-pass": {
+      label: "Gate Pass",
+      icon: "DoorOpen",
+      group: "Operations",
+      to: "/app/m/gate-pass",
+    },
+    leave: { label: "Leave", icon: "CalendarDays", group: "Operations", to: "/app/m/leave" },
+    mrf: { label: "MRF", icon: "ClipboardList", group: "Operations", to: "/app/m/mrf" },
+    visitors: { label: "Visitors", icon: "UserCheck", group: "Operations", to: "/app/m/visitors" },
+    vehicles: { label: "Vehicles", icon: "Car", group: "Operations", to: "/app/m/vehicles" },
+    assets: { label: "Assets", icon: "Package", group: "Operations", to: "/app/m/assets" },
+    "purchase-request": {
+      label: "Purchase Request",
+      icon: "ShoppingCart",
+      group: "Operations",
+      to: "/app/m/purchase-request",
+    },
 
-  employees: { label: "Employees", icon: "Users", group: "Management", to: "/app/m/employees" },
-  departments: { label: "Departments", icon: "Building2", group: "Management", to: "/app/m/departments" },
-  positions: { label: "Positions", icon: "Briefcase", group: "Management", to: "/app/m/positions" },
-  reports: { label: "Reports", icon: "BarChart3", group: "Management", to: "/app/m/reports" },
-  "audit-logs": { label: "Audit Logs", icon: "ScrollText", group: "Management", to: "/app/m/audit-logs" },
+    employees: { label: "Employees", icon: "Users", group: "Management", to: "/app/m/employees" },
+    departments: {
+      label: "Departments",
+      icon: "Building2",
+      group: "Management",
+      to: "/app/m/departments",
+    },
+    positions: {
+      label: "Positions",
+      icon: "Briefcase",
+      group: "Management",
+      to: "/app/m/positions",
+    },
+    reports: { label: "Reports", icon: "BarChart3", group: "Management", to: "/app/m/reports" },
+    "audit-logs": {
+      label: "Audit Logs",
+      icon: "ScrollText",
+      group: "Management",
+      to: "/app/m/audit-logs",
+    },
 
-  "company-profile": { label: "Company Profile", icon: "Building", group: "Administration", to: "/app/m/company-profile" },
-  users: { label: "Users & Roles", icon: "ShieldCheck", group: "Administration", to: "/app/m/users" },
-  workflows: { label: "Workflows", icon: "GitBranch", group: "Administration", to: "/app/m/workflows" },
-  "workflow-templates": { label: "Workflow Templates", icon: "FileCog", group: "Administration", to: "/app/m/workflow-templates" },
-  "control-numbers": { label: "Control Numbers", icon: "Hash", group: "Administration", to: "/app/m/control-numbers" },
-  "notification-rules": { label: "Notification Rules", icon: "BellRing", group: "Administration", to: "/app/m/notification-rules" },
-  "business-rules": { label: "Business Rules", icon: "BrainCircuit", group: "Administration", to: "/app/m/business-rules" },
-  "holiday-calendar": { label: "Holiday Calendar", icon: "Calendar", group: "Administration", to: "/app/m/holiday-calendar" },
-  delegations: { label: "Delegations", icon: "UserCheck", group: "Administration", to: "/app/m/delegations" },
-  settings: { label: "Settings", icon: "Settings", group: "Administration", to: "/app/m/settings" },
+    "company-profile": {
+      label: "Company Profile",
+      icon: "Building",
+      group: "Administration",
+      to: "/app/m/company-profile",
+    },
+    users: {
+      label: "Users & Roles",
+      icon: "ShieldCheck",
+      group: "Administration",
+      to: "/app/m/users",
+    },
+    workflows: {
+      label: "Workflows",
+      icon: "GitBranch",
+      group: "Administration",
+      to: "/app/m/workflows",
+    },
+    "workflow-templates": {
+      label: "Workflow Templates",
+      icon: "FileCog",
+      group: "Administration",
+      to: "/app/m/workflow-templates",
+    },
+    "control-numbers": {
+      label: "Control Numbers",
+      icon: "Hash",
+      group: "Administration",
+      to: "/app/m/control-numbers",
+    },
+    "notification-rules": {
+      label: "Notification Rules",
+      icon: "BellRing",
+      group: "Administration",
+      to: "/app/m/notification-rules",
+    },
+    "business-rules": {
+      label: "Business Rules",
+      icon: "BrainCircuit",
+      group: "Administration",
+      to: "/app/m/business-rules",
+    },
+    "holiday-calendar": {
+      label: "Holiday Calendar",
+      icon: "Calendar",
+      group: "Administration",
+      to: "/app/m/holiday-calendar",
+    },
+    delegations: {
+      label: "Delegations",
+      icon: "UserCheck",
+      group: "Administration",
+      to: "/app/m/delegations",
+    },
+    settings: {
+      label: "Settings",
+      icon: "Settings",
+      group: "Administration",
+      to: "/app/m/settings",
+    },
 
-  profile: { label: "My Profile", icon: "User", group: "Account", to: "/app/profile" },
-};
+    profile: { label: "My Profile", icon: "User", group: "Account", to: "/app/profile" },
+  };
 
 export const GROUP_ORDER = ["Overview", "Operations", "Management", "Administration", "Account"];
 

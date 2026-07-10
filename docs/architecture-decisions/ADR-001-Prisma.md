@@ -23,13 +23,13 @@ Use **Prisma ORM** as the primary database access tool.
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
+| Alternative               | Reason for Rejection                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Raw SQL (`pg` driver)** | No type safety, manual migration management, higher risk of SQL injection, slower development. |
-| **TypeORM** | Heavier, more complex API, history of breaking changes, less TypeScript-native feel. |
-| **Sequelize** | Limited TypeScript support, verbose model definitions, less performant query generation. |
-| **Drizzle ORM** | Newer and less mature ecosystem, smaller community, fewer enterprise adoptions. |
-| **Knex.js** | Query builder only — no type-safe client, no migration generation, more boilerplate. |
+| **TypeORM**               | Heavier, more complex API, history of breaking changes, less TypeScript-native feel.           |
+| **Sequelize**             | Limited TypeScript support, verbose model definitions, less performant query generation.       |
+| **Drizzle ORM**           | Newer and less mature ecosystem, smaller community, fewer enterprise adoptions.                |
+| **Knex.js**               | Query builder only — no type-safe client, no migration generation, more boilerplate.           |
 
 ## Consequences
 

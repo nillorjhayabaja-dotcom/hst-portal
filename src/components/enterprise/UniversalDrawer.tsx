@@ -48,18 +48,13 @@ export function UniversalDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent
-        side={side}
-        className={cn("w-full p-0", width, className)}
-      >
+      <SheetContent side={side} className={cn("w-full p-0", width, className)}>
         <SheetHeader className="border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <SheetTitle className="text-lg truncate">{title}</SheetTitle>
               {description && (
-                <SheetDescription className="text-xs mt-0.5">
-                  {description}
-                </SheetDescription>
+                <SheetDescription className="text-xs mt-0.5">{description}</SheetDescription>
               )}
             </div>
             <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onClose}>

@@ -22,12 +22,12 @@ Use **JWT (JSON Web Tokens)** with a dual-token pattern: short-lived access toke
 
 ## Alternatives Considered
 
-| Alternative | Reason for Rejection |
-|-------------|---------------------|
+| Alternative                              | Reason for Rejection                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------------------- |
 | **Session-based auth (express-session)** | Requires server-side session storage; adds latency; harder to scale horizontally. |
-| **OAuth 2.0 / OIDC** | Overkill for an on-premise ERP with a single identity source (local users table). |
-| **Magic link / passwordless** | Not appropriate for internal enterprise daily-use application. |
-| **API keys** | No user context, no expiry, no revocation mechanism. |
+| **OAuth 2.0 / OIDC**                     | Overkill for an on-premise ERP with a single identity source (local users table). |
+| **Magic link / passwordless**            | Not appropriate for internal enterprise daily-use application.                    |
+| **API keys**                             | No user context, no expiry, no revocation mechanism.                              |
 
 ## Token Lifecycle
 

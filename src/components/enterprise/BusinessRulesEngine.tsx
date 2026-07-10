@@ -7,8 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, BrainCircuit, GripVertical } from "lucide-react";
 import { getBusinessRules, createBusinessRule, deleteBusinessRule } from "@/services/config-engine";
@@ -47,24 +60,70 @@ export function BusinessRulesEngine() {
   };
 
   const columns: Column<BusinessRule>[] = [
-    { id: "name", header: "Rule Name", accessorKey: "name", sortable: true, filterable: true,
-      cell: (val) => <span className="font-medium">{String(val)}</span>
+    {
+      id: "name",
+      header: "Rule Name",
+      accessorKey: "name",
+      sortable: true,
+      filterable: true,
+      cell: (val) => <span className="font-medium">{String(val)}</span>,
     },
-    { id: "moduleId", header: "Module", accessorKey: "moduleId", sortable: true, width: "140px",
-      cell: (val) => <span className="capitalize">{String(val).replace("-", " ")}</span>
+    {
+      id: "moduleId",
+      header: "Module",
+      accessorKey: "moduleId",
+      sortable: true,
+      width: "140px",
+      cell: (val) => <span className="capitalize">{String(val).replace("-", " ")}</span>,
     },
     { id: "description", header: "Description", accessorKey: "description" },
-    { id: "priority", header: "Priority", accessorKey: "priority", sortable: true, width: "80px",
-      cell: (val) => <Badge variant="secondary" className="text-xs">{String(val)}</Badge>
+    {
+      id: "priority",
+      header: "Priority",
+      accessorKey: "priority",
+      sortable: true,
+      width: "80px",
+      cell: (val) => (
+        <Badge variant="secondary" className="text-xs">
+          {String(val)}
+        </Badge>
+      ),
     },
-    { id: "conditions", header: "Conditions", accessorKey: "conditions", width: "120px",
-      cell: (val) => <Badge variant="outline" className="text-xs">{(val as unknown[]).length} condition(s)</Badge>
+    {
+      id: "conditions",
+      header: "Conditions",
+      accessorKey: "conditions",
+      width: "120px",
+      cell: (val) => (
+        <Badge variant="outline" className="text-xs">
+          {(val as unknown[]).length} condition(s)
+        </Badge>
+      ),
     },
-    { id: "actions", header: "Actions", accessorKey: "actions", width: "100px",
-      cell: (val) => <Badge variant="outline" className="text-xs">{(val as unknown[]).length} action(s)</Badge>
+    {
+      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
+      width: "100px",
+      cell: (val) => (
+        <Badge variant="outline" className="text-xs">
+          {(val as unknown[]).length} action(s)
+        </Badge>
+      ),
     },
-    { id: "active", header: "Status", accessorKey: "active", width: "80px",
-      cell: (val) => val ? <Badge className="text-xs bg-success/10 text-success">Active</Badge> : <Badge variant="secondary" className="text-xs">Inactive</Badge>
+    {
+      id: "active",
+      header: "Status",
+      accessorKey: "active",
+      width: "80px",
+      cell: (val) =>
+        val ? (
+          <Badge className="text-xs bg-success/10 text-success">Active</Badge>
+        ) : (
+          <Badge variant="secondary" className="text-xs">
+            Inactive
+          </Badge>
+        ),
     },
   ];
 
@@ -73,14 +132,21 @@ export function BusinessRulesEngine() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Business Rules Engine</h3>
-          <p className="text-sm text-muted-foreground">IF-THEN rules that dynamically modify workflows at runtime</p>
+          <p className="text-sm text-muted-foreground">
+            IF-THEN rules that dynamically modify workflows at runtime
+          </p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="size-4" />New Rule</Button>
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              New Rule
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Create Business Rule</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Create Business Rule</DialogTitle>
+            </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-1.5">
                 <Label>Rule Name</Label>
@@ -90,7 +156,9 @@ export function BusinessRulesEngine() {
                 <div className="space-y-1.5">
                   <Label>Module</Label>
                   <Select name="moduleId" required>
-                    <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select module" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="gate-pass">Gate Pass</SelectItem>
                       <SelectItem value="leave">Leave</SelectItem>
@@ -106,13 +174,19 @@ export function BusinessRulesEngine() {
               </div>
               <div className="space-y-1.5">
                 <Label>Description</Label>
-                <Textarea name="description" placeholder="Describe what this rule does..." rows={2} />
+                <Textarea
+                  name="description"
+                  placeholder="Describe what this rule does..."
+                  rows={2}
+                />
               </div>
               <p className="text-xs text-muted-foreground italic">
                 After creating the rule, you can define conditions and actions in the detail view.
               </p>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit">Create Rule</Button>
               </DialogFooter>
             </form>
@@ -135,7 +209,9 @@ export function BusinessRulesEngine() {
                 <BrainCircuit className="size-12 text-muted-foreground/30" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">No business rules</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Create rules to dynamically modify workflows</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    Create rules to dynamically modify workflows
+                  </p>
                 </div>
               </div>
             }

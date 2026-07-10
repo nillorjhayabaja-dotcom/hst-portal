@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { workflowRepository } from '../../../infrastructure/database/repositories/workflow.repository';
+import { workflowService } from '../../../application/services/workflow.service';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../../../infrastructure/auth/rbac.middleware';
 import { auditService } from '../../../infrastructure/audit/audit.service';
@@ -12,9 +12,13 @@ export const workflowController = {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { moduleId } = req.query as any;
-        const items = moduleId
-          ? await workflowRepository.listByModule(moduleId)
-          : await workflowRepository.listByModule('');
+        let items;
+        if (moduleId) {
+          items = await workflowService.getByModule(moduleId);
+        } else {
+          const result = await workflowService.getAll();
+          items = result.items;
+        }
         res.json({ success: true, data: items });
       } catch (err) {
         next(err);
@@ -27,8 +31,7 @@ export const workflowController = {
     requirePermission('workflow', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const wf = await workflowRepository.findById(req.params.id);
-        if (!wf) throw new NotFoundError('Workflow not found');
+        const wf = await workflowService.getById(req.params.id);
         res.json({ success: true, data: wf });
       } catch (err) {
         next(err);
@@ -42,7 +45,7 @@ export const workflowController = {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = req.user as any;
-        const wf = await workflowRepository.create({
+        const wf = await workflowService.create({
           moduleId: req.body.moduleId,
           name: req.body.name,
           description: req.body.description,

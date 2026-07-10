@@ -127,10 +127,7 @@ export function WorkflowBuilder() {
     refresh();
   };
 
-  const handleUpdateStep = (
-    stepId: string,
-    updates: Partial<WorkflowStep>,
-  ) => {
+  const handleUpdateStep = (stepId: string, updates: Partial<WorkflowStep>) => {
     if (!selectedWorkflow) return;
     updateWorkflowStep(selectedWorkflow.id, stepId, updates);
     refresh();
@@ -175,11 +172,7 @@ export function WorkflowBuilder() {
       header: "Module",
       accessorKey: "moduleId",
       sortable: true,
-      cell: (val) => (
-        <span className="capitalize">
-          {String(val).replace("-", " ")}
-        </span>
-      ),
+      cell: (val) => <span className="capitalize">{String(val).replace("-", " ")}</span>,
     },
     {
       id: "description",
@@ -221,13 +214,35 @@ export function WorkflowBuilder() {
       width: "160px",
       cell: (_, row) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="size-7" onClick={() => handleDuplicate(row.id)} title="Duplicate">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => handleDuplicate(row.id)}
+            title="Duplicate"
+          >
             <Copy className="size-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7" onClick={() => handleToggle(row.id)} title={row.active ? "Deactivate" : "Activate"}>
-            {row.active ? <ToggleRight className="size-3.5 text-success" /> : <ToggleLeft className="size-3.5 text-muted-foreground" />}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => handleToggle(row.id)}
+            title={row.active ? "Deactivate" : "Activate"}
+          >
+            {row.active ? (
+              <ToggleRight className="size-3.5 text-success" />
+            ) : (
+              <ToggleLeft className="size-3.5 text-muted-foreground" />
+            )}
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => handleDelete(row.id)} title="Delete">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 text-destructive"
+            onClick={() => handleDelete(row.id)}
+            title="Delete"
+          >
             <Trash2 className="size-3.5" />
           </Button>
         </div>
@@ -306,7 +321,9 @@ export function WorkflowBuilder() {
               <div className="flex flex-col items-center gap-3 py-16 text-center">
                 <GitBranch className="size-12 text-muted-foreground/30" />
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">No workflows configured</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No workflows configured
+                  </p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
                     Create approval workflows for each module
                   </p>
@@ -424,12 +441,21 @@ export function WorkflowBuilder() {
                       </div>
                       <div className="space-y-1.5">
                         <Label>Timeout (hours)</Label>
-                        <Input name="escalationHours" type="number" placeholder="e.g., 24" min="1" />
+                        <Input
+                          name="escalationHours"
+                          type="number"
+                          placeholder="e.g., 24"
+                          min="1"
+                        />
                       </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setShowStepDialog(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowStepDialog(false)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit">Add Step</Button>
@@ -465,14 +491,15 @@ export function WorkflowBuilder() {
                         {/* Step details */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {step.name}
-                            </span>
+                            <span className="text-sm font-medium text-foreground">{step.name}</span>
                             <Badge variant="secondary" className="text-[10px]">
                               {ROLES[step.role]?.shortName || step.role}
                             </Badge>
                             {!step.required && (
-                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] text-muted-foreground"
+                              >
                                 Optional
                               </Badge>
                             )}
@@ -482,16 +509,17 @@ export function WorkflowBuilder() {
                               </Badge>
                             )}
                             {step.escalationEnabled && (
-                              <Badge variant="outline" className="text-[10px] text-warning-foreground">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] text-warning-foreground"
+                              >
                                 <Clock className="size-2.5 mr-0.5" />
                                 {step.escalationHours}h
                               </Badge>
                             )}
                           </div>
                           {step.label && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {step.label}
-                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{step.label}</p>
                           )}
                         </div>
 

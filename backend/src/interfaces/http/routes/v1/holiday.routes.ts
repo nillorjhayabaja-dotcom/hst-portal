@@ -8,19 +8,43 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  res.json({ success: true, message: 'Create holiday endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Create holiday endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.patch('/:id', (req, res) => {
-  res.json({ success: true, message: 'Update holiday endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Update holiday endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.delete('/:id', (req, res) => {
-  res.json({ success: true, message: 'Delete holiday endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Delete holiday endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 router.get('/is-business-day', (req, res) => {
-  res.json({ success: true, message: 'Check business day endpoint', data: null, meta: null, errors: null });
+  res.json({
+    success: true,
+    message: 'Check business day endpoint',
+    data: null,
+    meta: null,
+    errors: null,
+  });
 });
 
 export default router;

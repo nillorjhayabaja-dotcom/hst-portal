@@ -113,5 +113,7 @@ export function StatusDot({ status, className }: { status: string; className?: s
     purple: "bg-purple-500",
   };
 
-  return <span className={cn("inline-block size-2 rounded-full", TONE_CLASSES_DOT[tone], className)} />;
+  return (
+    <span className={cn("inline-block size-2 rounded-full", TONE_CLASSES_DOT[tone], className)} />
+  );
 }
