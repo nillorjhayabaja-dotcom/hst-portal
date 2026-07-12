@@ -148,8 +148,61 @@ async function main() {
     },
   });
 
+  // Workflow definitions for modules
+  const gatePassWorkflow = await prisma.workflow.upsert({
+    where: { id: 'wf-gate-pass' },
+    update: {},
+    create: {
+      id: 'wf-gate-pass',
+      moduleId: 'gate-pass',
+      name: 'Gate Pass Approval',
+      description: 'Standard gate pass approval workflow',
+      isActive: true,
+    },
+  });
+
+  await prisma.workflowStep.deleteMany({ where: { workflowId: gatePassWorkflow.id } });
+  await prisma.workflowStep.createMany({
+    data: [
+      {
+        workflowId: gatePassWorkflow.id,
+        name: 'Manager Approval',
+        roleId: 'manager',
+        stepOrder: 1,
+        isRequired: true,
+        label: 'Manager Review',
+        autoApprove: false,
+      },
+      {
+        workflowId: gatePassWorkflow.id,
+        name: 'Security Release',
+        roleId: 'admin',
+        stepOrder: 2,
+        isRequired: true,
+        label: 'Security Check',
+        autoApprove: false,
+      },
+    ],
+  });
+
+  // Vehicles seed (needed for gate-pass plateNumber lookups)
+  await prisma.vehicle.upsert({
+    where: { plateNumber: 'ABC-1234' },
+    update: {},
+    create: {
+      plateNumber: 'ABC-1234',
+      brand: 'Demo',
+      model: 'Vehicle',
+      year: 2020,
+      color: 'White',
+      vehicleType: 'company_vehicle',
+      status: 'available',
+    },
+  });
+
   // Control number series for modules
   const series = [
+
     {
       moduleId: 'gate-pass',
       prefix: 'GP',

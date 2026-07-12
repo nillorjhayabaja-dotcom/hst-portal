@@ -98,8 +98,27 @@ export interface RequestItem {
   controlNumber: string;
   type: RequestType;
   title: string;
-  requester: string;
-  department: string;
+  requester: {
+    id: string;
+    displayName: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    employeeNumber?: string;
+    department?: {
+      id: string;
+      name: string;
+      code: string;
+    };
+    position?: {
+      title: string;
+    };
+  };
+  department?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   status: RequestStatus;
   priority: "Low" | "Normal" | "High" | "Urgent";
   createdAt: string;

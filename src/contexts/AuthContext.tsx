@@ -20,9 +20,10 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const STORAGE_KEY_USER = "hst.auth.user";
 const STORAGE_KEY_REFRESH_TOKEN = "hst.auth.refreshToken";
+const STORAGE_KEY_ACCESS_TOKEN = "hst.auth.accessToken";
 
-// Use explicit dev backend URL to avoid incorrect VITE_API_BASE_URL causing 404s (backend runs on :3000).
-const API_BASE = "http://localhost:3000";
+// Backend runs on :3001 to avoid conflict with TanStack Start SSR server (:3000 default).
+const API_BASE = "http://localhost:3001";
 // Some deployments may prefix api routes with /api twice.
 // Normalize common cases by removing any trailing /api/v1 part.
 const API_BASE_NORMALIZED = API_BASE.replace(/\/?api\/?v1\/?$/i, "");
@@ -108,7 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const payload = (await resp.json()) as { success: boolean; data?: any };
-      const { refreshToken, user } = payload.data ?? {};
+      const { accessToken, refreshToken, user } = payload.data ?? {};
+      
+      // Store both access and refresh tokens
+      if (accessToken) localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, accessToken);
       if (refreshToken) localStorage.setItem(STORAGE_KEY_REFRESH_TOKEN, refreshToken);
 
       // Backend auth response shape differs from our frontend AuthUser.
@@ -134,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       persistUser(null);
       localStorage.removeItem(STORAGE_KEY_REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
     }
   }, [persistUser]);
 

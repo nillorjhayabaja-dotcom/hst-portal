@@ -22,6 +22,7 @@ export const notificationService = {
     recipientId: string,
     input: Omit<NotifyInput, 'moduleId' | 'event'>,
     email?: string,
+    tx?: import('@prisma/client').Prisma.TransactionClient,
   ) {
     const created = await notificationRepository.create({
       type: input.title,
@@ -33,7 +34,7 @@ export const notificationService = {
       moduleId: input.metadata?.moduleId as string | undefined,
       actionUrl: input.actionUrl,
       channel: 'in_app',
-    });
+    }, tx);
     if (email) {
       await emailService.send(email, input.title, `<p>${input.message}</p>`);
     }

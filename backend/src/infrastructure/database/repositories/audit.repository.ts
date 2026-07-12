@@ -13,7 +13,37 @@ export const auditRepository = {
     userAgent?: string;
     metadata?: unknown;
   }) {
-    return prisma.auditLog.create({ data });
+    const createData: any = {
+      action: data.action,
+      entityType: data.entityType,
+    };
+    
+    if (data.actorId !== undefined) {
+      createData.actorId = data.actorId;
+    }
+    if (data.actorName !== undefined) {
+      createData.actorName = data.actorName;
+    }
+    if (data.entityId !== undefined) {
+      createData.entityId = data.entityId;
+    }
+    if (data.targetId !== undefined) {
+      createData.targetId = data.targetId;
+    }
+    if (data.changes !== undefined) {
+      createData.changes = data.changes;
+    }
+    if (data.ipAddress !== undefined) {
+      createData.ipAddress = data.ipAddress;
+    }
+    if (data.userAgent !== undefined) {
+      createData.userAgent = data.userAgent;
+    }
+    if (data.metadata !== undefined) {
+      createData.metadata = data.metadata;
+    }
+    
+    return prisma.auditLog.create({ data: createData });
   },
 
   async list(params: { skip?: number; take?: number; entityType?: string; actorId?: string } = {}) {

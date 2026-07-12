@@ -1,40 +1,57 @@
 import { Router } from 'express';
+import { authenticate } from '../../middleware/auth';
+import { prisma } from '../../../../infrastructure/database/prisma.service';
 
 const router = Router();
 
-// Comment routes - implementation coming in Sprint 7
-router.get('/:entity-type/:entity-id', (req, res) => {
-  res.json({ success: true, message: 'Get comments endpoint', data: [], meta: null, errors: null });
+// Comment routes
+router.get('/:entityType/:entityId', authenticate, async (req, res, next) => {
+  try {
+    const { entityType, entityId } = req.params;
+    const comments = await prisma.comment.findMany({
+      where: { entityType, entityId },
+      include: {
+        author: { select: { id: true, displayName: true, avatarUrl: true } },
+        replies: {
+          include: {
+            author: { select: { id: true, displayName: true, avatarUrl: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json({ success: true, data: comments });
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/:entity-type/:entity-id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Create comment endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
+router.post('/:entityType/:entityId', authenticate, async (req, res, next) => {
+  try {
+    const { entityType, entityId } = req.params;
+    const { content } = req.body;
+    const user = req.user as any;
 
-router.patch('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Update comment endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
+    if (!content?.trim()) {
+      return res.status(400).json({ success: false, message: 'Content is required' });
+    }
 
-router.delete('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Delete comment endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
+    const comment = await prisma.comment.create({
+      data: {
+        entityType,
+        entityId,
+        content: content.trim(),
+        authorId: user.id,
+      },
+      include: {
+        author: { select: { id: true, displayName: true, avatarUrl: true } },
+      },
+    });
+
+    res.status(201).json({ success: true, data: comment });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

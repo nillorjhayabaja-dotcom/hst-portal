@@ -27,6 +27,11 @@ import {
 import { cn } from "@/lib/utils";
 import { MOCK_QUICK_ACTIONS } from "@/mock/enterprise-data";
 import type { CommentItem, AttachmentItem } from "@/types/enterprise";
+import {
+  getEmployeeDisplayName,
+  getDepartmentName,
+  displayValue,
+} from "@/utils/display";
 
 // ============================================================
 // Types
@@ -36,8 +41,27 @@ export interface RequestData {
   controlNumber: string;
   type: string;
   title: string;
-  requester: string;
-  department: string;
+  requester?: {
+    id: string;
+    displayName: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    employeeNumber?: string;
+    department?: {
+      id: string;
+      name: string;
+      code: string;
+    };
+    position?: {
+      title: string;
+    };
+  };
+  department?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   status: string;
   priority: string;
   createdAt: string;
@@ -91,8 +115,20 @@ export function RequestListPage({
       width: "160px",
     },
     { id: "title", header: "Title", accessorKey: "title", sortable: true, filterable: true },
-    { id: "requester", header: "Requester", accessorKey: "requester", sortable: true },
-    { id: "department", header: "Department", accessorKey: "department", sortable: true },
+    {
+      id: "requester",
+      header: "Requester",
+      accessorKey: "requester",
+      sortable: true,
+      cell: (value) => getEmployeeDisplayName(value as any),
+    },
+    {
+      id: "department",
+      header: "Department",
+      accessorKey: "department",
+      sortable: true,
+      cell: (value) => getDepartmentName(value as any),
+    },
     {
       id: "status",
       header: "Status",
@@ -216,8 +252,8 @@ export function RequestDetailsDrawer({
           <div className="grid grid-cols-2 gap-3">
             <DetailField icon={Hash} label="Control Number" value={request.controlNumber} />
             <DetailField icon={FileText} label="Type" value={request.type} />
-            <DetailField icon={User} label="Requester" value={request.requester} />
-            <DetailField icon={Building2} label="Department" value={request.department} />
+            <DetailField icon={User} label="Requester" value={getEmployeeDisplayName(request.requester)} />
+            <DetailField icon={Building2} label="Department" value={getDepartmentName(request.department)} />
             <DetailField icon={CalendarDays} label="Date Created" value={request.createdAt} />
             <DetailField icon={Clock} label="Priority" value={request.priority} />
           </div>
@@ -284,7 +320,7 @@ export function RequestDetailsDrawer({
   );
 }
 
-function DetailField({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function DetailField({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -11,13 +11,14 @@ export const localStorageAdapter = {
     file: { originalname: string; mimetype: string; size: number; stream: Readable },
     entityType: string,
     entityId: string,
+    subfolder?: string,
   ) {
-    const base = join(process.cwd(), env.upload.path, entityType, entityId);
+    const base = join(process.cwd(), env.upload.path, entityType, entityId, ...(subfolder ? [subfolder] : []));
     if (!existsSync(base)) mkdirSync(base, { recursive: true });
     const storedName = `${generateId()}${extname(file.originalname)}`;
     const fullPath = join(base, storedName);
     await pipeline(file.stream, createWriteStream(fullPath));
-    const storagePath = join(env.upload.path, entityType, entityId, storedName);
+    const storagePath = join(env.upload.path, entityType, entityId, ...(subfolder ? [subfolder] : []), storedName);
     logger.info({ storagePath }, 'File stored');
     return {
       fileName: file.originalname,

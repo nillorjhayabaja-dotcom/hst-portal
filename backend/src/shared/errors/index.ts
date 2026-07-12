@@ -3,3 +3,7 @@ export { NotFoundError } from './not-found.error';
 export { ValidationError } from './validation.error';
 export { UnauthorizedError } from './unauthorized.error';
 export { ForbiddenError } from './forbidden.error';
+export { ApprovalSignatureRequiredError } from './approval-signature-required.error';
+export { InvalidSignatureFormatError } from './invalid-signature-format.error';
+export { SignatureTooLargeError } from './signature-too-large.error';
+export { SignatureUploadFailedError } from './signature-upload-failed.error';

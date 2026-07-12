@@ -11,8 +11,9 @@ export const notificationRepository = {
     moduleId?: string;
     actionUrl?: string;
     channel?: string;
-  }) {
-    return prisma.notification.create({ data });
+  }, tx?: import('@prisma/client').Prisma.TransactionClient) {
+    const client = tx || prisma;
+    return client.notification.create({ data });
   },
 
   async listForUser(recipientId: string, unreadOnly = false) {

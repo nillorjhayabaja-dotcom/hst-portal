@@ -28,6 +28,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ClipboardList, FileClock, CheckCircle2, XCircle } from "lucide-react";
+import {
+  getEmployeeDisplayName,
+  getDepartmentName,
+} from "@/utils/display";
 
 const TYPE_MAP: Partial<Record<ModuleId, RequestType>> = {
   "gate-pass": "Gate Pass",
@@ -96,7 +100,11 @@ export function RequestsModule({
       render: (r) => <span className="font-medium">{r.title}</span>,
     },
     ...(isApprovals ? [{ key: "type", header: "Type" } as Column<RequestItem>] : []),
-    { key: "requester", header: "Requester" },
+    {
+      key: "requester",
+      header: "Requester",
+      render: (r) => <span>{getEmployeeDisplayName(r.requester as any)}</span>,
+    },
     { key: "priority", header: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
     { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
     {
@@ -183,8 +191,8 @@ export function RequestsModule({
               </SheetHeader>
               <div className="space-y-6 px-4 pb-6">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <Field label="Requester" value={selected.requester} />
-                  <Field label="Department" value={selected.department} />
+                  <Field label="Requester" value={getEmployeeDisplayName(selected.requester as any)} />
+                  <Field label="Department" value={getDepartmentName(selected.department as any)} />
                   <Field label="Priority" value={selected.priority} />
                   <Field label="Created" value={selected.createdAt} />
                   {selected.amount && <Field label="Amount" value={selected.amount} />}

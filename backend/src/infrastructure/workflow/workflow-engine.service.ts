@@ -2,6 +2,7 @@ import { workflowRepository } from '../database/repositories/workflow.repository
 import { prisma } from '../database/prisma.service';
 import { NotFoundError, ValidationError } from '../../shared/errors';
 import { generateId } from '../../shared/utils';
+import { notificationService } from '../notifications/notification.service';
 
 export interface WorkflowStepDef {
   id: string;
@@ -47,11 +48,15 @@ export const workflowEngine = {
   },
 
   async startRequest(input: StartRequestInput): Promise<StartedRequest> {
+    console.log('[WORKFLOW] Starting request for module:', input.moduleId);
     const workflow = await this.resolveWorkflow(input.moduleId, input.workflowId);
+    console.log('[WORKFLOW] Found workflow:', workflow.id, 'with', workflow.steps?.length || 0, 'steps');
     const controlNumber = await this.nextControlNumber(input.moduleId);
+    console.log('[WORKFLOW] Control number:', controlNumber);
 
     const result = await prisma.$transaction(
       async (tx: import('@prisma/client').Prisma.TransactionClient) => {
+        console.log('[WORKFLOW] Creating approval request...');
         const request = await tx.approvalRequest.create({
           data: {
             controlNumber,
@@ -67,11 +72,14 @@ export const workflowEngine = {
             metadata: input.metadata as any,
           },
         });
+        console.log('[WORKFLOW] Created approval request:', request.id);
 
         const steps = (workflow.steps as WorkflowStepDef[])
           .filter((s) => this.conditionMet(s, input.metadata))
           .sort((a, b) => a.stepOrder - b.stepOrder);
 
+        console.log('[WORKFLOW] Filtered steps:', steps.length);
+        
         if (!steps.length) throw new ValidationError('Workflow has no applicable steps');
 
         await tx.approvalStep.createMany({
@@ -89,9 +97,34 @@ export const workflowEngine = {
         for (const s of steps) {
           if (s.autoApprove) {
             await tx.approvalStep.update({
-              where: { requestId_stepId: { requestId: request.id, stepId: s.id } },
+              where: { id: s.id || `${request.id}-${s.stepOrder}` },
               data: { status: 'approved', actedAt: new Date() },
             });
+          }
+        }
+
+        // Send notification to the assigned approver for the first non-auto-approve step
+        const firstPendingStep = steps.find((st) => !st.autoApprove);
+        if (firstPendingStep) {
+          const usersWithRole = await tx.userRole.findMany({
+            where: { roleId: firstPendingStep.roleId },
+            include: { user: { select: { id: true, email: true, displayName: true } } },
+          });
+
+          for (const userRole of usersWithRole) {
+            await notificationService.notifyUser(
+              userRole.user.id,
+              {
+                title: `New ${input.moduleId.replace('-', ' ')} Approval Required`,
+                message: `You have a new ${input.moduleId.replace('-', ' ')} request (${controlNumber}) pending your approval`,
+                actionUrl: `/app/m/${input.moduleId}`,
+                requestId: request.id,
+                controlNumber,
+                metadata: { moduleId: input.moduleId },
+              },
+              undefined,
+              tx
+            );
           }
         }
 

@@ -1,18 +1,24 @@
-import { PrismaClient } from '@prisma/client';
-import { approvalService } from './approval.service';
-import { notificationService } from '../../infrastructure/notifications/notification.service';
+import { gatePassRepository } from '../../infrastructure/database/repositories/gate-pass.repository';
 import { auditService } from '../../infrastructure/audit/audit.service';
-
-const prisma = new PrismaClient();
+import { notificationService } from '../../infrastructure/notifications/notification.service';
+import { fileStorageService } from '../../infrastructure/storage/file-storage.service';
+import { prisma } from '../../infrastructure/database/prisma.service';
+import { NotFoundError, ValidationError, ApprovalSignatureRequiredError, InvalidSignatureFormatError, SignatureTooLargeError, SignatureUploadFailedError } from '../../shared/errors';
+import { workflowEngine } from '../../infrastructure/workflow/workflow-engine.service';
+import { GatePassWorkflowService } from './gate-pass-workflow.service';
 
 export interface GatePassFilters {
   status?: string;
   requesterId?: string;
   departmentId?: string;
-  vehicleId?: string;
   search?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  pageSize?: number;
+  currentUserId?: string;
+  userRoles?: string[];
+  userDepartmentId?: string;
 }
 
 export interface PaginatedResult<T> {
@@ -22,360 +28,487 @@ export interface PaginatedResult<T> {
   pageSize: number;
 }
 
-export const gatePassService = {
-  async getAll(
-    filters: GatePassFilters = {},
-    page = 1,
-    pageSize = 20,
-  ): Promise<PaginatedResult<any>> {
+const gatePassWorkflowService = new GatePassWorkflowService();
+
+export class GatePassService {
+  async getAll(filters: GatePassFilters = {}): Promise<PaginatedResult<any>> {
+    const page = filters.page || 1;
+    const pageSize = filters.pageSize || 20;
     const skip = (page - 1) * pageSize;
-    const where: any = {};
 
-    if (filters.status) where.request = { ...where.request, status: filters.status };
-    if (filters.requesterId) where.request = { ...where.request, requesterId: filters.requesterId };
-    if (filters.departmentId)
-      where.request = { ...where.request, departmentId: filters.departmentId };
-    if (filters.vehicleId) where.vehicleId = filters.vehicleId;
-    if (filters.search) {
-      where.request = {
-        ...where.request,
-        OR: [
-          { title: { contains: filters.search, mode: 'insensitive' } },
-          { controlNumber: { contains: filters.search, mode: 'insensitive' } },
-        ],
-      };
-    }
-
-    const [items, total] = await Promise.all([
-      prisma.gatePass.findMany({
-        where,
-        skip,
-        take: pageSize,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          request: {
-            include: {
-              requester: { select: { id: true, employeeId: true, displayName: true } },
-              department: { select: { id: true, name: true, code: true } },
-              steps: { include: { role: true, actor: { select: { displayName: true } } } },
-            },
-          },
-          vehicle: { select: { id: true, plateNumber: true, brand: true, model: true } },
-        },
-      }),
-      prisma.gatePass.count({ where }),
-    ]);
-
-    return { items, total, page, pageSize };
-  },
-
-  async getById(id: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: {
-        request: {
-          include: {
-            requester: { select: { id: true, employeeId: true, displayName: true, email: true } },
-            department: { select: { id: true, name: true, code: true } },
-            workflow: { include: { steps: { orderBy: { stepOrder: 'asc' } } } },
-            steps: {
-              orderBy: { stepOrder: 'asc' },
-              include: {
-                role: true,
-                actor: { select: { id: true, employeeId: true, displayName: true } },
-              },
-            },
-            actions: {
-              orderBy: { createdAt: 'desc' },
-              include: { actor: { select: { displayName: true } } },
-            },
-          },
-        },
-        vehicle: true,
-      },
+    const result = await gatePassRepository.list({
+      skip,
+      take: pageSize,
+      status: filters.status,
+      requesterId: filters.requesterId,
+      departmentId: filters.departmentId,
+      search: filters.search,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      currentUserId: filters.currentUserId,
+      userRoles: filters.userRoles,
+      userDepartmentId: filters.userDepartmentId,
     });
 
-    if (!gatePass) throw new Error('Gate pass not found');
-    return gatePass;
-  },
+    return {
+      items: result.items,
+      total: result.total,
+      page,
+      pageSize,
+    };
+  }
 
-  async create(data: {
+  async submit(data: {
+    purpose: string;
+    destination?: string;
+    transportation?: string;
+    plateNumber?: string;
+    vehicleId?: string;
+    driverName?: string;
+    items?: any;
+    expectedReturn?: Date;
+    notes?: string;
     requesterId: string;
     departmentId?: string;
+  }) {
+    console.log('[SUBMIT] Starting gate pass submission for user:', data.requesterId);
+    console.log('[SUBMIT] Data:', JSON.stringify({ ...data, requesterId: data.requesterId }));
+    
+    let resolvedVehicleId: string | undefined = data.vehicleId;
+
+    if (data.plateNumber) {
+      const vehicle = await gatePassRepository.getVehicleByPlateNumber(data.plateNumber);
+      if (!vehicle) {
+        throw new ValidationError(`Invalid plateNumber: Vehicle not found (${data.plateNumber})`);
+      }
+      resolvedVehicleId = vehicle.id;
+    }
+
+    const started = await workflowEngine.startRequest({
+      moduleId: 'gate-pass',
+      title: data.purpose,
+      description: data.notes || data.purpose,
+      requesterId: data.requesterId,
+      departmentId: data.departmentId,
+      metadata: { purpose: data.purpose, destination: data.destination },
+    });
+
+    const gatePass = await gatePassRepository.create({
+      requestId: started.id,
+      purpose: data.purpose,
+      transportation: data.transportation,
+      vehicleId: resolvedVehicleId,
+      driverName: data.driverName,
+      items: data.items,
+      destination: data.destination,
+      expectedReturn: data.expectedReturn,
+    });
+
+    await auditService.record('create', 'gate_pass', {
+      actorId: data.requesterId,
+      entityId: gatePass.id,
+      metadata: { controlNumber: started.controlNumber },
+    });
+
+    return {
+      id: gatePass.id,
+      requestId: started.id,
+      controlNumber: started.controlNumber,
+      status: started.status,
+    };
+  }
+
+  async getById(id: string) {
+    const gatePass = await gatePassRepository.findById(id);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
+    return gatePass;
+  }
+
+  async getByRequestId(requestId: string) {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
+    return gatePass;
+  }
+
+  async create(data: {
+    requestId: string;
     purpose: string;
     transportation?: string;
     vehicleId?: string;
     driverName?: string;
-    items?: any[];
+    items?: any;
     destination?: string;
-    expectedReturn?: string;
-    priority?: string;
-    workflowId?: string;
+    expectedReturn?: Date;
+    requesterId: string;
+    departmentId?: string;
+    controlNumber?: string;
   }) {
-    // Generate control number
-    const controlNumber = await this.generateControlNumber('gate-pass');
-
-    // Create approval request and gate pass in transaction
-    const result = await prisma.$transaction(async (tx: any) => {
-      const approvalRequest = await tx.approvalRequest.create({
-        data: {
-          controlNumber,
-          moduleId: 'gate-pass',
-          title: `Gate Pass - ${data.purpose.substring(0, 50)}`,
-          description: data.purpose,
-          requesterId: data.requesterId,
-          departmentId: data.departmentId,
-          priority: data.priority || 'normal',
-          status: 'draft',
-          workflowId: data.workflowId,
-          metadata: { transportation: data.transportation, destination: data.destination },
-        },
-      });
-
-      const gatePass = await tx.gatePass.create({
-        data: {
-          requestId: approvalRequest.id,
-          purpose: data.purpose,
-          transportation: data.transportation,
-          vehicleId: data.vehicleId,
-          driverName: data.driverName,
-          items: data.items || [],
-          destination: data.destination,
-          expectedReturn: data.expectedReturn ? new Date(data.expectedReturn) : null,
-        },
-        include: {
-          request: {
-            include: { requester: { select: { id: true, employeeId: true, displayName: true } } },
-          },
-          vehicle: true,
-        },
-      });
-
-      return gatePass;
+    const gatePass = await gatePassRepository.create({
+      requestId: data.requestId,
+      purpose: data.purpose,
+      transportation: data.transportation,
+      vehicleId: data.vehicleId,
+      driverName: data.driverName,
+      items: data.items,
+      destination: data.destination,
+      expectedReturn: data.expectedReturn,
     });
 
-    await auditService.record('create', 'gate-pass', {
+    await auditService.record('create', 'gate_pass', {
       actorId: data.requesterId,
-      entityId: result.id,
-      metadata: { controlNumber },
+      entityId: gatePass.id,
+      metadata: { controlNumber: data.controlNumber },
     });
 
-    return result;
-  },
+    return gatePass;
+  }
 
-  async submit(id: string, userId: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
+  async update(
+    id: string,
+    data: {
+      purpose?: string;
+      transportation?: string;
+      vehicleId?: string;
+      driverName?: string;
+      items?: any;
+      destination?: string;
+      expectedReturn?: Date;
+      actualReturn?: Date;
+      qrCode?: string;
+      securityReleasedBy?: string;
+      securityReleasedAt?: Date;
+      printCount?: number;
+    },
+    actorId?: string
+  ) {
+    const gatePass = await gatePassRepository.findById(id);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
 
-    if (!gatePass) throw new Error('Gate pass not found');
-    if (gatePass.request.status !== 'draft')
-      throw new Error('Only draft gate passes can be submitted');
+    const updated = await gatePassRepository.update(id, data);
 
-    // Initialize workflow approval steps
-    await approvalService.startWorkflow(gatePass.requestId, userId);
-
-    const updated = await prisma.approvalRequest.update({
-      where: { id: gatePass.requestId },
-      data: { status: 'pending', submittedAt: new Date() },
-    });
-
-    await auditService.record('submit', 'gate-pass', {
-      actorId: userId,
-      entityId: id,
-      metadata: { controlNumber: updated.controlNumber },
-    });
-
-    return this.getById(id);
-  },
-
-  async approve(id: string, userId: string, note?: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: { include: { steps: true } } },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
-
-    const result = await approvalService.approve(gatePass.requestId, userId, note);
-
-    // Generate QR code if fully approved
-    if (result.status === 'approved') {
-      const qrData = `${gatePass.request.controlNumber}|${id}`;
-      await prisma.gatePass.update({
-        where: { id },
-        data: { qrCode: qrData },
+    if (actorId) {
+      await auditService.record('update', 'gate_pass', {
+        actorId,
+        entityId: id,
+        changes: data,
       });
     }
 
-    await notificationService.dispatch({
-      moduleId: 'gate-pass',
-      event: result.status === 'approved' ? 'approved' : 'in_review',
-      title: `Gate Pass ${gatePass.request.controlNumber} ${result.status === 'approved' ? 'Approved' : 'Advanced'}`,
-      message: `Your gate pass has been ${result.status === 'approved' ? 'approved' : 'reviewed'}`,
-      requestId: gatePass.requestId,
-      controlNumber: gatePass.request.controlNumber,
-      actionUrl: `/app/gate-pass/${id}`,
-      metadata: { moduleId: 'gate-pass' },
-    });
+    return updated;
+  }
 
-    return this.getById(id);
-  },
-
-  async reject(id: string, userId: string, note?: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
-
-    await approvalService.reject(gatePass.requestId, userId, note);
-
-    await notificationService.dispatch({
-      moduleId: 'gate-pass',
-      event: 'rejected',
-      title: `Gate Pass ${gatePass.request.controlNumber} Rejected`,
-      message: note || 'Your gate pass request has been rejected',
-      requestId: gatePass.requestId,
-      controlNumber: gatePass.request.controlNumber,
-      actionUrl: `/app/gate-pass/${id}`,
-      metadata: { moduleId: 'gate-pass' },
-    });
-
-    return this.getById(id);
-  },
-
-  async returnForRevision(id: string, userId: string, note?: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
-
-    await approvalService.returnToRequester(gatePass.requestId, userId, note);
-
-    return this.getById(id);
-  },
-
-  async cancel(id: string, userId: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
-
-    if (gatePass.request.requesterId !== userId) {
-      throw new Error('Only the requester can cancel a gate pass');
+  async updateByRequestId(requestId: string, data: any, actorId?: string) {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
     }
 
+    const updated = await gatePassRepository.updateByRequestId(requestId, data);
+
+    if (actorId) {
+      await auditService.record('update', 'gate_pass', {
+        actorId,
+        entityId: gatePass.id,
+        changes: data,
+      });
+    }
+
+    return updated;
+  }
+
+  async getStats(filters: { startDate?: string; endDate?: string; departmentId?: string } = {}) {
+    return gatePassRepository.getStats(filters);
+  }
+
+  async getActiveGatePasses() {
+    return gatePassRepository.getActiveGatePasses();
+  }
+
+  async approve(requestId: string, actorId: string, actorName: string, note?: string, signature?: { originalname: string; mimetype: string; size: number; stream: any }) {
+    const result = await gatePassWorkflowService.approveStep(
+      requestId,
+      actorId,
+      actorName,
+      'approve',
+      note,
+      signature
+    );
+
+    if (!result.success) {
+      throw new ValidationError(result.message);
+    }
+
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    return gatePass!;
+  }
+
+  async reject(requestId: string, actorId: string, actorName: string, reason: string) {
+    const result = await gatePassWorkflowService.rejectStep(
+      requestId,
+      actorId,
+      actorName,
+      reason
+    );
+
+    if (!result.success) {
+      throw new ValidationError(result.message);
+    }
+  }
+
+  async returnRequest(requestId: string, actorId: string, actorName: string, note: string) {
+    const result = await gatePassWorkflowService.returnStep(
+      requestId,
+      actorId,
+      actorName,
+      note
+    );
+
+    if (!result.success) {
+      throw new ValidationError(result.message);
+    }
+  }
+
+  async recordSecurityCheck(
+    requestId: string,
+    data: {
+      kmReadingStart?: number;
+      timeOut?: Date;
+      kmReadingEnd?: number;
+      timeIn?: Date;
+      checkedBy: string;
+      withMeal?: boolean;
+      mealAmount?: number;
+    }
+  ) {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
+
+    const updated = await gatePassRepository.updateByRequestId(requestId, {
+      securityReleasedBy: data.checkedBy,
+      securityReleasedAt: data.timeOut,
+      printCount: (gatePass.printCount || 0) + 1,
+    });
+
+    await auditService.record('update', 'gate_pass', {
+      actorId: data.checkedBy,
+      entityId: gatePass.id,
+      metadata: { action: 'security_check', data },
+    });
+
+    return updated;
+  }
+
+  async generateQRCode(requestId: string): Promise<string> {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
+
+    if (gatePass.request.status !== 'approved') {
+      throw new ValidationError('QR code can only be generated for approved gate passes');
+    }
+
+    const qrData = {
+      controlNumber: gatePass.request.controlNumber,
+      requestId,
+      purpose: gatePass.purpose,
+      destination: gatePass.destination,
+      expectedReturn: gatePass.expectedReturn,
+      timestamp: new Date().toISOString(),
+    };
+
+    const qrCode = Buffer.from(JSON.stringify(qrData)).toString('base64');
+
+    await gatePassRepository.updateByRequestId(requestId, {
+      qrCode,
+      printCount: (gatePass.printCount || 0) + 1,
+    });
+
+    await auditService.record('generate_qr', 'gate_pass', {
+      actorId: gatePass.request.requesterId,
+      entityId: gatePass.id,
+      metadata: { qrCode },
+    });
+
+    return qrCode;
+  }
+
+  async getWorkflowStatus(requestId: string) {
+    return gatePassWorkflowService.getWorkflowStatus(requestId);
+  }
+
+  async uploadSignature(userId: string, signature: { originalname: string; mimetype: string; size: number; stream: any }) {
+    const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedMimeTypes.includes(signature.mimetype)) {
+      throw new InvalidSignatureFormatError();
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (signature.size > maxSize) {
+      throw new SignatureTooLargeError();
+    }
+
+    try {
+      const uploadedFile = await fileStorageService.upload(
+        signature,
+        'signatures',
+        userId,
+        userId,  // uploadedBy must be a valid user UUID
+      );
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          signaturePath: uploadedFile.storagePath,
+          signatureUploadedAt: new Date(),
+          signatureMimeType: signature.mimetype,
+        },
+      });
+
+      await auditService.record('upload_signature', 'user', {
+        actorId: userId,
+        entityId: userId,
+        metadata: { signaturePath: uploadedFile.storagePath },
+      });
+
+      return {
+        signaturePath: uploadedFile.storagePath,
+        mimeType: signature.mimetype,
+      };
+    } catch (error) {
+      throw new SignatureUploadFailedError(error instanceof Error ? error.message : 'Failed to upload signature');
+    }
+  }
+
+  async getUserSignature(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      signaturePath: user.signaturePath,
+      signatureUploadedAt: user.signatureUploadedAt,
+      signatureMimeType: user.signatureMimeType,
+    };
+  }
+
+  async approveStep(
+    requestId: string,
+    actorId: string,
+    actorName: string,
+    stepName: string,
+    note?: string,
+    signature?: { originalname: string; mimetype: string; size: number; stream: any }
+  ) {
+    const result = await gatePassWorkflowService.approveStep(
+      requestId,
+      actorId,
+      actorName,
+      stepName,
+      note,
+      signature
+    );
+
+    if (!result.success) {
+      throw new ValidationError(result.message);
+    }
+
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    return gatePass;
+  }
+
+  async releaseGatePass(
+    requestId: string,
+    securityUserId: string,
+    securityName: string,
+    data: {
+      kmReadingStart?: number;
+      kmReadingEnd?: number;
+      withMeal?: boolean;
+      mealAmount?: number;
+      timeOut: Date;
+      timeIn?: Date;
+    }
+  ) {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
+
+    const request = await prisma.approvalRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request || request.status !== 'approved') {
+      throw new ValidationError('Gate pass must be fully approved before release');
+    }
+
+    if (gatePass.securityReleasedAt) {
+      throw new ValidationError('Gate pass has already been released');
+    }
+
+    // Update gate pass with release info
+    const updated = await gatePassRepository.updateByRequestId(requestId, {
+      securityReleasedBy: securityUserId,
+      securityReleasedAt: data.timeOut,
+      printCount: (gatePass.printCount || 0) + 1,
+    });
+
+    // Update request status to released
     await prisma.approvalRequest.update({
-      where: { id: gatePass.requestId },
-      data: { status: 'cancelled' },
+      where: { id: requestId },
+      data: { status: 'released' },
     });
 
-    await auditService.record('cancel', 'gate-pass', {
-      actorId: userId,
-      entityId: id,
-      metadata: { controlNumber: gatePass.request.controlNumber },
-    });
-
-    return this.getById(id);
-  },
-
-  async securityRelease(id: string, userId: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
-    if (gatePass.request.status !== 'approved')
-      throw new Error('Only approved gate passes can be released');
-
-    const updated = await prisma.gatePass.update({
-      where: { id },
-      data: {
-        securityReleasedBy: userId,
-        securityReleasedAt: new Date(),
+    // Audit log
+    await auditService.record('release', 'gate_pass', {
+      actorId: securityUserId,
+      entityId: gatePass.id,
+      metadata: {
+        controlNumber: request.controlNumber,
+        kmReadingStart: data.kmReadingStart,
+        kmReadingEnd: data.kmReadingEnd,
+        withMeal: data.withMeal,
+        mealAmount: data.mealAmount,
+        releasedAt: data.timeOut,
       },
     });
 
-    await auditService.record('security_release', 'gate-pass', {
-      actorId: userId,
-      entityId: id,
-      metadata: { controlNumber: gatePass.request.controlNumber },
+    // Notify requester
+    await notificationService.notifyUser(request.requesterId, {
+      title: 'Gate Pass Released',
+      message: `Your gate pass ${request.controlNumber} has been released by Security`,
+      actionUrl: '/app/m/gate-pass',
+      requestId: request.id,
+      controlNumber: request.controlNumber,
+      metadata: { moduleId: 'gate-pass', status: 'released' },
     });
 
-    return this.getById(id);
-  },
+    return updated;
+  }
 
-  async assignVehicle(id: string, vehicleId: string, userId: string) {
-    const gatePass = await prisma.gatePass.findUnique({
-      where: { id },
-      include: { request: true },
-    });
-    if (!gatePass) throw new Error('Gate pass not found');
+  async incrementPrintCount(requestId: string) {
+    const gatePass = await gatePassRepository.findByRequestId(requestId);
+    if (!gatePass) {
+      throw new NotFoundError('Gate pass not found');
+    }
 
-    const updated = await prisma.gatePass.update({
-      where: { id },
-      data: { vehicleId },
+    const updated = await gatePassRepository.updateByRequestId(requestId, {
+      printCount: (gatePass.printCount || 0) + 1,
     });
 
-    await auditService.record('assign_vehicle', 'gate-pass', {
-      actorId: userId,
-      entityId: id,
-      metadata: { vehicleId, controlNumber: gatePass.request.controlNumber },
-    });
-
-    return this.getById(id);
-  },
-
-  async incrementPrintCount(id: string) {
-    return prisma.gatePass.update({
-      where: { id },
-      data: { printCount: { increment: 1 } },
-    });
-  },
-
-  async getDashboardStats(userId?: string) {
-    const where = userId ? { request: { requesterId: userId } } : {};
-
-    const [total, pending, approved, draft, rejected, todayCount] = await Promise.all([
-      prisma.gatePass.count({ where }),
-      prisma.gatePass.count({ where: { ...where, request: { status: 'pending' } } }),
-      prisma.gatePass.count({ where: { ...where, request: { status: 'approved' } } }),
-      prisma.gatePass.count({ where: { ...where, request: { status: 'draft' } } }),
-      prisma.gatePass.count({ where: { ...where, request: { status: 'rejected' } } }),
-      prisma.gatePass.count({
-        where: {
-          ...where,
-          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-        },
-      }),
-    ]);
-
-    return { total, pending, approved, draft, rejected, todayCount };
-  },
-
-  async generateControlNumber(moduleId: string): Promise<string> {
-    const series = await prisma.controlNumberSeries.findUnique({ where: { moduleId } });
-    if (!series) throw new Error(`No control number series configured for module: ${moduleId}`);
-
-    const seq = series.nextSequence;
-    const year = series.includeYear ? new Date().getFullYear().toString() : '';
-    const month = series.includeMonth ? String(new Date().getMonth() + 1).padStart(2, '0') : '';
-
-    const controlNumber = series.formatPattern
-      .replace('{PREFIX}', series.prefix)
-      .replace('{YEAR}', year)
-      .replace('{MONTH}', month)
-      .replace('{SEQ}', String(seq).padStart(series.sequenceLength, '0'))
-      .replace('{SEPARATOR}', series.separator);
-
-    await prisma.controlNumberSeries.update({
-      where: { moduleId },
-      data: { nextSequence: seq + 1 },
-    });
-
-    return controlNumber;
-  },
-};
+    return updated;
+  }
+}

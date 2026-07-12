@@ -21,6 +21,9 @@
     "test:e2e": "vitest run tests/e2e",
     "prepare": "husky"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed-master.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^5.1.1",

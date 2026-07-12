@@ -1,31 +1,22 @@
-// Gate Pass Module - Uses Enterprise Core Framework
-import { useState } from "react";
+// Gate Pass Module - Uses Enterprise Core Framework with Real Backend
+import { useState, useEffect, useCallback } from "react";
 import {
   RequestListPage,
-  RequestDetailsDrawer,
-  type RequestData,
   type ModuleConfig,
 } from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
-import { useAuth } from "@/contexts/AuthContext";
-import { REQUESTS, VEHICLES } from "@/mock/data";
-import {
-  MOCK_COMMENTS,
-  MOCK_ATTACHMENTS,
-  MOCK_TIMELINE_EVENTS,
-  MOCK_QUICK_ACTIONS,
-} from "@/mock/enterprise-data";
-import { DoorOpen, ClipboardList, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
+import { gatePassApi, type GatePass, type WorkflowStatus } from "@/services/gate-pass-api";
+import { DoorOpen, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
-import {
-  ApproveDialog,
-  RejectDialog,
-  ReturnDialog,
-} from "@/components/enterprise/EnterpriseDialogs";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
-import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
+import { GatePassForm } from "./GatePassForm";
+import { GatePassDetailsDrawer } from "@/components/enterprise/GatePassDetailsDrawer";
+import {
+  getEmployeeDisplayName,
+  getDepartmentName,
+} from "@/utils/display";
 
 const MODULE_CONFIG: ModuleConfig = {
   moduleId: "gate-pass",
@@ -63,91 +54,161 @@ const GATE_PASS_ACTIONS = [
   },
 ];
 
-const GATE_COLUMNS: Column<RequestData>[] = [
+const GATE_COLUMNS: Column<GatePass>[] = [
   {
     id: "controlNumber",
     header: "Control No.",
     accessorKey: "controlNumber",
     sortable: true,
     width: "160px",
-    cell: (_, row) => (
-      <span className="font-mono text-xs font-medium">{String(row.controlNumber)}</span>
+    cell: (_: any, row: GatePass) => (
+      <span className="font-mono text-xs font-medium">{row.controlNumber}</span>
     ),
   },
-  { id: "title", header: "Purpose", accessorKey: "title", sortable: true, filterable: true },
-  { id: "requester", header: "Requester", accessorKey: "requester", sortable: true },
-  { id: "department", header: "Department", accessorKey: "department", sortable: true },
+  {
+    id: "purpose",
+    header: "Purpose",
+    accessorKey: "purpose",
+    sortable: true,
+    filterable: true,
+  },
+  {
+    id: "destination",
+    header: "Destination",
+    accessorKey: "destination",
+    sortable: true,
+  },
+  {
+    id: "requester",
+    header: "Requester",
+    accessorKey: "requester",
+    sortable: true,
+    cell: (_: any, row: GatePass) => (
+      <span>{getEmployeeDisplayName(row.requester)}</span>
+    ),
+  },
+  {
+    id: "department",
+    header: "Department",
+    accessorKey: "department",
+    sortable: true,
+    cell: (_: any, row: GatePass) => (
+      <span>{getDepartmentName(row.department) || getDepartmentName(row.requester?.department) || 'N/A'}</span>
+    ),
+  },
+  {
+    id: "currentStep",
+    header: "Current Step",
+    accessorKey: "currentStep",
+    sortable: true,
+    width: "180px",
+    cell: (_: any, row: GatePass) => (
+      <span>{row.currentStep?.name || 'N/A'}</span>
+    ),
+  },
   {
     id: "status",
     header: "Status",
     accessorKey: "status",
     sortable: true,
     width: "140px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
+    cell: (val: any) => <StatusBadgeEnhanced status={String(val)} />,
   },
   {
-    id: "priority",
-    header: "Priority",
-    accessorKey: "priority",
+    id: "createdAt",
+    header: "Date Requested",
+    accessorKey: "createdAt",
     sortable: true,
-    width: "100px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
+    width: "120px",
+    cell: (_: any, row: GatePass) => (
+      <span>{new Date(row.createdAt).toLocaleDateString()}</span>
+    ),
   },
-  { id: "createdAt", header: "Date", accessorKey: "createdAt", sortable: true, width: "120px" },
 ];
 
 export function GatePassModule() {
-  const { user } = useAuth();
-  const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
-  const [showApprove, setShowApprove] = useState(false);
-  const [showReject, setShowReject] = useState(false);
-  const [showReturn, setShowReturn] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<GatePass | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowStatus | null>(null);
+  const [gatePasses, setGatePasses] = useState<GatePass[]>([]);
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [dataLoading, setDataLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const gatePasses = REQUESTS.filter((r) => r.type === "Gate Pass").map((r) => ({
-    ...r,
-    type: r.type,
-  }));
+  // Fetch gate passes from backend
+  const fetchGatePasses = useCallback(async () => {
+    try {
+      setDataLoading(true);
+      const result = await gatePassApi.getAll({ pageSize: 100 });
+      const passes = result.data;
+      
+      setGatePasses(passes);
+      
+      // Calculate stats using HST workflow statuses
+      const total = passes.length;
+      const pending = passes.filter((p: GatePass) => ["pending", "in_review"].includes(p.status)).length;
+      const approved = passes.filter((p: GatePass) => ["approved", "released"].includes(p.status)).length;
+      const rejected = passes.filter((p: GatePass) => ["rejected", "returned", "cancelled"].includes(p.status)).length;
+      
+      setStats({ total, pending, approved, rejected });
+    } catch (error) {
+      console.error("Failed to fetch gate passes:", error);
+      toast.error("Failed to load gate passes");
+    } finally {
+      setDataLoading(false);
+    }
+  }, []);
 
-  const stats = {
-    total: gatePasses.length,
-    pending: gatePasses.filter((r) => ["Pending", "In Review"].includes(r.status)).length,
-    approved: gatePasses.filter((r) => ["Approved", "Completed"].includes(r.status)).length,
-    rejected: gatePasses.filter((r) => ["Rejected", "Returned"].includes(r.status)).length,
-  };
+  useEffect(() => {
+    fetchGatePasses();
+  }, [fetchGatePasses]);
 
   const handleCreate = () => {
-    toast.success("New Gate Pass form opened", { description: "Create a gate pass request" });
+    setShowForm(true);
   };
 
-  const handleApprove = (note?: string) => {
-    if (!user || !selectedRequest) return;
-    setLoading(true);
-    approveRequest(selectedRequest.id, user.id, user.name, note);
-    setLoading(false);
-    setShowApprove(false);
+  const handleRowClick = async (row: GatePass) => {
+    setSelectedRequest(row);
+    setDrawerOpen(true);
+    // Fetch workflow status
+    try {
+      const workflow = await gatePassApi.getWorkflowStatus(row.requestId);
+      setSelectedWorkflow(workflow);
+    } catch (error) {
+      console.error("Failed to fetch workflow status:", error);
+      setSelectedWorkflow(null);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await fetchGatePasses();
+    // Re-fetch workflow if drawer is open
+    if (selectedRequest && drawerOpen) {
+      try {
+        const workflow = await gatePassApi.getWorkflowStatus(selectedRequest.requestId);
+        setSelectedWorkflow(workflow);
+      } catch {
+        setSelectedWorkflow(null);
+      }
+    }
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
     setSelectedRequest(null);
+    setSelectedWorkflow(null);
   };
 
-  const handleReject = (note?: string) => {
-    if (!user || !selectedRequest || !note) return;
-    setLoading(true);
-    rejectRequest(selectedRequest.id, user.id, user.name, note);
-    setLoading(false);
-    setShowReject(false);
-    setSelectedRequest(null);
-  };
+  // Recalculate stats
+  const recalcStats = useCallback((passes: GatePass[]) => {
+    const total = passes.length;
+    const pending = passes.filter((p: GatePass) => ["pending", "in_review"].includes(p.status)).length;
+    const approved = passes.filter((p: GatePass) => ["approved", "released"].includes(p.status)).length;
+    const rejected = passes.filter((p: GatePass) => ["rejected", "returned", "cancelled"].includes(p.status)).length;
+    setStats({ total, pending, approved, rejected });
+  }, []);
 
-  const handleReturn = (note?: string) => {
-    if (!user || !selectedRequest || !note) return;
-    setLoading(true);
-    returnRequest(selectedRequest.id, user.id, user.name, note);
-    setLoading(false);
-    setShowReturn(false);
-    setSelectedRequest(null);
-  };
-
-  const kpiCards = (
+  const kpiCards = dataLoading ? null : (
     <>
       <UniversalKpiCard
         label="Total Gate Passes"
@@ -160,14 +221,12 @@ export function GatePassModule() {
         value={stats.pending}
         icon={Clock}
         tone="warning"
-        trend={{ value: "3 new today", up: true }}
       />
       <UniversalKpiCard
         label="Approved"
         value={stats.approved}
         icon={CheckCircle}
         tone="success"
-        trend={{ value: "85% rate", up: true }}
       />
       <UniversalKpiCard label="Rejected" value={stats.rejected} icon={XCircle} tone="danger" />
     </>
@@ -177,48 +236,34 @@ export function GatePassModule() {
     <>
       <RequestListPage
         config={MODULE_CONFIG}
-        data={gatePasses as RequestData[]}
-        columns={GATE_COLUMNS}
+        data={gatePasses as any[]}
+        columns={GATE_COLUMNS as any[]}
         onCreateNew={handleCreate}
-        onRowClick={(row) => setSelectedRequest(row)}
+        onRowClick={(row) => handleRowClick(row as unknown as GatePass)}
         kpiCards={kpiCards}
         quickActions={<QuickActionCards actions={GATE_PASS_ACTIONS} columns={3} />}
         searchPlaceholder="Search gate passes by control no., purpose, requester..."
         filename="gate-pass-list"
+        loading={dataLoading}
+      />
+
+      <GatePassForm
+        open={showForm}
+        onOpenChange={setShowForm}
+        onSuccess={() => {
+          fetchGatePasses().catch(() => {});
+        }}
       />
 
       {selectedRequest && (
-        <RequestDetailsDrawer
-          request={selectedRequest}
-          config={MODULE_CONFIG}
-          onClose={() => setSelectedRequest(null)}
-          onApprove={() => setShowApprove(true)}
-          onReject={() => setShowReject(true)}
-          onReturn={() => setShowReturn(true)}
-          timeline={MOCK_TIMELINE_EVENTS}
-          comments={MOCK_COMMENTS}
-          attachments={MOCK_ATTACHMENTS}
+        <GatePassDetailsDrawer
+          gatePass={selectedRequest}
+          workflowStatus={selectedWorkflow}
+          open={drawerOpen}
+          onClose={handleDrawerClose}
+          onRefresh={handleRefresh}
         />
       )}
-
-      <ApproveDialog
-        open={showApprove}
-        onOpenChange={setShowApprove}
-        onConfirm={handleApprove}
-        loading={loading}
-      />
-      <RejectDialog
-        open={showReject}
-        onOpenChange={setShowReject}
-        onConfirm={handleReject}
-        loading={loading}
-      />
-      <ReturnDialog
-        open={showReturn}
-        onOpenChange={setShowReturn}
-        onConfirm={handleReturn}
-        loading={loading}
-      />
     </>
   );
 }

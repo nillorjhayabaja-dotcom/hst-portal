@@ -31,7 +31,7 @@ interface NotificationItem {
   time: string;
   type: string;
   read: boolean;
-  requester?: string;
+  requester?: string | { displayName: string };
   priority?: string;
 }
 
@@ -237,7 +237,7 @@ export function NotificationCenter() {
                         <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
                         {n.requester && (
                           <p className="mt-1 text-[10px] text-muted-foreground/60">
-                            From: {n.requester}
+                            From: {typeof n.requester === "string" ? n.requester : n.requester?.displayName}
                           </p>
                         )}
                         <div className="mt-2 flex items-center gap-2">

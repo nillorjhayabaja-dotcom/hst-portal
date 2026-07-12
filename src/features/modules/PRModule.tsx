@@ -21,6 +21,10 @@ import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { useAuth } from "@/contexts/AuthContext";
 import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
+import {
+  getEmployeeDisplayName,
+  getDepartmentName,
+} from "@/utils/display";
 
 const MODULE_CONFIG: ModuleConfig = {
   moduleId: "purchase-request",
@@ -70,8 +74,20 @@ const PR_COLUMNS: Column<RequestData>[] = [
     ),
   },
   { id: "title", header: "Item", accessorKey: "title", sortable: true, filterable: true },
-  { id: "requester", header: "Requested By", accessorKey: "requester", sortable: true },
-  { id: "department", header: "Department", accessorKey: "department", sortable: true },
+  {
+    id: "requester",
+    header: "Requested By",
+    accessorKey: "requester",
+    sortable: true,
+    cell: (value) => getEmployeeDisplayName(value as any),
+  },
+  {
+    id: "department",
+    header: "Department",
+    accessorKey: "department",
+    sortable: true,
+    cell: (value) => getDepartmentName(value as any),
+  },
   {
     id: "status",
     header: "Status",

@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { REQUESTS, NOTIFICATIONS } from "@/mock/data";
 import { cn } from "@/lib/utils";
+import {
+  getEmployeeDisplayName,
+  getDepartmentName,
+} from "@/utils/display";
 
 export function RecentRequests({
   title = "Recent Requests",
@@ -35,7 +39,7 @@ export function RecentRequests({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {r.controlNumber} · {r.requester}
+                {r.controlNumber} · {getEmployeeDisplayName(r.requester as any)}
               </p>
             </div>
             <StatusBadge status={r.status} />
@@ -65,7 +69,7 @@ export function ApprovalQueueCard({ title = "Pending Approvals" }: { title?: str
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
               <p className="text-xs text-muted-foreground">
-                {r.type} · {r.department}
+                {r.type} · {getDepartmentName(r.department as any)}
               </p>
             </div>
             <div className="flex shrink-0 gap-1.5">
