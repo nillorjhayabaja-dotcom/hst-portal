@@ -8,8 +8,6 @@ import {
 } from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
-import { REQUESTS } from "@/mock/data";
-import { MOCK_COMMENTS, MOCK_ATTACHMENTS, MOCK_TIMELINE_EVENTS } from "@/mock/enterprise-data";
 import { Users, Clock, CheckCircle, XCircle, UserPlus } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import {
@@ -21,6 +19,7 @@ import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { useAuth } from "@/contexts/AuthContext";
 import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
+import { useApprovalRequests } from "@/services/approval-hooks";
 import {
   getEmployeeDisplayName,
   getDepartmentName,
@@ -28,11 +27,11 @@ import {
 
 const MODULE_CONFIG: ModuleConfig = {
   moduleId: "mrf",
-  moduleName: "MRF",
+  moduleName: "Manpower Request Form",
   moduleIcon: "Users",
   controlPrefix: "MRF",
   createLabel: "New MRF",
-  description: "Manpower requisition forms",
+  description: "Request additional manpower",
 };
 
 const MRF_ACTIONS = [
@@ -46,26 +45,18 @@ const MRF_ACTIONS = [
   },
   {
     id: "qa2",
-    label: "Open Positions",
-    description: "View current openings",
+    label: "Headcount Reports",
+    description: "Manpower utilization reports",
     icon: "Users",
-    action: "positions",
-    color: "blue" as const,
-  },
-  {
-    id: "qa3",
-    label: "Hiring Reports",
-    description: "Recruitment analytics",
-    icon: "BarChart3",
     action: "reports",
-    color: "teal" as const,
+    color: "blue" as const,
   },
 ];
 
 const MRF_COLUMNS: Column<RequestData>[] = [
   {
     id: "controlNumber",
-    header: "Control No.",
+    header: "MRF No.",
     accessorKey: "controlNumber",
     sortable: true,
     width: "160px",
@@ -96,15 +87,7 @@ const MRF_COLUMNS: Column<RequestData>[] = [
     width: "140px",
     cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
   },
-  {
-    id: "priority",
-    header: "Priority",
-    accessorKey: "priority",
-    sortable: true,
-    width: "100px",
-    cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
-  },
-  { id: "createdAt", header: "Date", accessorKey: "createdAt", sortable: true, width: "120px" },
+  { id: "createdAt", header: "Date Filed", accessorKey: "createdAt", sortable: true, width: "120px" },
 ];
 
 export function MRFModule() {
@@ -115,13 +98,17 @@ export function MRFModule() {
   const [showReturn, setShowReturn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const mrfs = REQUESTS.filter((r) => r.type === "MRF").map((r) => ({ ...r, type: r.type }));
+  const { data: approvalData } = useApprovalRequests({ moduleId: "mrf" });
+  const mrfs = (approvalData?.data || []).map((r: any) => ({
+    ...r,
+    type: "MRF",
+  }));
 
   const stats = {
     total: mrfs.length,
-    pending: mrfs.filter((r) => ["Pending", "In Review"].includes(r.status)).length,
-    approved: mrfs.filter((r) => ["Approved", "Completed"].includes(r.status)).length,
-    rejected: mrfs.filter((r) => ["Rejected", "Returned"].includes(r.status)).length,
+    pending: mrfs.filter((r: any) => ["Pending", "In Review"].includes(r.status)).length,
+    approved: mrfs.filter((r: any) => ["Approved", "Completed"].includes(r.status)).length,
+    rejected: mrfs.filter((r: any) => ["Rejected", "Returned"].includes(r.status)).length,
   };
 
   const handleApprove = (note?: string) => {
@@ -158,7 +145,7 @@ export function MRFModule() {
         value={stats.approved}
         icon={CheckCircle}
         tone="success"
-        trend={{ value: "78% fill rate", up: true }}
+        trend={{ value: `${stats.approved} positions filled`, up: true }}
       />
       <UniversalKpiCard label="Rejected" value={stats.rejected} icon={XCircle} tone="danger" />
     </>
@@ -185,9 +172,9 @@ export function MRFModule() {
           onApprove={() => setShowApprove(true)}
           onReject={() => setShowReject(true)}
           onReturn={() => setShowReturn(true)}
-          timeline={MOCK_TIMELINE_EVENTS}
-          comments={MOCK_COMMENTS}
-          attachments={MOCK_ATTACHMENTS}
+          timeline={[]}
+          comments={[]}
+          attachments={[]}
         />
       )}
 

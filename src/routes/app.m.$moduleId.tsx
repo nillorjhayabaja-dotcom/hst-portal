@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { MODULES } from "@/navigation/nav";
@@ -28,25 +28,18 @@ import { Switch } from "@/components/ui/switch";
 import {
   Check,
   Minus,
-  TrendingUp,
   Clock,
   CheckCircle2,
   XCircle,
-  Users,
-  GitBranch,
-  Hash,
-  Settings,
-  Activity,
 } from "lucide-react";
 import { getApprovalMetrics } from "@/services/approval-engine";
 import type { ApprovalMetrics } from "@/types/approval";
-import { EMPLOYEES, DEPARTMENTS, VISITORS, VEHICLES, ASSETS, AUDIT_LOGS } from "@/mock/data";
+import { useEmployees } from "@/services/employee-hooks";
+import { useDepartments } from "@/services/config-hooks";
 
 export const Route = createFileRoute("/app/m/$moduleId")({
   component: ModuleRoute,
 });
-
-const REQUEST_MODULES: ModuleId[] = ["gate-pass", "leave", "mrf", "purchase-request", "approvals"];
 
 function ModuleRoute() {
   const { moduleId } = useParams({ from: "/app/m/$moduleId" });
@@ -109,279 +102,75 @@ function ModuleContent({
   role: import("@/types").RoleId;
   label: string;
 }) {
-  // Use new enterprise modules for request-based modules
   if (module === "gate-pass") return <GatePassModule />;
   if (module === "leave") return <LeaveModule />;
   if (module === "mrf") return <MRFModule />;
   if (module === "purchase-request") return <PRModule />;
-
-  // Approvals module - Universal Approval Inbox
-  if (module === "approvals") {
-    return <ApprovalInbox />;
-  }
+  if (module === "approvals") return <ApprovalInbox />;
 
   switch (module) {
     case "employees": {
+      const { data: empData, isLoading } = useEmployees();
+      const empRows = empData?.data || [];
       const cols: Column[] = [
-        {
-          id: "id",
-          header: "ID",
-          accessorKey: "id",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
-        },
-        {
-          id: "name",
-          header: "Name",
-          accessorKey: "name",
-          sortable: true,
-          filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>,
-        },
+        { id: "employeeNumber", header: "ID", accessorKey: "employeeNumber", sortable: true, width: "120px", cell: (val) => <span className="font-mono text-xs">{String(val)}</span> },
+        { id: "firstName", header: "First Name", accessorKey: "firstName", sortable: true, filterable: true, cell: (val) => <span className="font-medium">{String(val)}</span> },
+        { id: "lastName", header: "Last Name", accessorKey: "lastName", sortable: true, cell: (val) => <span className="font-medium">{String(val)}</span> },
         { id: "title", header: "Title", accessorKey: "title", sortable: true },
-        { id: "department", header: "Department", accessorKey: "department", sortable: true },
-        {
-          id: "status",
-          header: "Status",
-          accessorKey: "status",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
-        },
+        { id: "departmentName", header: "Department", accessorKey: "departmentName", sortable: true },
+        { id: "status", header: "Status", accessorKey: "status", sortable: true, width: "120px", cell: (val) => <StatusBadgeEnhanced status={String(val)} /> },
       ];
       return (
-        <EnterpriseDataTable
-          title="Employee Directory"
-          data={EMPLOYEES}
-          columns={cols}
-          keyExtractor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search employees by name, title, department..."
-          exportable
-          filename="employees"
-          selectable
-        />
+        <EnterpriseDataTable title="Employee Directory" data={empRows} columns={cols} keyExtractor={(row: any) => row.id} searchable searchPlaceholder="Search employees..." exportable filename="employees" loading={isLoading} />
       );
     }
-    case "departments":
+    case "departments": {
+      const { data: deptData, isLoading } = useDepartments();
+      const deptRows = deptData || [];
+      if (isLoading) return <div className="text-sm text-muted-foreground p-8">Loading departments...</div>;
       return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {DEPARTMENTS.map((d) => (
+          {deptRows.map((d: any) => (
             <Card key={d.id} className="shadow-card">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{d.name}</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-base">{d.name}</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-sm">
-                <p className="text-muted-foreground">
-                  Head: <span className="text-foreground">{d.head}</span>
-                </p>
-                <div className="flex justify-between pt-2">
-                  <span className="text-muted-foreground">Employees</span>
-                  <span className="font-semibold text-foreground">{d.employees}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Open requests</span>
-                  <span className="font-semibold text-foreground">{d.requests}</span>
-                </div>
+                <p className="text-muted-foreground">Code: <span className="text-foreground">{d.code}</span></p>
+                <p className="text-muted-foreground">Level: <span className="text-foreground">{d.level}</span></p>
               </CardContent>
             </Card>
           ))}
         </div>
       );
-    case "visitors": {
-      const cols: Column[] = [
-        {
-          id: "id",
-          header: "ID",
-          accessorKey: "id",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
-        },
-        {
-          id: "name",
-          header: "Visitor",
-          accessorKey: "name",
-          sortable: true,
-          filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>,
-        },
-        { id: "company", header: "Company", accessorKey: "company", sortable: true },
-        { id: "host", header: "Host", accessorKey: "host", sortable: true },
-        { id: "purpose", header: "Purpose", accessorKey: "purpose" },
-        { id: "time", header: "Time", accessorKey: "time", sortable: true },
-        {
-          id: "status",
-          header: "Status",
-          accessorKey: "status",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
-        },
-      ];
-      return (
-        <EnterpriseDataTable
-          title="Visitor Management"
-          data={VISITORS}
-          columns={cols}
-          keyExtractor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search visitors by name, company, host..."
-          exportable
-          filename="visitors"
-        />
-      );
     }
-    case "vehicles": {
-      const cols: Column[] = [
-        {
-          id: "plate",
-          header: "Plate No.",
-          accessorKey: "plate",
-          sortable: true,
-          width: "140px",
-          cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>,
-        },
-        { id: "type", header: "Type", accessorKey: "type", sortable: true },
-        { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
-        { id: "location", header: "Location", accessorKey: "location", sortable: true },
-        {
-          id: "status",
-          header: "Status",
-          accessorKey: "status",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
-        },
-      ];
-      return (
-        <EnterpriseDataTable
-          title="Vehicle Fleet"
-          data={VEHICLES}
-          columns={cols}
-          keyExtractor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search vehicles by plate, type, assignment..."
-          exportable
-          filename="vehicles"
-        />
-      );
-    }
-    case "assets": {
-      const cols: Column[] = [
-        {
-          id: "id",
-          header: "Asset ID",
-          accessorKey: "id",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
-        },
-        {
-          id: "name",
-          header: "Name",
-          accessorKey: "name",
-          sortable: true,
-          filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>,
-        },
-        { id: "category", header: "Category", accessorKey: "category", sortable: true },
-        { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo", sortable: true },
-        { id: "value", header: "Value", accessorKey: "value", sortable: true },
-        {
-          id: "status",
-          header: "Status",
-          accessorKey: "status",
-          sortable: true,
-          width: "120px",
-          cell: (val) => <StatusBadgeEnhanced status={String(val)} />,
-        },
-      ];
-      return (
-        <EnterpriseDataTable
-          title="Asset Registry"
-          data={ASSETS}
-          columns={cols}
-          keyExtractor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search assets by name, category, assignment..."
-          exportable
-          filename="assets"
-        />
-      );
-    }
-    case "audit-logs": {
-      const cols: Column[] = [
-        {
-          id: "time",
-          header: "Timestamp",
-          accessorKey: "time",
-          sortable: true,
-          width: "180px",
-          cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
-        },
-        {
-          id: "actor",
-          header: "Actor",
-          accessorKey: "actor",
-          sortable: true,
-          filterable: true,
-          cell: (val) => <span className="font-medium">{String(val)}</span>,
-        },
-        { id: "action", header: "Action", accessorKey: "action", sortable: true },
-        { id: "target", header: "Target", accessorKey: "target", sortable: true },
-      ];
-      return (
-        <EnterpriseDataTable
-          title="Audit Trail"
-          data={AUDIT_LOGS}
-          columns={cols}
-          keyExtractor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search audit logs by actor, action, target..."
-          exportable
-          filename="audit-logs"
-        />
-      );
-    }
+    case "visitors":
+      return <EnterpriseDataTable title="Visitor Management" data={[]} columns={[{ id: "name", header: "Name", accessorKey: "name" }]} keyExtractor={(row: any) => row.id} filename="visitors" />;
+    case "vehicles":
+      return <EnterpriseDataTable title="Vehicle Fleet" data={[]} columns={[{ id: "plateNumber", header: "Plate No.", accessorKey: "plateNumber" }]} keyExtractor={(row: any) => row.id} filename="vehicles" />;
+    case "assets":
+      return <EnterpriseDataTable title="Asset Registry" data={[]} columns={[{ id: "assetTag", header: "Asset ID", accessorKey: "assetTag" }, { id: "name", header: "Name", accessorKey: "name" }]} keyExtractor={(row: any) => row.id} filename="assets" />;
+    case "audit-logs":
+      return <EnterpriseDataTable title="Audit Trail" data={[]} columns={[{ id: "createdAt", header: "Timestamp", accessorKey: "createdAt" }, { id: "actorName", header: "Actor", accessorKey: "actorName" }, { id: "action", header: "Action", accessorKey: "action" }]} keyExtractor={(row: any) => row.id} filename="audit-logs" />;
     case "reports":
       return (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <TrendChart title="Requests vs Approvals" />
-            </div>
-            <div className="space-y-4">
-              <RequestPie />
-              <PieLegend />
-            </div>
+            <div className="lg:col-span-2"><TrendChart /></div>
+            <div className="space-y-4"><RequestPie /><PieLegend /></div>
           </div>
           <DeptBar />
         </div>
       );
-    case "users":
-      return <RbacMatrix />;
+    case "users": return <RbacMatrix />;
     case "workflows":
-      return <WorkflowBuilder />;
-    case "workflow-templates":
-      return <WorkflowBuilder />;
-    case "company-profile":
-      return <CompanyProfileEditor />;
-    case "holiday-calendar":
-      return <HolidayCalendar />;
-    case "notification-rules":
-      return <NotificationRulesManager />;
-    case "business-rules":
-      return <BusinessRulesEngine />;
-    case "delegations":
-      return <DelegationManager />;
-    case "control-numbers":
-      return <ControlNumbers />;
-    case "settings":
-      return <SettingsView />;
-    default:
-      return null;
+    case "workflow-templates": return <WorkflowBuilder />;
+    case "company-profile": return <CompanyProfileEditor />;
+    case "holiday-calendar": return <HolidayCalendar />;
+    case "notification-rules": return <NotificationRulesManager />;
+    case "business-rules": return <BusinessRulesEngine />;
+    case "delegations": return <DelegationManager />;
+    case "control-numbers": return <ControlNumbers />;
+    case "settings": return <SettingsView />;
+    default: return null;
   }
 }
 
@@ -389,12 +178,7 @@ function RbacMatrix() {
   const modules = Object.keys(MODULES) as ModuleId[];
   return (
     <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="text-base">Role-Based Access Matrix</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Module access per role across the organization.
-        </p>
-      </CardHeader>
+      <CardHeader><CardTitle className="text-base">Role-Based Access Matrix</CardTitle></CardHeader>
       <CardContent>
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full border-collapse text-sm">
@@ -402,9 +186,7 @@ function RbacMatrix() {
               <tr>
                 <th className="sticky left-0 bg-card p-2 text-left font-semibold">Module</th>
                 {ROLE_ORDER.map((r) => (
-                  <th key={r} className="p-2 text-center text-xs font-semibold">
-                    {ROLES[r].shortName}
-                  </th>
+                  <th key={r} className="p-2 text-center text-xs font-semibold">{ROLES[r].shortName}</th>
                 ))}
               </tr>
             </thead>
@@ -413,14 +195,10 @@ function RbacMatrix() {
                 <tr key={m} className="border-t border-border">
                   <td className="sticky left-0 bg-card p-2 font-medium">{MODULES[m].label}</td>
                   {ROLE_ORDER.map((r) => {
-                    const has = !!PERMISSIONS[r][m]?.length;
+                    const has = !!PERMISSIONS[r]?.[m]?.length;
                     return (
                       <td key={r} className="p-2 text-center">
-                        {has ? (
-                          <Check className="mx-auto size-4 text-success" />
-                        ) : (
-                          <Minus className="mx-auto size-4 text-muted-foreground/40" />
-                        )}
+                        {has ? <Check className="mx-auto size-4 text-success" /> : <Minus className="mx-auto size-4 text-muted-foreground/40" />}
                       </td>
                     );
                   })}
@@ -434,48 +212,6 @@ function RbacMatrix() {
   );
 }
 
-const FLOWS = [
-  {
-    name: "Gate Pass",
-    steps: [
-      "Employee",
-      "Supervisor",
-      "Department Manager",
-      "General Administration",
-      "Security",
-      "Completed",
-    ],
-  },
-  { name: "Leave", steps: ["Employee", "Supervisor", "Manager", "HR", "Completed"] },
-  { name: "MRF", steps: ["Employee", "Supervisor", "Manager", "Approver", "Completed"] },
-  {
-    name: "Purchase Request",
-    steps: ["Employee", "Manager", "Purchasing", "Finance", "Completed"],
-  },
-];
-
-function WorkflowsView() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {FLOWS.map((f) => (
-        <Card key={f.name} className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{f.name} Workflow</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ApprovalStepper
-              steps={f.steps.map((s, i) => ({
-                role: s,
-                status: i === 0 ? "done" : i === f.steps.length - 1 ? "pending" : "pending",
-              }))}
-            />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
 function ControlNumbers() {
   const series = [
     { prefix: "GP-2026", label: "Gate Pass", current: 482, format: "GP-YYYY-000000" },
@@ -484,41 +220,12 @@ function ControlNumbers() {
     { prefix: "PR-2026", label: "Purchase Request", current: 921, format: "PR-YYYY-000000" },
   ];
   const cols: Column[] = [
-    {
-      id: "prefix",
-      header: "Series",
-      accessorKey: "prefix",
-      sortable: true,
-      width: "140px",
-      cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span>,
-    },
+    { id: "prefix", header: "Series", accessorKey: "prefix", sortable: true, width: "140px", cell: (val) => <span className="font-mono text-xs font-medium">{String(val)}</span> },
     { id: "label", header: "Document", accessorKey: "label", sortable: true },
-    {
-      id: "format",
-      header: "Format",
-      accessorKey: "format",
-      sortable: true,
-      cell: (val) => <span className="font-mono text-xs">{String(val)}</span>,
-    },
-    {
-      id: "current",
-      header: "Current No.",
-      accessorKey: "current",
-      sortable: true,
-      cell: (val) => <span className="font-semibold">{String(val)}</span>,
-    },
+    { id: "format", header: "Format", accessorKey: "format", sortable: true, cell: (val) => <span className="font-mono text-xs">{String(val)}</span> },
+    { id: "current", header: "Current No.", accessorKey: "current", sortable: true, cell: (val) => <span className="font-semibold">{String(val)}</span> },
   ];
-  return (
-    <EnterpriseDataTable
-      title="Control Number Series"
-      data={series}
-      columns={cols}
-      keyExtractor={(row) => row.prefix}
-      searchable={false}
-      exportable
-      filename="control-numbers"
-    />
-  );
+  return <EnterpriseDataTable title="Control Number Series" data={series} columns={cols} keyExtractor={(row: any) => row.prefix} filename="control-numbers" />;
 }
 
 function SettingsView() {
@@ -530,23 +237,15 @@ function SettingsView() {
   ];
   return (
     <Card className="max-w-2xl shadow-card">
-      <CardHeader>
-        <CardTitle className="text-base">System Preferences</CardTitle>
-      </CardHeader>
+      <CardHeader><CardTitle className="text-base">System Preferences</CardTitle></CardHeader>
       <CardContent className="space-y-1">
         {options.map((o) => (
-          <div
-            key={o.label}
-            className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0"
-          >
+          <div key={o.label} className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0">
             <div>
               <p className="text-sm font-medium text-foreground">{o.label}</p>
               <p className="text-xs text-muted-foreground">{o.desc}</p>
             </div>
-            <Switch
-              defaultChecked={o.on}
-              onCheckedChange={() => toast.success("Preference updated")}
-            />
+            <Switch defaultChecked={o.on} onCheckedChange={() => toast.success("Preference updated")} />
           </div>
         ))}
       </CardContent>

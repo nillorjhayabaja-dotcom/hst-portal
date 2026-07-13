@@ -14,7 +14,63 @@ import {
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { QuickAction } from "@/types/enterprise";
-import { MOCK_QUICK_ACTIONS } from "@/mock/enterprise-data";
+
+const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: "qa1",
+    label: "New Gate Pass",
+    description: "Create a gate pass request",
+    icon: "DoorOpen",
+    action: "create-gate-pass",
+    color: "blue",
+    to: "/app/m/gate-pass?action=create",
+  },
+  {
+    id: "qa2",
+    label: "File Leave",
+    description: "Submit a leave request",
+    icon: "CalendarCheck",
+    action: "create-leave",
+    color: "green",
+    to: "/app/m/leave?action=create",
+  },
+  {
+    id: "qa3",
+    label: "MRF Request",
+    description: "Request additional manpower",
+    icon: "Users",
+    action: "create-mrf",
+    color: "purple",
+    to: "/app/m/mrf?action=create",
+  },
+  {
+    id: "qa4",
+    label: "Purchase Request",
+    description: "Submit a purchase request",
+    icon: "ShoppingCart",
+    action: "create-pr",
+    color: "orange",
+    to: "/app/m/purchase-request?action=create",
+  },
+  {
+    id: "qa5",
+    label: "View Reports",
+    description: "Access operational reports",
+    icon: "BarChart3",
+    action: "reports",
+    color: "red",
+    to: "/app/m/reports",
+  },
+  {
+    id: "qa6",
+    label: "Approval Center",
+    description: "Pending approvals",
+    icon: "CheckCircle",
+    action: "approvals",
+    color: "teal",
+    to: "/app/m/approvals",
+  },
+];
 
 const ICON_MAP: Record<string, LucideIcon> = {
   DoorOpen,
@@ -45,14 +101,13 @@ interface QuickActionCardsProps {
 }
 
 export function QuickActionCards({
-  actions = MOCK_QUICK_ACTIONS,
+  actions = DEFAULT_QUICK_ACTIONS,
   columns = 3,
   className,
 }: QuickActionCardsProps) {
   const navigate = useNavigate();
 
   const handleAction = (action: QuickAction) => {
-    // In a real app, this would navigate or open a modal
     if (action.to) {
       navigate({ to: action.to });
     }

@@ -82,22 +82,26 @@ export const workflowEngine = {
         
         if (!steps.length) throw new ValidationError('Workflow has no applicable steps');
 
+        // First step is 'current', rest are 'pending'
         await tx.approvalStep.createMany({
-          data: steps.map((s) => ({
+          data: steps.map((s, index) => ({
             requestId: request.id,
             stepId: s.id,
             name: s.name,
             roleId: s.roleId,
             stepOrder: s.stepOrder,
-            status: 'current',
+            status: index === 0 ? 'current' : 'pending',
             assignedAt: new Date(),
           })),
         });
 
         for (const s of steps) {
           if (s.autoApprove) {
-            await tx.approvalStep.update({
-              where: { id: s.id || `${request.id}-${s.stepOrder}` },
+            await tx.approvalStep.updateMany({
+              where: {
+                requestId: request.id,
+                stepId: s.id,
+              },
               data: { status: 'approved', actedAt: new Date() },
             });
           }

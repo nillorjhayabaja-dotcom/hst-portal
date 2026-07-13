@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MONTHLY_TRENDS, REQUEST_BREAKDOWN, DEPT_PERFORMANCE } from "@/mock/data";
+import { useDashboardCharts } from "@/services/dashboard-hooks";
 
 const AXIS = "var(--color-muted-foreground)";
 
@@ -36,10 +36,23 @@ const tooltipStyle = {
 };
 
 export function TrendChart({ title = "Monthly Trends" }: { title?: string }) {
+  const { data: charts, isLoading } = useDashboardCharts();
+  const data = charts?.monthlyRequests || [];
+
+  if (isLoading) {
+    return (
+      <ChartFrame title={title}>
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading...
+        </div>
+      </ChartFrame>
+    );
+  }
+
   return (
     <ChartFrame title={title}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={MONTHLY_TRENDS} margin={{ left: -20, right: 8, top: 8 }}>
+        <AreaChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
           <defs>
             <linearGradient id="gReq" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity={0.35} />
@@ -74,19 +87,32 @@ export function TrendChart({ title = "Monthly Trends" }: { title?: string }) {
 }
 
 export function RequestPie({ title = "Requests by Type" }: { title?: string }) {
+  const { data: charts, isLoading } = useDashboardCharts();
+  const data = charts?.requestBreakdown || [];
+
+  if (isLoading) {
+    return (
+      <ChartFrame title={title}>
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading...
+        </div>
+      </ChartFrame>
+    );
+  }
+
   return (
     <ChartFrame title={title}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={REQUEST_BREAKDOWN}
+            data={data}
             dataKey="value"
             nameKey="name"
             innerRadius={52}
             outerRadius={80}
             paddingAngle={3}
           >
-            {REQUEST_BREAKDOWN.map((d) => (
+            {data.map((d: any) => (
               <Cell key={d.key} fill={`var(--color-${d.key})`} />
             ))}
           </Pie>
@@ -98,10 +124,23 @@ export function RequestPie({ title = "Requests by Type" }: { title?: string }) {
 }
 
 export function DeptBar({ title = "Department Performance" }: { title?: string }) {
+  const { data: charts, isLoading } = useDashboardCharts();
+  const data = charts?.departmentPerformance || [];
+
+  if (isLoading) {
+    return (
+      <ChartFrame title={title}>
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading...
+        </div>
+      </ChartFrame>
+    );
+  }
+
   return (
     <ChartFrame title={title}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={DEPT_PERFORMANCE} margin={{ left: -20, right: 8, top: 8 }}>
+        <BarChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
           <XAxis dataKey="dept" stroke={AXIS} fontSize={11} tickLine={false} axisLine={false} />
           <YAxis stroke={AXIS} fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--color-muted)" }} />
@@ -113,9 +152,12 @@ export function DeptBar({ title = "Department Performance" }: { title?: string }
 }
 
 export function PieLegend() {
+  const { data: charts } = useDashboardCharts();
+  const data = charts?.requestBreakdown || [];
+
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-      {REQUEST_BREAKDOWN.map((d) => (
+      {data.map((d: any) => (
         <span key={d.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span
             className="size-2.5 rounded-full"

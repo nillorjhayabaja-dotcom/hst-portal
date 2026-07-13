@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Plus, Eye, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ModuleId, RequestItem, RequestType, RoleId } from "@/types";
-import { REQUESTS } from "@/mock/data";
 import { canApprove, canCreate } from "@/rbac/permissions";
+import { useApprovalRequests } from "@/services/approval-hooks";
 import { DataTable, type Column } from "@/components/app/DataTable";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
@@ -51,7 +51,9 @@ export function RequestsModule({
 }) {
   const type = TYPE_MAP[module];
   const isApprovals = module === "approvals";
-  const [rows, setRows] = useState<RequestItem[]>(REQUESTS);
+  const { data: approvalData } = useApprovalRequests({ pageSize: 100 });
+  const apiRequests = (approvalData?.data || []) as unknown as RequestItem[];
+  const [rows, setRows] = useState<RequestItem[]>(apiRequests);
   const [selected, setSelected] = useState<RequestItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 

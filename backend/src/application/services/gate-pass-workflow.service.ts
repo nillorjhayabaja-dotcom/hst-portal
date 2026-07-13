@@ -5,6 +5,7 @@ import { fileStorageService } from '../../infrastructure/storage/file-storage.se
 import { NotFoundError, ValidationError, ApprovalSignatureRequiredError } from '../../shared/errors';
 import { workflowEngine } from '../../infrastructure/workflow/workflow-engine.service';
 import { qrTokenService } from './qr-token.service';
+import { gatePassVerificationService } from './gate-pass-verification.service';
 import { GatePassPDFService } from './gate-pass-pdf.service';
 
 export interface ApprovalStepResult {
@@ -175,8 +176,8 @@ export class GatePassWorkflowService {
           },
         });
 
-        // Generate QR token and code
-        const qrToken = await qrTokenService.generateToken(requestId);
+        // Generate secure verification token
+        const qrToken = await gatePassVerificationService.generateVerificationToken(requestId);
 
         // Generate PDF
         const pdfService = new GatePassPDFService();

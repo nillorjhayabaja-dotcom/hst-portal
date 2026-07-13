@@ -1,44 +1,136 @@
-// Enterprise Export Service - Mock implementations for Excel, PDF, and Print
+// Export Service - Uses real backend API
 import { toast } from "sonner";
 
-interface ExportData {
-  filename: string;
-  columns: { key: string; header: string }[];
-  data: Record<string, unknown>[];
+export async function exportToPDF(data: any, filename: string): Promise<void> {
+  try {
+    // Call backend PDF generation endpoint
+    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+    
+    const response = await fetch(`${baseUrl}/export/pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      },
+      body: JSON.stringify({ data, filename }),
+    });
+
+    if (!response.ok) {
+      throw new Error('PDF generation failed');
+    }
+
+    // Download the PDF blob
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success(`PDF "${filename}.pdf" has been generated`);
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to generate PDF');
+    throw error;
+  }
 }
 
-export function exportToExcel(config: ExportData) {
-  const { filename, columns, data } = config;
-  // Mock Excel export - in production this would use a library like xlsx
-  const csvContent = [
-    columns.map((c) => `"${c.header}"`).join(","),
-    ...data.map((row) => columns.map((c) => `"${String(row[c.key] ?? "")}"`).join(",")),
-  ].join("\n");
+export async function exportToExcel(data: any, filename: string): Promise<void> {
+  try {
+    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+    
+    const response = await fetch(`${baseUrl}/export/excel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      },
+      body: JSON.stringify({ data, filename }),
+    });
 
-  downloadFile(csvContent, `${filename}.csv`, "text/csv;charset=utf-8;");
-  toast.success(`Exported "${filename}.csv"`);
+    if (!response.ok) {
+      throw new Error('Excel generation failed');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success(`Excel "${filename}.xlsx" has been generated`);
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to generate Excel');
+    throw error;
+  }
 }
 
-export function exportToPDF(config: ExportData) {
-  const { filename } = config;
-  // Mock PDF export - in production this would use jsPDF or similar
-  toast.success(`PDF "${filename}.pdf" has been generated (mock)`);
+export function printTable(data: any[], filename: string): void {
+  // Print table using the backend or browser print
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    const headers = data.length > 0 ? Object.keys(data[0]) : [];
+    const html = `
+      <html>
+        <head><title>${filename}</title></head>
+        <body>
+          <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>
+              ${data.map(row => `<tr>${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  }
 }
 
-export function printTable(title: string) {
-  // Trigger browser print dialog
-  window.print();
-  toast.success(`Printing "${title}"`);
-}
+export async function exportToCSV(data: any, filename: string): Promise<void> {
+  try {
+    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+    
+    const response = await fetch(`${baseUrl}/export/csv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      },
+      body: JSON.stringify({ data, filename }),
+    });
 
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    if (!response.ok) {
+      throw new Error('CSV generation failed');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success(`CSV "${filename}.csv" has been generated`);
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to generate CSV');
+    throw error;
+  }
 }

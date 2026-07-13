@@ -75,13 +75,18 @@ export class GatePassService {
     console.log('[SUBMIT] Data:', JSON.stringify({ ...data, requesterId: data.requesterId }));
     
     let resolvedVehicleId: string | undefined = data.vehicleId;
+    let resolvedPlateNumber: string | undefined;
 
     if (data.plateNumber) {
       const vehicle = await gatePassRepository.getVehicleByPlateNumber(data.plateNumber);
-      if (!vehicle) {
-        throw new ValidationError(`Invalid plateNumber: Vehicle not found (${data.plateNumber})`);
+      if (vehicle) {
+        resolvedVehicleId = vehicle.id;
+      } else {
+        // Plate number entered doesn't match a registered vehicle.
+        // Store it as a free-text value on the gate pass instead of linking to a vehicle FK.
+        console.warn(`[SUBMIT] Vehicle plate number not found in system: ${data.plateNumber}. Storing as text.`);
+        resolvedPlateNumber = data.plateNumber;
       }
-      resolvedVehicleId = vehicle.id;
     }
 
     const started = await workflowEngine.startRequest({
@@ -98,6 +103,7 @@ export class GatePassService {
       purpose: data.purpose,
       transportation: data.transportation,
       vehicleId: resolvedVehicleId,
+      plateNumber: resolvedPlateNumber,
       driverName: data.driverName,
       items: data.items,
       destination: data.destination,

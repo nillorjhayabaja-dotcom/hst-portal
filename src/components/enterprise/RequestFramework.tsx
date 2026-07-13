@@ -25,7 +25,6 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_QUICK_ACTIONS } from "@/mock/enterprise-data";
 import type { CommentItem, AttachmentItem } from "@/types/enterprise";
 import {
   getEmployeeDisplayName,

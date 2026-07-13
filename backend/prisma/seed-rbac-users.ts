@@ -41,7 +41,7 @@ const USERS: Array<{
   },
   {
     employeeId: 'HS0001-0005',
-    roleId: 'manager',
+    roleId: 'supervisor',
     email: 'supervisor@hst-corp.com',
     displayName: 'Supervisor',
     employeeNumber: 'HS0001-0005',
@@ -59,7 +59,7 @@ const USERS: Array<{
   },
   {
     employeeId: 'HS0001-0007',
-    roleId: 'employee',
+    roleId: 'gad',
     email: 'gad@hst-corp.com',
     displayName: 'GAD',
     employeeNumber: 'HS0001-0007',
@@ -68,7 +68,7 @@ const USERS: Array<{
   },
   {
     employeeId: 'HS0001-0008',
-    roleId: 'employee',
+    roleId: 'security',
     email: 'security@hst-corp.com',
     displayName: 'Security',
     employeeNumber: 'HS0001-0008',

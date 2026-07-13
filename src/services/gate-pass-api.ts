@@ -445,9 +445,8 @@ export const gatePassApi = {
   },
 
   async verifyQRToken(token: string) {
-    return fetchApi<any>(`/qr-scanner/validate`, {
-      method: 'POST',
-      body: JSON.stringify({ token }),
+    return fetchApi<any>(`/verification/verify/${token}`, {
+      method: 'GET',
     });
   },
 
@@ -458,10 +457,11 @@ export const gatePassApi = {
     mealAmount?: number;
     timeOut?: string;
     timeIn?: string;
+    remarks?: string;
   }) {
-    return fetchApi<any>(`/qr-scanner/verify`, {
+    return fetchApi<any>(`/verification/verify/${token}/release`, {
       method: 'POST',
-      body: JSON.stringify({ token, ...data }),
+      body: JSON.stringify(data),
     });
   },
 

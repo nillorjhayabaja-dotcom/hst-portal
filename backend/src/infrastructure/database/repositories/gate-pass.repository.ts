@@ -238,9 +238,67 @@ export const gatePassRepository = {
   async findByRequestId(requestId: string) {
     return prisma.gatePass.findUnique({
       where: { requestId },
-      include: {
-        request: true,
-        vehicle: true,
+      select: {
+        id: true,
+        requestId: true,
+        purpose: true,
+        destination: true,
+        transportation: true,
+        plateNumber: true,
+        driverName: true,
+        expectedReturn: true,
+        approvalStage: true,
+        qrCode: true,
+        qrToken: true,
+        qrGeneratedAt: true,
+        expiresAt: true,
+        isUsed: true,
+        isVerified: true,
+        verifiedAt: true,
+        verifiedBy: true,
+        securityReleasedAt: true,
+        securityReleasedBy: true,
+        actualReturn: true,
+        printCount: true,
+        createdAt: true,
+        updatedAt: true,
+        request: {
+          select: {
+            id: true,
+            controlNumber: true,
+            status: true,
+            title: true,
+            submittedAt: true,
+            completedAt: true,
+            requesterId: true,
+            requester: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+                employees: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    employeeNumber: true,
+                    department: { select: { name: true, code: true } },
+                    position: { select: { title: true } }
+                  }
+                }
+              }
+            },
+            department: { select: { id: true, name: true, code: true } },
+          }
+        },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            brand: true,
+            model: true,
+            vehicleType: true
+          }
+        }
       },
     });
   },
@@ -250,6 +308,7 @@ export const gatePassRepository = {
     purpose: string;
     transportation?: string;
     vehicleId?: string;
+    plateNumber?: string;
     driverName?: string;
     items?: any;
     destination?: string;

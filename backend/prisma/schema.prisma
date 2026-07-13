@@ -489,6 +489,7 @@ model GatePass {
   purpose            String
   transportation     String?
   vehicleId          String?         @map("vehicle_id")
+  plateNumber        String?         @map("plate_number")
   driverName         String?         @map("driver_name")
   items              Json?
   destination        String?
@@ -519,6 +520,7 @@ model GatePass {
   vehicle            Vehicle?        @relation(fields: [vehicleId], references: [id])
   qrScanLogs         QRScanLog[]
   verifications       Verification[]
+  gatePassVerifications GatePassVerification[]
 
   @@index([qrToken])
   @@index([approvalStage])
@@ -766,19 +768,46 @@ model AssetTransaction {
 }
 
 model QRScanLog {
-  id           String   @id @default(uuid())
-  qrCode       String   @map("qr_code")
-  requestId    String?  @map("request_id")
-  scannedBy    String   @map("scanned_by")
-  scannedAt    DateTime @default(now()) @map("scanned_at")
-  ipAddress    String?  @map("ip_address")
-  userAgent    String?  @map("user_agent")
+  id           String    @id @default(uuid())
+  qrCode       String    @map("qr_code")
+  requestId    String?   @map("request_id")
+  scannedBy    String    @map("scanned_by")
+  scannedAt    DateTime  @default(now()) @map("scanned_at")
+  ipAddress    String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
   action       String?
   metadata     Json?
-  scanner      User?    @relation(fields: [scannedBy], references: [id])
+  scanner      User?     @relation(fields: [scannedBy], references: [id])
   gatePass     GatePass? @relation(fields: [requestId], references: [requestId], onDelete: SetNull)
 
   @@index([qrCode])
   @@index([requestId])
   @@map("qr_scan_logs")
+}
+
+model GatePassVerification {
+  id                String    @id @default(uuid())
+  gatePassId        String    @map("gate_pass_id")
+  requestId         String    @map("request_id")
+  verificationToken String    @unique @map("verification_token")
+  status            String    @default("generated") // generated, ready, verified, released, expired, cancelled
+  expiresAt         DateTime  @map("expires_at")
+  scannedAt         DateTime? @map("scanned_at")
+  releasedAt        DateTime? @map("released_at")
+  releasedBy        String?   @map("released_by")
+  scanCount         Int       @default(0) @map("scan_count")
+  guardEmployeeId   String?   @map("guard_employee_id")
+  guardIPAddress    String?   @map("guard_ip_address")
+  guardDevice       String?   @map("guard_device")
+  guardBrowser      String?   @map("guard_browser")
+  remarks           String?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  gatePass          GatePass  @relation(fields: [gatePassId], references: [id], onDelete: Cascade)
+
+  @@index([verificationToken])
+  @@index([gatePassId])
+  @@index([status])
+  @@map("gate_pass_verifications")
 }

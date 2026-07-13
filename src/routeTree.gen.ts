@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as VerifyTokenRouteImport } from './routes/verify.$token'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
@@ -31,6 +32,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const VerifyTokenRoute = VerifyTokenRouteImport.update({
+  id: '/verify/$token',
+  path: '/verify/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
+  '/verify/$token': typeof VerifyTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/m/$moduleId': typeof AppMModuleIdRoute
 }
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
+  '/verify/$token': typeof VerifyTokenRoute
   '/app': typeof AppIndexRoute
   '/app/m/$moduleId': typeof AppMModuleIdRoute
 }
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
+  '/verify/$token': typeof VerifyTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/m/$moduleId': typeof AppMModuleIdRoute
 }
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/profile'
+    | '/verify/$token'
     | '/app/'
     | '/app/m/$moduleId'
   fileRoutesByTo: FileRoutesByTo
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/profile'
+    | '/verify/$token'
     | '/app'
     | '/app/m/$moduleId'
   id:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/profile'
+    | '/verify/$token'
     | '/app/'
     | '/app/m/$moduleId'
   fileRoutesById: FileRoutesById
@@ -112,6 +124,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  VerifyTokenRoute: typeof VerifyTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -136,6 +149,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/verify/$token': {
+      id: '/verify/$token'
+      path: '/verify/$token'
+      fullPath: '/verify/$token'
+      preLoaderRoute: typeof VerifyTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/profile': {
       id: '/app/profile'
@@ -189,6 +209,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  VerifyTokenRoute: VerifyTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

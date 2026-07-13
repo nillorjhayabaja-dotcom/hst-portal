@@ -22,6 +22,7 @@ import { StatCard } from "@/components/app/StatCard";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "./charts";
 import { RecentRequests, ApprovalQueueCard, QuickActions, ActivityFeed } from "./widgets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDashboardOverview, useDashboardMetrics } from "@/services/dashboard-hooks";
 
 function StatGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{children}</div>;
@@ -32,6 +33,27 @@ function TwoCol({ children }: { children: React.ReactNode }) {
 }
 
 export function RoleDashboard({ role }: { role: RoleId }) {
+  const { data: overview } = useDashboardOverview();
+  const { data: metrics } = useDashboardMetrics();
+  
+  const stats = overview || {
+    totalEmployees: 0,
+    activeEmployees: 0,
+    totalDepartments: 0,
+    pendingGatePasses: 0,
+    approvedGatePasses: 0,
+    rejectedGatePasses: 0,
+    pendingLeaves: 0,
+    approvedLeaves: 0,
+    pendingPurchaseRequests: 0,
+    pendingMRFs: 0,
+    visitorsToday: 0,
+    vehiclesInUse: 0,
+    assetsAssigned: 0,
+    unreadNotifications: 0,
+    pendingApprovals: 0,
+  };
+
   switch (role) {
     case "super_admin":
     case "admin":
@@ -40,32 +62,31 @@ export function RoleDashboard({ role }: { role: RoleId }) {
           <StatGrid>
             <StatCard
               label="Total Employees"
-              value="714"
+              value={String(stats.totalEmployees)}
               icon={Users}
               tone="primary"
-              trend={{ value: "+18", up: true }}
-              hint="this month"
+              hint="active employees"
             />
             <StatCard
               label="Pending Approvals"
-              value="27"
+              value={String(stats.pendingApprovals)}
               icon={FileClock}
               tone="warning"
               hint="across modules"
             />
             <StatCard
-              label="Completed Today"
-              value="142"
+              label="Approved Today"
+              value={String(metrics?.approvedToday || 0)}
               icon={CheckCircle2}
               tone="success"
-              trend={{ value: "+12%", up: true }}
+              trend={metrics?.approvalRate ? { value: `${metrics.approvalRate}%`, up: true } : undefined}
             />
             <StatCard
-              label="Users Online"
-              value="63"
+              label="Unread Notifications"
+              value={String(stats.unreadNotifications)}
               icon={Activity}
               tone="info"
-              hint="live sessions"
+              hint="alerts"
             />
           </StatGrid>
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -101,22 +122,20 @@ export function RoleDashboard({ role }: { role: RoleId }) {
         <>
           <StatGrid>
             <StatCard
-              label="Production Output"
-              value="95%"
+              label="Total Requests"
+              value={String(metrics?.totalRequests || 0)}
               icon={Factory}
               tone="success"
-              trend={{ value: "+3%", up: true }}
-              hint="vs target"
+              hint="all time"
             />
             <StatCard
-              label="Monthly Requests"
-              value="590"
+              label="Pending Approvals"
+              value={String(stats.pendingApprovals)}
               icon={ClipboardList}
               tone="primary"
-              trend={{ value: "+30", up: true }}
             />
-            <StatCard label="Approval Rate" value="91.5%" icon={CheckCircle2} tone="info" />
-            <StatCard label="Departments" value="8" icon={Building2} tone="accent" hint="active" />
+            <StatCard label="Approval Rate" value={`${metrics?.approvalRate || 0}%`} icon={CheckCircle2} tone="info" />
+            <StatCard label="Departments" value={String(stats.totalDepartments || 0)} icon={Building2} tone="accent" hint="active" />
           </StatGrid>
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -163,21 +182,19 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Department Staff" value="342" icon={Users} tone="primary" />
-            <StatCard label="Pending Team Requests" value="9" icon={FileClock} tone="warning" />
+            <StatCard label="Department Staff" value={String(stats.totalEmployees || 0)} icon={Users} tone="primary" />
+            <StatCard label="Pending Requests" value={String(stats.pendingApprovals || 0)} icon={FileClock} tone="warning" />
             <StatCard
-              label="Approved This Week"
-              value="41"
+              label="Approved Today"
+              value={String(metrics?.approvedToday || 0)}
               icon={CheckCircle2}
               tone="success"
-              trend={{ value: "+7", up: true }}
             />
             <StatCard
-              label="Dept. Performance"
-              value="96%"
+              label="Rejected Today"
+              value={String(metrics?.rejectedToday || 0)}
               icon={TrendingUp}
               tone="info"
-              trend={{ value: "+2%", up: true }}
             />
           </StatGrid>
           <TwoCol>
@@ -200,10 +217,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Team Members" value="28" icon={Users} tone="primary" />
-            <StatCard label="Recommendation Queue" value="6" icon={FileClock} tone="warning" />
-            <StatCard label="Recommended Today" value="11" icon={CheckCircle2} tone="success" />
-            <StatCard label="On Leave" value="3" icon={CalendarDays} tone="info" />
+            <StatCard label="Team Members" value={String(stats.totalEmployees || 0)} icon={Users} tone="primary" />
+            <StatCard label="Pending Approvals" value={String(stats.pendingApprovals || 0)} icon={FileClock} tone="warning" />
+            <StatCard label="Approved Today" value={String(metrics?.approvedToday || 0)} icon={CheckCircle2} tone="success" />
+            <StatCard label="On Leave" value={String(stats.pendingLeaves || 0)} icon={CalendarDays} tone="info" />
           </StatGrid>
           <TwoCol>
             <div className="lg:col-span-2">
@@ -218,10 +235,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Total Employees" value="714" icon={Users} tone="primary" />
-            <StatCard label="On Leave Today" value="18" icon={CalendarDays} tone="warning" />
-            <StatCard label="Pending Leave" value="12" icon={FileClock} tone="info" />
-            <StatCard label="Visitors Today" value="7" icon={UserCheck} tone="accent" />
+            <StatCard label="Total Employees" value={String(stats.totalEmployees || 0)} icon={Users} tone="primary" />
+            <StatCard label="On Leave" value={String(stats.pendingLeaves || 0)} icon={CalendarDays} tone="warning" />
+            <StatCard label="Pending Leave" value={String(stats.pendingLeaves || 0)} icon={FileClock} tone="info" />
+            <StatCard label="Visitors Today" value={String(stats.visitorsToday || 0)} icon={UserCheck} tone="accent" />
           </StatGrid>
           <TwoCol>
             <div className="lg:col-span-2">
@@ -250,16 +267,16 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="Gate Pass Queue" value="14" icon={DoorOpen} tone="warning" />
-            <StatCard label="Vehicles Assigned" value="9" icon={Car} tone="primary" />
+            <StatCard label="Gate Pass Queue" value={String(stats.pendingGatePasses || 0)} icon={DoorOpen} tone="warning" />
+            <StatCard label="Vehicles In Use" value={String(stats.vehiclesInUse || 0)} icon={Car} tone="primary" />
             <StatCard
-              label="Meal Allowance"
-              value="52"
+              label="Assets Assigned"
+              value={String(stats.assetsAssigned || 0)}
               icon={Utensils}
               tone="info"
-              hint="to process"
+              hint="active"
             />
-            <StatCard label="Final Approved Today" value="23" icon={CheckCircle2} tone="success" />
+            <StatCard label="Approved Today" value={String(metrics?.approvedToday || 0)} icon={CheckCircle2} tone="success" />
           </StatGrid>
           <TwoCol>
             <div className="lg:col-span-2">
@@ -282,15 +299,15 @@ export function RoleDashboard({ role }: { role: RoleId }) {
         <>
           <StatGrid>
             <StatCard
-              label="Released Gate Pass"
-              value="23"
+              label="Approved Gate Pass"
+              value={String(stats.approvedGatePasses || 0)}
               icon={DoorOpen}
               tone="success"
               hint="today"
             />
-            <StatCard label="Vehicle Exits" value="11" icon={LogOut} tone="warning" />
-            <StatCard label="Vehicle Entries" value="9" icon={LogIn} tone="info" />
-            <StatCard label="Visitor Check-Ins" value="7" icon={UserCheck} tone="primary" />
+            <StatCard label="Rejected Gate Pass" value={String(stats.rejectedGatePasses || 0)} icon={LogOut} tone="warning" />
+            <StatCard label="Pending Gate Pass" value={String(stats.pendingGatePasses || 0)} icon={LogIn} tone="info" />
+            <StatCard label="Visitors Today" value={String(stats.visitorsToday || 0)} icon={UserCheck} tone="primary" />
           </StatGrid>
           <TwoCol>
             <div className="lg:col-span-2">
@@ -313,10 +330,10 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="My Requests" value="8" icon={ClipboardList} tone="primary" />
-            <StatCard label="Pending" value="3" icon={FileClock} tone="warning" />
-            <StatCard label="Approved" value="4" icon={CheckCircle2} tone="success" />
-            <StatCard label="Notifications" value="2" icon={Activity} tone="info" hint="unread" />
+            <StatCard label="My Requests" value={String(metrics?.totalRequests || 0)} icon={ClipboardList} tone="primary" />
+            <StatCard label="Pending" value={String(stats.pendingApprovals || 0)} icon={FileClock} tone="warning" />
+            <StatCard label="Approved" value={String(metrics?.approvedToday || 0)} icon={CheckCircle2} tone="success" />
+            <StatCard label="Notifications" value={String(stats.unreadNotifications || 0)} icon={Activity} tone="info" hint="unread" />
           </StatGrid>
           <div className="mt-6">
             <QuickActions

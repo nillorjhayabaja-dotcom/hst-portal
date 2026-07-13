@@ -8,8 +8,7 @@ import {
 } from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
-import { REQUESTS } from "@/mock/data";
-import { MOCK_COMMENTS, MOCK_ATTACHMENTS, MOCK_TIMELINE_EVENTS } from "@/mock/enterprise-data";
+import { useApprovalRequests } from "@/services/approval-hooks";
 import { CalendarCheck, Clock, CheckCircle, XCircle, TrendingUp, Users } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import {
@@ -121,7 +120,8 @@ export function LeaveModule() {
   const [showReturn, setShowReturn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const leaves = REQUESTS.filter((r) => r.type === "Leave").map((r) => ({ ...r, type: r.type }));
+  const { data: approvalData } = useApprovalRequests({ moduleId: "leave" });
+  const leaves = (approvalData?.data || []).map((r: any) => ({ ...r, type: "Leave" }));
 
   const stats = {
     total: leaves.length,
@@ -196,9 +196,9 @@ export function LeaveModule() {
           onApprove={() => setShowApprove(true)}
           onReject={() => setShowReject(true)}
           onReturn={() => setShowReturn(true)}
-          timeline={MOCK_TIMELINE_EVENTS}
-          comments={MOCK_COMMENTS}
-          attachments={MOCK_ATTACHMENTS}
+          timeline={[]}
+          comments={[]}
+          attachments={[]}
         />
       )}
 

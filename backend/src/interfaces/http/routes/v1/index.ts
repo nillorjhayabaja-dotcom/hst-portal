@@ -11,6 +11,8 @@ import auditRoutes from './audit.routes';
 import workflowRoutes from './workflow.routes';
 import attachmentRoutes from './attachment.routes';
 import commentRoutes from './comment.routes';
+import verificationRoutes from './verification.routes';
+import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
 
@@ -30,5 +32,7 @@ router.use('/audit', auditRoutes);
 router.use('/workflows', workflowRoutes);
 router.use('/attachments', attachmentRoutes);
 router.use('/comments', commentRoutes);
+router.use('/verification', verificationRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

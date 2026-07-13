@@ -182,9 +182,11 @@ export function GatePassModule() {
 
   const handleRefresh = async () => {
     await fetchGatePasses();
-    // Re-fetch workflow if drawer is open
+    // Re-fetch the selected request and workflow if drawer is open
     if (selectedRequest && drawerOpen) {
       try {
+        const updated = await gatePassApi.getById(selectedRequest.id);
+        setSelectedRequest(updated);
         const workflow = await gatePassApi.getWorkflowStatus(selectedRequest.requestId);
         setSelectedWorkflow(workflow);
       } catch {

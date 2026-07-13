@@ -3,12 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { REQUESTS, NOTIFICATIONS } from "@/mock/data";
 import { cn } from "@/lib/utils";
 import {
   getEmployeeDisplayName,
   getDepartmentName,
 } from "@/utils/display";
+import { useApprovalRequests } from "@/services/approval-hooks";
+import { useNotifications } from "@/services/notification-hooks";
 
 export function RecentRequests({
   title = "Recent Requests",
@@ -16,10 +17,28 @@ export function RecentRequests({
   limit = 5,
 }: {
   title?: string;
-  filter?: (r: (typeof REQUESTS)[number]) => boolean;
+  filter?: (r: any) => boolean;
   limit?: number;
 }) {
-  const rows = (filter ? REQUESTS.filter(filter) : REQUESTS).slice(0, limit);
+  const { data, isLoading } = useApprovalRequests({ pageSize: limit });
+  const requests = data?.data || [];
+  const rows = filter ? requests.filter(filter) : requests;
+  
+  if (isLoading) {
+    return (
+      <Card className="shadow-card">
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            Loading...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-card">
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
@@ -31,7 +50,7 @@ export function RecentRequests({
         </Button>
       </CardHeader>
       <CardContent className="space-y-1">
-        {rows.map((r) => (
+        {rows.map((r: any) => (
           <div
             key={r.id}
             className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
@@ -45,23 +64,43 @@ export function RecentRequests({
             <StatusBadge status={r.status} />
           </div>
         ))}
+        {rows.length === 0 && (
+          <p className="py-4 text-center text-sm text-muted-foreground">No requests found</p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export function ApprovalQueueCard({ title = "Pending Approvals" }: { title?: string }) {
-  const rows = REQUESTS.filter((r) => ["Pending", "In Review"].includes(r.status)).slice(0, 4);
+  const { data, isLoading } = useApprovalRequests({ status: "pending", pageSize: 4 });
+  const requests = data?.data || [];
+  
+  if (isLoading) {
+    return (
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            Loading...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-card">
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <span className="rounded-full bg-warning/20 px-2 py-0.5 text-xs font-semibold text-warning-foreground">
-          {rows.length} waiting
+          {requests.length} waiting
         </span>
       </CardHeader>
       <CardContent className="space-y-2">
-        {rows.map((r) => (
+        {requests.map((r: any) => (
           <div
             key={r.id}
             className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
@@ -69,7 +108,7 @@ export function ApprovalQueueCard({ title = "Pending Approvals" }: { title?: str
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
               <p className="text-xs text-muted-foreground">
-                {r.type} · {getDepartmentName(r.department as any)}
+                {r.moduleId} · {getDepartmentName(r.department as any)}
               </p>
             </div>
             <div className="flex shrink-0 gap-1.5">
@@ -82,6 +121,9 @@ export function ApprovalQueueCard({ title = "Pending Approvals" }: { title?: str
             </div>
           </div>
         ))}
+        {requests.length === 0 && (
+          <p className="py-4 text-center text-sm text-muted-foreground">No pending approvals</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -116,13 +158,31 @@ export function QuickActions({
 }
 
 export function ActivityFeed({ title = "Recent Activity" }: { title?: string }) {
+  const { data, isLoading } = useNotifications({ pageSize: 5 });
+  const notifications = data?.data || [];
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            Loading...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {NOTIFICATIONS.map((n) => (
+        {notifications.map((n: any) => (
           <div key={n.id} className="flex gap-3">
             <span
               className={cn(
@@ -136,10 +196,15 @@ export function ActivityFeed({ title = "Recent Activity" }: { title?: string }) 
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{n.title}</p>
               <p className="truncate text-xs text-muted-foreground">{n.message}</p>
-              <p className="text-[11px] text-muted-foreground/70">{n.time}</p>
+              <p className="text-[11px] text-muted-foreground/70">
+                {new Date(n.createdAt).toLocaleDateString()}
+              </p>
             </div>
           </div>
         ))}
+        {notifications.length === 0 && (
+          <p className="py-4 text-center text-sm text-muted-foreground">No recent activity</p>
+        )}
       </CardContent>
     </Card>
   );

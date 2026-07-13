@@ -12,45 +12,35 @@ import {
   AlertCircle,
   Info,
   Megaphone,
-  Clock,
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  MOCK_APPROVAL_NOTIFICATIONS,
-  MOCK_ANNOUNCEMENTS,
-  MOCK_REMINDERS,
-} from "@/mock/enterprise-data";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: string;
-  read: boolean;
-  requester?: string | { displayName: string };
-  priority?: string;
-}
+import { useNotifications, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "@/services/notification-hooks";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function NotificationCenter() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(
-    MOCK_APPROVAL_NOTIFICATIONS,
-  );
   const navigate = useNavigate();
+  const { data, isLoading } = useNotifications({ pageSize: 50 });
+  const markAsRead = useMarkNotificationAsRead();
+  const markAllAsRead = useMarkAllNotificationsAsRead();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const notifications = data?.data || [];
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleMarkAsRead = (id: string) => {
+    markAsRead.mutate(id);
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success("All notifications marked as read");
+  const handleMarkAllAsRead = () => {
+    if (user?.id) {
+      markAllAsRead.mutate(user.id, {
+        onSuccess: () => toast.success("All notifications marked as read"),
+      });
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -87,6 +77,56 @@ export function NotificationCenter() {
     );
   };
 
+  const renderNotification = (n: any) => (
+    <button
+      key={n.id}
+      onClick={() => handleMarkAsRead(n.id)}
+      className={cn(
+        "flex w-full items-start gap-3 px-6 py-4 text-left transition-colors hover:bg-muted/50",
+        !n.isRead && "bg-primary/5",
+      )}
+    >
+      <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p
+            className={cn(
+              "text-sm truncate",
+              !n.isRead ? "font-semibold text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {n.title}
+          </p>
+          {!n.isRead && (
+            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+          )}
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+          {n.message}
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground/60">
+            {new Date(n.createdAt).toLocaleDateString()}
+          </span>
+          {getTypeBadge(n.type)}
+          {n.priority && n.priority !== "Normal" && (
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                n.priority === "High" || n.priority === "Urgent"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {n.priority}
+            </span>
+          )}
+        </div>
+      </div>
+      <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/40" />
+    </button>
+  );
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -116,7 +156,7 @@ export function NotificationCenter() {
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-1.5 text-xs"
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
               >
                 <CheckCheck className="size-3.5" />
                 Mark all read
@@ -137,19 +177,17 @@ export function NotificationCenter() {
               <TabsTrigger value="system" className="text-xs data-[state=active]:shadow-none">
                 System
               </TabsTrigger>
-              <TabsTrigger
-                value="announcements"
-                className="text-xs data-[state=active]:shadow-none"
-              >
-                Announcements
-              </TabsTrigger>
             </TabsList>
           </div>
 
           <TabsContent value="all" className="flex-1 p-0 m-0">
             <ScrollArea className="h-full">
               <div className="divide-y divide-border">
-                {notifications.length === 0 ? (
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
+                    Loading...
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="flex flex-col items-center gap-3 py-16 text-center">
                     <Bell className="size-10 text-muted-foreground/30" />
                     <div>
@@ -158,53 +196,7 @@ export function NotificationCenter() {
                     </div>
                   </div>
                 ) : (
-                  notifications.map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => markAsRead(n.id)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-6 py-4 text-left transition-colors hover:bg-muted/50",
-                        !n.read && "bg-primary/5",
-                      )}
-                    >
-                      <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={cn(
-                              "text-sm truncate",
-                              !n.read ? "font-semibold text-foreground" : "text-muted-foreground",
-                            )}
-                          >
-                            {n.title}
-                          </p>
-                          {!n.read && (
-                            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
-                          {n.message}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-[10px] text-muted-foreground/60">{n.time}</span>
-                          {getTypeBadge(n.type)}
-                          {n.priority && n.priority !== "Normal" && (
-                            <span
-                              className={cn(
-                                "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                                n.priority === "High" || n.priority === "Urgent"
-                                  ? "bg-destructive/10 text-destructive"
-                                  : "bg-muted text-muted-foreground",
-                              )}
-                            >
-                              {n.priority}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/40" />
-                    </button>
-                  ))
+                  notifications.map(renderNotification)
                 )}
               </div>
             </ScrollArea>
@@ -214,44 +206,8 @@ export function NotificationCenter() {
             <ScrollArea className="h-full">
               <div className="divide-y divide-border">
                 {notifications
-                  .filter((n) => n.type === "approval")
-                  .map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => markAsRead(n.id)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-6 py-4 text-left transition-colors hover:bg-muted/50",
-                        !n.read && "bg-primary/5",
-                      )}
-                    >
-                      <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={cn(
-                            "text-sm",
-                            !n.read ? "font-semibold" : "text-muted-foreground",
-                          )}
-                        >
-                          {n.title}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
-                        {n.requester && (
-                          <p className="mt-1 text-[10px] text-muted-foreground/60">
-                            From: {typeof n.requester === "string" ? n.requester : n.requester?.displayName}
-                          </p>
-                        )}
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-[10px] text-muted-foreground/60">{n.time}</span>
-                          {n.priority && n.priority !== "Normal" && (
-                            <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
-                              {n.priority}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/40" />
-                    </button>
-                  ))}
+                  .filter((n: any) => n.type === "approval")
+                  .map(renderNotification)}
               </div>
             </ScrollArea>
           </TabsContent>
@@ -260,56 +216,8 @@ export function NotificationCenter() {
             <ScrollArea className="h-full">
               <div className="divide-y divide-border">
                 {notifications
-                  .filter((n) => n.type === "system" || n.type === "alert" || n.type === "info")
-                  .map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => markAsRead(n.id)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-6 py-4 text-left transition-colors hover:bg-muted/50",
-                        !n.read && "bg-primary/5",
-                      )}
-                    >
-                      <div className="mt-0.5 shrink-0">{getTypeIcon(n.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={cn(
-                            "text-sm",
-                            !n.read ? "font-semibold" : "text-muted-foreground",
-                          )}
-                        >
-                          {n.title}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
-                        <span className="mt-1 block text-[10px] text-muted-foreground/60">
-                          {n.time}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="announcements" className="flex-1 p-0 m-0">
-            <ScrollArea className="h-full">
-              <div className="divide-y divide-border">
-                {MOCK_ANNOUNCEMENTS.map((ann) => (
-                  <div key={ann.id} className="px-6 py-4">
-                    <div className="flex items-start gap-3">
-                      <Megaphone className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{ann.title}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{ann.message}</p>
-                        <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground/60">
-                          <span>{ann.time}</span>
-                          <span>·</span>
-                          <span>{ann.author}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  .filter((n: any) => n.type === "system" || n.type === "alert" || n.type === "info")
+                  .map(renderNotification)}
               </div>
             </ScrollArea>
           </TabsContent>

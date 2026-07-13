@@ -11,12 +11,11 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Search, Clock, Hash, LayoutDashboard, FileText, User, Building2 } from "lucide-react";
-import { searchEnterprise } from "@/services/search-service";
-import { MOCK_RECENT_SEARCHES } from "@/mock/enterprise-data";
+import { searchApi } from "@/services/search-api";
 import { cn } from "@/lib/utils";
-import type { SearchResult } from "@/types/enterprise";
+import { useAuth } from "@/contexts/AuthContext";
 
-const ICON_MAP: Record<string, typeof Search> = {
+const ICON_MAP: Record<string, any> = {
   LayoutDashboard,
   FileText,
   User,
@@ -26,9 +25,11 @@ const ICON_MAP: Record<string, typeof Search> = {
 };
 
 export function GlobalSearch() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,20 +49,38 @@ export function GlobalSearch() {
     if (open) {
       setQuery("");
       setResults([]);
+      // Load recent searches when opening
+      if (user?.id) {
+        searchApi.getRecentSearches(user.id, 5).then(setRecentSearches).catch(() => setRecentSearches([
+          "Gate Pass",
+          "Leave request",
+          "GP-2026",
+        ]));
+      }
     }
-  }, [open]);
+  }, [open, user?.id]);
 
-  const handleSearch = useCallback((value: string) => {
+  const handleSearch = useCallback(async (value: string) => {
     setQuery(value);
     if (value.trim()) {
-      setResults(searchEnterprise({ q: value, limit: 8 }));
+      try {
+        const searchResults = await searchApi.search({ query: value, pageSize: 8 });
+        setResults(searchResults.data || []);
+        
+        // Save the search
+        if (user?.id) {
+          searchApi.saveSearch(user.id, value, 'global').catch(() => {});
+        }
+      } catch {
+        setResults([]);
+      }
     } else {
       setResults([]);
     }
-  }, []);
+  }, [user?.id]);
 
   const handleSelect = useCallback(
-    (result: SearchResult) => {
+    (result: any) => {
       setOpen(false);
       if (result.to) {
         navigate({ to: result.to });
@@ -121,10 +140,10 @@ export function GlobalSearch() {
             </CommandEmpty>
           )}
 
-          {!query.trim() && MOCK_RECENT_SEARCHES.length > 0 && (
+          {!query.trim() && recentSearches.length > 0 && (
             <>
               <CommandGroup heading="Recent Searches">
-                {MOCK_RECENT_SEARCHES.map((term) => (
+                {recentSearches.map((term) => (
                   <CommandItem
                     key={term}
                     onSelect={() => handleSearch(term)}
@@ -173,11 +192,11 @@ export function GlobalSearch() {
               {/* Group results by type */}
               {(["module", "request", "employee", "department", "control-number"] as const).map(
                 (type) => {
-                  const typeResults = results.filter((r) => r.type === type);
+                  const typeResults = results.filter((r: any) => r.type === type);
                   if (typeResults.length === 0) return null;
                   return (
                     <CommandGroup key={type} heading={getTypeLabel(type)}>
-                      {typeResults.map((result) => (
+                      {typeResults.map((result: any) => (
                         <CommandItem
                           key={result.id}
                           onSelect={() => handleSelect(result)}

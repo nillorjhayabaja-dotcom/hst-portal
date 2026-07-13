@@ -62,6 +62,39 @@ async function main() {
       description: 'Department manager',
     },
   });
+  const supervisor = await prisma.role.upsert({
+    where: { id: 'supervisor' },
+    update: {},
+    create: {
+      id: 'supervisor',
+      name: 'Supervisor',
+      shortName: 'SUP',
+      level: 5,
+      description: 'Department supervisor - provides recommendation',
+    },
+  });
+  const gad = await prisma.role.upsert({
+    where: { id: 'gad' },
+    update: {},
+    create: {
+      id: 'gad',
+      name: 'GAD',
+      shortName: 'GAD',
+      level: 3,
+      description: 'General Administration Department - final approval',
+    },
+  });
+  const security = await prisma.role.upsert({
+    where: { id: 'security' },
+    update: {},
+    create: {
+      id: 'security',
+      name: 'Security',
+      shortName: 'SEC',
+      level: 8,
+      description: 'Security personnel - gate pass release',
+    },
+  });
   const employee = await prisma.role.upsert({
     where: { id: 'employee' },
     update: {},
@@ -85,6 +118,75 @@ async function main() {
     })),
   });
 
+  // Permissions: supervisor role
+  await prisma.permission.deleteMany({ where: { roleId: supervisor.id } });
+  await prisma.permission.createMany({
+    data: [
+      { roleId: supervisor.id, moduleId: 'employees', actions: ['view'], scope: 'own' },
+      {
+        roleId: supervisor.id,
+        moduleId: 'gate-pass',
+        actions: ['create', 'view', 'edit', 'approve'],
+        scope: 'department',
+      },
+    ],
+  });
+
+  // Permissions: manager role
+  await prisma.permission.deleteMany({ where: { roleId: manager.id } });
+  await prisma.permission.createMany({
+    data: [
+      { roleId: manager.id, moduleId: 'employees', actions: ['view'], scope: 'department' },
+      {
+        roleId: manager.id,
+        moduleId: 'gate-pass',
+        actions: ['create', 'view', 'edit', 'approve'],
+        scope: 'department',
+      },
+      { roleId: manager.id, moduleId: 'leave', actions: ['create', 'view', 'approve'], scope: 'department' },
+    ],
+  });
+
+  // Permissions: admin role
+  await prisma.permission.deleteMany({ where: { roleId: admin.id } });
+  await prisma.permission.createMany({
+    data: [
+      {
+        roleId: admin.id,
+        moduleId: 'gate-pass',
+        actions: ['create', 'view', 'edit', 'approve'],
+        scope: 'all',
+      },
+    ],
+  });
+
+  // Permissions: GAD role
+  await prisma.permission.deleteMany({ where: { roleId: gad.id } });
+  await prisma.permission.createMany({
+    data: [
+      {
+        roleId: gad.id,
+        moduleId: 'gate-pass',
+        actions: ['view', 'approve'],
+        scope: 'all',
+      },
+    ],
+  });
+
+  // Permissions: Security role
+  await prisma.permission.deleteMany({ where: { roleId: security.id } });
+  await prisma.permission.createMany({
+    data: [
+      {
+        roleId: security.id,
+        moduleId: 'gate-pass',
+        actions: ['view', 'edit'],
+        scope: 'all',
+      },
+    ],
+  });
+
+  // Permissions: employee role
   await prisma.permission.deleteMany({ where: { roleId: employee.id } });
   await prisma.permission.createMany({
     data: [
@@ -166,20 +268,35 @@ async function main() {
     data: [
       {
         workflowId: gatePassWorkflow.id,
-        name: 'Manager Approval',
-        roleId: 'manager',
+        name: 'Recommendation',
+        roleId: 'supervisor',
         stepOrder: 1,
         isRequired: true,
-        label: 'Manager Review',
+        label: 'Supervisor Recommendation',
+        description: 'Supervisor reviews and recommends the gate pass',
         autoApprove: false,
       },
       {
         workflowId: gatePassWorkflow.id,
-        name: 'Security Release',
+        name: 'Noted By',
         roleId: 'admin',
         stepOrder: 2,
         isRequired: true,
-        label: 'Security Check',
+        label: 'Administrator / Car Assignee',
+        description: 'Administrator notes and assigns vehicle',
+        autoApprove: false,
+        conditionField: 'needsManagerNoted',
+        conditionOperator: 'neq',
+        conditionValue: 'false',
+      },
+      {
+        workflowId: gatePassWorkflow.id,
+        name: 'GAD Approval',
+        roleId: 'gad',
+        stepOrder: 3,
+        isRequired: true,
+        label: 'General Administration Approval',
+        description: 'GAD final approval - QR code generated after this',
         autoApprove: false,
       },
     ],

@@ -31,6 +31,7 @@ import {
   Download,
   Shield,
   CheckCircle,
+  Printer,
 } from "lucide-react";
 import {
   getEmployeeDisplayName,
@@ -505,34 +506,51 @@ export function GatePassDetailsDrawer({
             {gatePass.qrCode && (
               <>
                 <Separator />
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                    <QrCode className="size-4" />
-                    QR Code
+                <div className="bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                    <QrCode className="size-5" />
+                    Gate Pass QR Code - Show this to Security Guard
                   </h4>
-                  <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
-                    <div className="border-2 border-foreground/20 p-1 rounded">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-lg">
                       <img
                         src={`data:image/png;base64,${gatePass.qrCode}`}
-                        alt="Gate Pass QR"
-                        className="w-24 h-24"
+                        alt="Gate Pass QR Code"
+                        className="w-48 h-48"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.download = `${gatePass.controlNumber}-qr.png`;
-                          link.href = `data:image/png;base64,${gatePass.qrCode}`;
-                          link.click();
-                        }}
-                      >
-                        <Download className="size-4" />
-                        Download PNG
-                      </Button>
+                    <div className="text-center space-y-2">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Present this QR code to the Security Guard at the gate
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
+                        Control Number: <span className="font-mono font-bold">{gatePass.controlNumber}</span>
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-2 bg-blue-600 hover:bg-blue-700"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.download = `${gatePass.controlNumber}-qr.png`;
+                            link.href = `data:image/png;base64,${gatePass.qrCode}`;
+                            link.click();
+                          }}
+                        >
+                          <Download className="size-4" />
+                          Download QR Code
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => window.print()}
+                        >
+                          <Printer className="size-4" />
+                          Print
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

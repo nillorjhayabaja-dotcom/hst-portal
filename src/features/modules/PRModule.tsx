@@ -8,8 +8,6 @@ import {
 } from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
 import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
-import { REQUESTS } from "@/mock/data";
-import { MOCK_COMMENTS, MOCK_ATTACHMENTS, MOCK_TIMELINE_EVENTS } from "@/mock/enterprise-data";
 import { ShoppingCart, Clock, CheckCircle, XCircle, DollarSign, TrendingUp } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import {
@@ -21,6 +19,7 @@ import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { useAuth } from "@/contexts/AuthContext";
 import { approveRequest, rejectRequest, returnRequest } from "@/services/approval-engine";
+import { useApprovalRequests } from "@/services/approval-hooks";
 import {
   getEmployeeDisplayName,
   getDepartmentName,
@@ -115,16 +114,17 @@ export function PRModule() {
   const [showReturn, setShowReturn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const prs = REQUESTS.filter((r) => r.type === "Purchase Request").map((r) => ({
+  const { data: approvalData } = useApprovalRequests({ moduleId: "purchase-request" });
+  const prs = (approvalData?.data || []).map((r: any) => ({
     ...r,
-    type: r.type,
+    type: "Purchase Request",
   }));
 
   const stats = {
     total: prs.length,
-    pending: prs.filter((r) => ["Pending", "In Review"].includes(r.status)).length,
-    approved: prs.filter((r) => ["Approved", "Completed"].includes(r.status)).length,
-    rejected: prs.filter((r) => ["Rejected", "Returned"].includes(r.status)).length,
+    pending: prs.filter((r: any) => ["Pending", "In Review"].includes(r.status)).length,
+    approved: prs.filter((r: any) => ["Approved", "Completed"].includes(r.status)).length,
+    rejected: prs.filter((r: any) => ["Rejected", "Returned"].includes(r.status)).length,
   };
 
   const handleApprove = (note?: string) => {
@@ -188,9 +188,9 @@ export function PRModule() {
           onApprove={() => setShowApprove(true)}
           onReject={() => setShowReject(true)}
           onReturn={() => setShowReturn(true)}
-          timeline={MOCK_TIMELINE_EVENTS}
-          comments={MOCK_COMMENTS}
-          attachments={MOCK_ATTACHMENTS}
+          timeline={[]}
+          comments={[]}
+          attachments={[]}
         />
       )}
 
