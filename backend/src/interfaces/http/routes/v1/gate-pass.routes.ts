@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { gatePassController } from '../../controllers/gate-pass.controller';
+import { documentController } from '../../controllers/document.controller';
 
 const router = Router();
 
@@ -31,5 +32,12 @@ router.post('/:requestId/print', ...gatePassController.incrementPrintCount);
 router.get('/qr/verify/:token', ...gatePassController.verifyQRToken);
 router.post('/qr/verify/:token/confirm', ...gatePassController.confirmQRVerification);
 router.get('/:requestId/qr/history', ...gatePassController.getQRScanHistory);
+
+// Document generation endpoints
+router.get('/:requestId/preview', documentController.getPreview);
+router.get('/:requestId/print', documentController.getPrintHtml);
+router.post('/:requestId/generate-pdf', documentController.generatePdf);
+router.get('/:requestId/download-pdf', documentController.downloadPdf);
+router.post('/:requestId/regenerate-pdf', documentController.regeneratePdf);
 
 export default router;

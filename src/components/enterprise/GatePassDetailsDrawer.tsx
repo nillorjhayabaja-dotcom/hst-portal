@@ -13,6 +13,7 @@ import {
   RejectDialog,
   ReturnDialog,
 } from "@/components/enterprise/EnterpriseDialogs";
+import { DocumentViewer } from "@/components/enterprise/DocumentViewer";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,6 +65,9 @@ export function GatePassDetailsDrawer({
 
   // Get user's role name
   const userRoleName = user?.role?.toLowerCase() || '';
+
+  // Determine if request is already in a terminal state (no more approval actions needed)
+  const isTerminal = ['approved', 'completed', 'rejected', 'released'].includes(gatePass.status);
 
   // Fetch comments and attachments on open
   useEffect(() => {
@@ -427,14 +431,16 @@ export function GatePassDetailsDrawer({
       uploadedAt: a.createdAt,
     }));
 
+    const hasQRCode = !!gatePass.qrCode;
+
     const tabs: DrawerTab[] = [
       {
         id: "overview",
         label: "Overview",
         content: (
           <div className="space-y-4">
-            {/* Gate Pass Fields */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Gate Pass Fields - responsive grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <DetailField
                 icon={Hash}
                 label="Control Number"
@@ -497,13 +503,13 @@ export function GatePassDetailsDrawer({
             </div>
 
             <Separator />
-            <div>
-              <h4 className="text-sm font-medium text-foreground mb-2">Status</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-medium text-foreground">Status</h4>
               <StatusBadgeEnhanced status={gatePass.status} size="md" />
             </div>
 
-            {/* QR Code - only after GAD approval */}
-            {gatePass.qrCode && (
+            {/* QR Code - in overview when available */}
+            {hasQRCode && (
               <>
                 <Separator />
                 <div className="bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -512,25 +518,25 @@ export function GatePassDetailsDrawer({
                     Gate Pass QR Code - Show this to Security Guard
                   </h4>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow-lg">
+                    <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-xs mx-auto">
                       <img
                         src={`data:image/png;base64,${gatePass.qrCode}`}
                         alt="Gate Pass QR Code"
-                        className="w-48 h-48"
+                        className="w-full h-auto max-w-[200px] mx-auto"
                       />
                     </div>
-                    <div className="text-center space-y-2">
+                    <div className="text-center space-y-2 w-full">
                       <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
                         Present this QR code to the Security Guard at the gate
                       </p>
                       <p className="text-xs text-blue-700 dark:text-blue-300">
                         Control Number: <span className="font-mono font-bold">{gatePass.controlNumber}</span>
                       </p>
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
                         <Button
                           variant="default"
                           size="sm"
-                          className="gap-2 bg-blue-600 hover:bg-blue-700"
+                          className="gap-2 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                           onClick={() => {
                             const link = document.createElement('a');
                             link.download = `${gatePass.controlNumber}-qr.png`;
@@ -544,7 +550,7 @@ export function GatePassDetailsDrawer({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-2"
+                          className="gap-2 w-full sm:w-auto"
                           onClick={() => window.print()}
                         >
                           <Printer className="size-4" />
@@ -557,18 +563,18 @@ export function GatePassDetailsDrawer({
               </>
             )}
 
-            {/* Approval Controls - Only for current approver (not requestor, not security) */}
-            {!isRequestor() && !isSecurity() && (
+            {/* Approval Controls - Only show if NOT terminal (approved/completed/rejected) */}
+            {!isTerminal && !isRequestor() && !isSecurity() && (
               <>
                 <Separator />
                 {isCurrentApprover() || isSuperAdmin() ? (
                   <div className="space-y-3">
                     <h4 className="text-sm font-medium text-foreground">Approval Actions</h4>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         onClick={() => setShowReturn(true)}
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 w-full sm:w-auto"
                         disabled={loading}
                       >
                         Return
@@ -576,14 +582,14 @@ export function GatePassDetailsDrawer({
                       <Button
                         onClick={() => setShowReject(true)}
                         variant="destructive"
-                        className="flex-1"
+                        className="flex-1 w-full sm:w-auto"
                         disabled={loading}
                       >
                         Reject
                       </Button>
                       <Button
                         onClick={() => setShowApprove(true)}
-                        className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                        className="flex-1 w-full sm:w-auto bg-success hover:bg-success/90 text-success-foreground"
                         disabled={loading}
                       >
                         Approve
@@ -632,68 +638,72 @@ export function GatePassDetailsDrawer({
         ),
       },
       {
-        id: "attachments",
-        label: "Attachments",
-        badge: attachments.length,
-        content: (
-          <div className="space-y-4">
-            {formattedAttachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No attachments yet. Attachments will appear after approval.
-              </p>
-            ) : (
-              <AttachmentSection
-                attachments={formattedAttachments}
-                readonly
-              />
-            )}
-          </div>
-        ),
+        id: "documents",
+        label: "Official Documents",
+        badge: 1,
+        content: <DocumentViewer gatePass={gatePass} workflowStatus={workflowStatus} isSuperAdmin={isSuperAdmin()} onRefresh={onRefresh} />,
       },
-      // QR Code tab - visible only when approved by GAD
-      ...(workflowStatus?.status === 'approved' || workflowStatus?.status === 'released' || workflowStatus?.status === 'completed' ? [{
+      // QR Code tab - always visible, shows QR code or placeholder
+      {
         id: "qr-code",
         label: "QR Code",
         content: (
           <div className="space-y-4">
-            <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg">
-              {gatePass.qrCode ? (
+            <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-muted/30 rounded-lg">
+              {hasQRCode ? (
                 <>
-                  <img
-                    src={`data:image/png;base64,${gatePass.qrCode}`}
-                    alt="Gate Pass QR Code"
-                    className="w-64 h-64 border-4 border-foreground/20 rounded-lg p-2 bg-white"
-                  />
-                  <div className="mt-4 text-center">
-                    <p className="text-sm font-medium text-foreground mb-2">
+                  <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-xs mx-auto">
+                    <img
+                      src={`data:image/png;base64,${gatePass.qrCode}`}
+                      alt="Gate Pass QR Code"
+                      className="w-full h-auto max-w-[250px] mx-auto"
+                    />
+                  </div>
+                  <div className="mt-4 text-center space-y-3 w-full">
+                    <p className="text-sm font-medium text-foreground">
                       Present this QR Code to the Security Guard before leaving the company premises.
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.download = `${gatePass.controlNumber}-qr.png`;
-                        link.href = `data:image/png;base64,${gatePass.qrCode}`;
-                        link.click();
-                      }}
-                    >
-                      <Download className="size-4" />
-                      Download QR Code
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button
+                        variant="default"
+                        size="default"
+                        className="gap-2 w-full sm:w-auto"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.download = `${gatePass.controlNumber}-qr.png`;
+                          link.href = `data:image/png;base64,${gatePass.qrCode}`;
+                          link.click();
+                        }}
+                      >
+                        <Download className="size-4" />
+                        Download QR Code (Offline Use)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="default"
+                        className="gap-2 w-full sm:w-auto"
+                        onClick={() => window.print()}
+                      >
+                        <Printer className="size-4" />
+                        Print
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Download the QR code to your device for offline use if internet is unavailable.
+                    </p>
                   </div>
                 </>
               ) : (
                 <div className="text-center">
                   <QrCode className="w-16 h-16 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">QR Code not yet generated</p>
+                  <p className="text-xs text-muted-foreground mt-1">Wait for final approval to generate QR code</p>
                 </div>
               )}
             </div>
           </div>
         ),
-      }] : []),
+      },
       // Scan QR tab - visible only to security role
       ...(isSecurity() ? [{
         id: "scan-qr",
@@ -722,6 +732,7 @@ export function GatePassDetailsDrawer({
         title={gatePass.controlNumber}
         description={`${gatePass.purpose}`}
         tabs={getTabs()}
+        width="sm:max-w-3xl"
       />
 
       <ApprovalSignatureDialog
@@ -805,19 +816,19 @@ function QRScannerSection({ gatePass, onRefresh }: { gatePass: GatePass; onRefre
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           value={scanInput}
           onChange={(e) => setScanInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleScan()}
           placeholder="Enter QR token or scan QR code..."
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
         />
         <button
           onClick={handleScan}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full sm:w-auto"
         >
           {loading ? 'Scanning...' : 'Scan'}
         </button>
@@ -836,7 +847,7 @@ function QRScannerSection({ gatePass, onRefresh }: { gatePass: GatePass; onRefre
           </div>
 
           <div className="space-y-2 mb-4">
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="font-semibold">Requester:</span>
                 <p>{scanResult.request.requester.displayName}</p>

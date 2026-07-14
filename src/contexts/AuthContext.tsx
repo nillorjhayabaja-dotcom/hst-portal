@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthUser } from "@/types";
+import { API_BASE_URL, API_BASE_NORMALIZED, STORAGE_KEYS } from "@/config/environment";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -18,15 +19,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const STORAGE_KEY_USER = "hst.auth.user";
-const STORAGE_KEY_REFRESH_TOKEN = "hst.auth.refreshToken";
-const STORAGE_KEY_ACCESS_TOKEN = "hst.auth.accessToken";
-
-// Backend runs on :3001 to avoid conflict with TanStack Start SSR server (:3000 default).
-const API_BASE = "http://localhost:3001";
-// Some deployments may prefix api routes with /api twice.
-// Normalize common cases by removing any trailing /api/v1 part.
-const API_BASE_NORMALIZED = API_BASE.replace(/\/?api\/?v1\/?$/i, "");
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -34,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_USER);
+      const raw = localStorage.getItem(STORAGE_KEYS.USER);
       if (raw) setUser(JSON.parse(raw));
     } catch {
       /* ignore */
@@ -43,16 +35,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const persistUser = useCallback((next: AuthUser | null) => {
-    if (next) localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(next));
-    else localStorage.removeItem(STORAGE_KEY_USER);
+    if (next) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(next));
+    else localStorage.removeItem(STORAGE_KEYS.USER);
     setUser(next);
   }, []);
 
   const refreshMe = useCallback(async () => {
-    const refreshToken = localStorage.getItem(STORAGE_KEY_REFRESH_TOKEN);
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
     if (!refreshToken) return;
 
-    const resp = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+    const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -60,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!resp.ok) {
       persistUser(null);
-      localStorage.removeItem(STORAGE_KEY_REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       return;
     }
 
     const payload = (await resp.json()) as { success: boolean; data?: any };
     // backend returns new tokens + user in `data` (depending on implementation)
     if (payload?.data?.refreshToken)
-      localStorage.setItem(STORAGE_KEY_REFRESH_TOKEN, payload.data.refreshToken);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, payload.data.refreshToken);
 
     const me = payload?.data?.user;
     if (me) persistUser(me as AuthUser);
@@ -75,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async ({ identifier, password }: { identifier: string; password: string }) => {
-      const resp = await fetch(`${API_BASE_NORMALIZED}/api/v1/auth/login`, {
+      const resp = await fetch(`${API_BASE_NORMALIZED}/auth/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ identifier, password }),
@@ -112,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { accessToken, refreshToken, user } = payload.data ?? {};
       
       // Store both access and refresh tokens
-      if (accessToken) localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, accessToken);
-      if (refreshToken) localStorage.setItem(STORAGE_KEY_REFRESH_TOKEN, refreshToken);
+      if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+      if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
 
       // Backend auth response shape differs from our frontend AuthUser.
       // Normalize so the rest of the app can rely on user.role/name/department.
@@ -124,12 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem(STORAGE_KEY_REFRESH_TOKEN);
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
     try {
       // If refresh token is stored, backend logout can still work with authenticate middleware only.
       // Keep it best-effort; always clear local state.
       if (refreshToken) {
-        await fetch(`${API_BASE}/api/v1/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ refreshToken }),
@@ -137,8 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       persistUser(null);
-      localStorage.removeItem(STORAGE_KEY_REFRESH_TOKEN);
-      localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     }
   }, [persistUser]);
 

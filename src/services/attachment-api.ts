@@ -1,5 +1,6 @@
 // Attachment API Service - Real backend integration
 import { fetchApi } from './api-client';
+import { API_BASE_URL, getAuthHeaders, STORAGE_KEYS } from '@/config/environment';
 
 export interface Attachment {
   id: string;
@@ -30,13 +31,10 @@ export const attachmentApi = {
     formData.append('entityType', entityType);
     formData.append('entityId', entityId);
 
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'}/attachments/upload`, {
+    const response = await fetch(`${API_BASE_URL}/attachments/upload`, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -55,11 +53,8 @@ export const attachmentApi = {
   },
 
   async download(id: string): Promise<Blob> {
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'}/attachments/${id}/download`, {
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+    const response = await fetch(`${API_BASE_URL}/attachments/${id}/download`, {
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -70,8 +65,7 @@ export const attachmentApi = {
   },
 
   async getDownloadUrl(id: string): Promise<string> {
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
-    return `${baseUrl}/attachments/${id}/download?token=${accessToken}`;
+    const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    return `${API_BASE_URL}/attachments/${id}/download?token=${accessToken}`;
   },
 };

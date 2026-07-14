@@ -1,6 +1,5 @@
 // Request Framework - Reusable request list, details, and wizard for every module
 import { useState, type ReactNode } from "react";
-import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { UniversalDrawer, type DrawerTab } from "@/components/enterprise/UniversalDrawer";
@@ -26,11 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CommentItem, AttachmentItem } from "@/types/enterprise";
-import {
-  getEmployeeDisplayName,
-  getDepartmentName,
-  displayValue,
-} from "@/utils/display";
+import { getEmployeeDisplayName, getDepartmentName, displayValue } from "@/utils/display";
 
 // ============================================================
 // Types
@@ -155,28 +150,23 @@ export function RequestListPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={config.moduleName}
-        description={config.description}
-        crumbs={[{ label: "Dashboard", to: "/app/dashboard" }, { label: config.moduleName }]}
-        actions={
-          onCreateNew ? (
-            <Button onClick={onCreateNew} className="gap-2">
-              <Plus className="size-4" />
-              {config.createLabel}
-            </Button>
-          ) : undefined
-        }
-      />
-
       {kpiCards && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{kpiCards}</div>
       )}
 
-      {quickActions && (
-        <div>
-          <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
-          {quickActions}
+      {(quickActions || onCreateNew) && (
+        <div className="flex items-start justify-between gap-4">
+          {quickActions && (
+            <div className="flex-1">
+              {quickActions}
+            </div>
+          )}
+          {onCreateNew && (
+            <Button onClick={onCreateNew} className="gap-2 shrink-0 mt-1">
+              <Plus className="size-4" />
+              {config.createLabel}
+            </Button>
+          )}
         </div>
       )}
 
@@ -251,8 +241,16 @@ export function RequestDetailsDrawer({
           <div className="grid grid-cols-2 gap-3">
             <DetailField icon={Hash} label="Control Number" value={request.controlNumber} />
             <DetailField icon={FileText} label="Type" value={request.type} />
-            <DetailField icon={User} label="Requester" value={getEmployeeDisplayName(request.requester)} />
-            <DetailField icon={Building2} label="Department" value={getDepartmentName(request.department)} />
+            <DetailField
+              icon={User}
+              label="Requester"
+              value={getEmployeeDisplayName(request.requester)}
+            />
+            <DetailField
+              icon={Building2}
+              label="Department"
+              value={getDepartmentName(request.department)}
+            />
             <DetailField icon={CalendarDays} label="Date Created" value={request.createdAt} />
             <DetailField icon={Clock} label="Priority" value={request.priority} />
           </div>
@@ -319,7 +317,15 @@ export function RequestDetailsDrawer({
   );
 }
 
-function DetailField({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+function DetailField({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

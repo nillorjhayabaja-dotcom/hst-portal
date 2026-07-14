@@ -1,18 +1,13 @@
 // Export Service - Uses real backend API
 import { toast } from "sonner";
+import { API_BASE_URL, getAuthHeaders } from '@/config/environment';
 
 export async function exportToPDF(data: any, filename: string): Promise<void> {
   try {
     // Call backend PDF generation endpoint
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
-    
-    const response = await fetch(`${baseUrl}/export/pdf`, {
+    const response = await fetch(`${API_BASE_URL}/export/pdf`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ data, filename }),
     });
 
@@ -40,15 +35,9 @@ export async function exportToPDF(data: any, filename: string): Promise<void> {
 
 export async function exportToExcel(data: any, filename: string): Promise<void> {
   try {
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
-    
-    const response = await fetch(`${baseUrl}/export/excel`, {
+    const response = await fetch(`${API_BASE_URL}/export/excel`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ data, filename }),
     });
 
@@ -102,15 +91,9 @@ export function printTable(data: any[], filename: string): void {
 
 export async function exportToCSV(data: any, filename: string): Promise<void> {
   try {
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
-    
-    const response = await fetch(`${baseUrl}/export/csv`, {
+    const response = await fetch(`${API_BASE_URL}/export/csv`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ data, filename }),
     });
 

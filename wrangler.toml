@@ -1,0 +1,12 @@
+# HST Enterprise Portal - Cloudflare Workers Configuration
+# Deployment: https://hst-portal.workers.dev
+
+name = "hst-portal"
+account_id = "c17088f811d1ae75fb6d7cb5ae94eccf"
+compatibility_date = "2026-07-14"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables (non-sensitive)
+[vars]
+ENVIRONMENT = "production"
+APP_NAME = "HST Enterprise Portal"

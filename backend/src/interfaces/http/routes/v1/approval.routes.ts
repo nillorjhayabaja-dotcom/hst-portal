@@ -1,70 +1,19 @@
 import { Router } from 'express';
+import { approvalController } from '../../controllers/approval.controller';
 
 const router = Router();
 
-// Approval routes - implementation coming in Sprint 4
-router.get('/', (req, res) => {
-  res.json({ success: true, message: 'Approvals endpoint', data: [], meta: null, errors: null });
-});
+// Approval Request endpoints
+router.get('/', ...approvalController.getAll);
+router.get('/:id', ...approvalController.getById);
+router.get('/pending/:userId', ...approvalController.getPending);
+router.get('/mine/:userId', ...approvalController.getMine);
 
-router.get('/pending', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Pending approvals endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
-
-router.get('/mine', (req, res) => {
-  res.json({
-    success: true,
-    message: 'My approvals endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
-
-router.get('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get approval endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
-
-router.post('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Create approval endpoint',
-    data: null,
-    meta: null,
-    errors: null,
-  });
-});
-
-router.post('/:id/approve', (req, res) => {
-  res.json({ success: true, message: 'Approve endpoint', data: null, meta: null, errors: null });
-});
-
-router.post('/:id/reject', (req, res) => {
-  res.json({ success: true, message: 'Reject endpoint', data: null, meta: null, errors: null });
-});
-
-router.post('/:id/return', (req, res) => {
-  res.json({ success: true, message: 'Return endpoint', data: null, meta: null, errors: null });
-});
-
-router.post('/:id/delegate', (req, res) => {
-  res.json({ success: true, message: 'Delegate endpoint', data: null, meta: null, errors: null });
-});
-
-router.post('/:id/recall', (req, res) => {
-  res.json({ success: true, message: 'Recall endpoint', data: null, meta: null, errors: null });
-});
+// Approval actions
+router.post('/:id/approve', ...approvalController.approve);
+router.post('/:id/reject', ...approvalController.reject);
+router.post('/:id/return', ...approvalController.returnRequest);
+router.post('/:id/delegate', ...approvalController.delegate);
+router.post('/:id/recall', ...approvalController.recall);
 
 export default router;

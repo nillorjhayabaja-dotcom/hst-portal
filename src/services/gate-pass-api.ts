@@ -1,20 +1,17 @@
 // Gate Pass API Service - Communicates with backend
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+import { API_BASE_URL, getAuthHeaders, STORAGE_KEYS } from '@/config/environment';
 
 async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  
-  // Get access token from localStorage
-  const accessToken = localStorage.getItem('hst.auth.accessToken');
+  const url = `${API_BASE_URL}${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      ...getAuthHeaders(),
       ...options?.headers,
     },
   });
@@ -22,6 +19,10 @@ async function fetchApi<T>(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
     if (response.status === 401) {
+      // Clear auth and redirect to login
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      window.location.href = '/login';
       throw new Error('Your session has expired. Please log in again.');
     }
     throw new Error(error.message || `HTTP ${response.status}`);
@@ -201,16 +202,10 @@ export const gatePassApi = {
     if (filters.page) params.append('page', String(filters.page));
     if (filters.pageSize) params.append('pageSize', String(filters.pageSize));
 
-    const url = `${API_BASE}/gate-pass?${params.toString()}`;
-    
-    // Get access token from localStorage
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass?${params.toString()}`;
     
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -243,14 +238,11 @@ export const gatePassApi = {
     if (note) formData.append('note', note);
     if (signature) formData.append('signature', signature);
 
-    const url = `${API_BASE}/gate-pass/${requestId}/approve`;
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass/${requestId}/approve`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -269,14 +261,11 @@ export const gatePassApi = {
     if (note) formData.append('note', note);
     if (signature) formData.append('signature', signature);
 
-    const url = `${API_BASE}/gate-pass/${requestId}/recommend`;
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass/${requestId}/recommend`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -294,14 +283,11 @@ export const gatePassApi = {
     if (note) formData.append('note', note);
     if (signature) formData.append('signature', signature);
 
-    const url = `${API_BASE}/gate-pass/${requestId}/noted`;
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass/${requestId}/noted`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -319,14 +305,11 @@ export const gatePassApi = {
     if (note) formData.append('note', note);
     if (signature) formData.append('signature', signature);
 
-    const url = `${API_BASE}/gate-pass/${requestId}/gado-approve`;
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass/${requestId}/gado-approve`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -378,14 +361,11 @@ export const gatePassApi = {
     const formData = new FormData();
     formData.append('signature', signature);
 
-    const url = `${API_BASE}/gate-pass/signature/upload`;
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
+    const url = `${API_BASE_URL}/gate-pass/signature/upload`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {

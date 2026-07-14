@@ -5,9 +5,8 @@ import {
   type ModuleConfig,
 } from "@/components/enterprise/RequestFramework";
 import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
-import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
 import { gatePassApi, type GatePass, type WorkflowStatus } from "@/services/gate-pass-api";
-import { DoorOpen, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
+import { DoorOpen, Clock, CheckCircle, XCircle } from "lucide-react";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
@@ -26,33 +25,6 @@ const MODULE_CONFIG: ModuleConfig = {
   createLabel: "New Gate Pass",
   description: "Create, route and release gate passes for outgoing items",
 };
-
-const GATE_PASS_ACTIONS = [
-  {
-    id: "qa1",
-    label: "New Gate Pass",
-    description: "Create a gate pass request",
-    icon: "DoorOpen",
-    action: "create",
-    color: "blue" as const,
-  },
-  {
-    id: "qa2",
-    label: "Vehicle Log",
-    description: "View vehicle exit records",
-    icon: "Truck",
-    action: "vehicles",
-    color: "teal" as const,
-  },
-  {
-    id: "qa3",
-    label: "Gate Reports",
-    description: "Monthly gate pass reports",
-    icon: "BarChart3",
-    action: "reports",
-    color: "orange" as const,
-  },
-];
 
 const GATE_COLUMNS: Column<GatePass>[] = [
   {
@@ -168,14 +140,19 @@ export function GatePassModule() {
   };
 
   const handleRowClick = async (row: GatePass) => {
-    setSelectedRequest(row);
     setDrawerOpen(true);
-    // Fetch workflow status
+    // Fetch full detail with qrCode and workflow status
     try {
-      const workflow = await gatePassApi.getWorkflowStatus(row.requestId);
+      const [fullDetail, workflow] = await Promise.all([
+        gatePassApi.getById(row.id),
+        gatePassApi.getWorkflowStatus(row.requestId),
+      ]);
+      setSelectedRequest(fullDetail);
       setSelectedWorkflow(workflow);
     } catch (error) {
-      console.error("Failed to fetch workflow status:", error);
+      console.error("Failed to fetch full gate pass detail:", error);
+      // Fallback to list row data
+      setSelectedRequest(row);
       setSelectedWorkflow(null);
     }
   };
@@ -243,7 +220,7 @@ export function GatePassModule() {
         onCreateNew={handleCreate}
         onRowClick={(row) => handleRowClick(row as unknown as GatePass)}
         kpiCards={kpiCards}
-        quickActions={<QuickActionCards actions={GATE_PASS_ACTIONS} columns={3} />}
+        quickActions={undefined}
         searchPlaceholder="Search gate passes by control no., purpose, requester..."
         filename="gate-pass-list"
         loading={dataLoading}

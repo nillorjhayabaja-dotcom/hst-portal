@@ -1,5 +1,6 @@
 // Approval API Service - Real backend integration
 import { fetchApi } from './api-client';
+import { API_BASE_URL, getAuthHeaders, STORAGE_KEYS } from '@/config/environment';
 
 export interface ApprovalRequest {
   id: string;
@@ -146,13 +147,10 @@ export const approvalApi = {
     if (data.note) formData.append('note', data.note);
     if (data.signature) formData.append('signature', data.signature);
 
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'}/approval-requests/${requestId}/approve`, {
+    const response = await fetch(`${API_BASE_URL}/approval-requests/${requestId}/approve`, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -169,13 +167,10 @@ export const approvalApi = {
     formData.append('reason', data.reason);
     if (data.signature) formData.append('signature', data.signature);
 
-    const accessToken = localStorage.getItem('hst.auth.accessToken');
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'}/approval-requests/${requestId}/reject`, {
+    const response = await fetch(`${API_BASE_URL}/approval-requests/${requestId}/reject`, {
       method: 'POST',
       body: formData,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {

@@ -1,7 +1,6 @@
 // Base API Client with TanStack Query integration
 import { QueryClient } from '@tanstack/react-query';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+import { API_BASE_URL, API_BASE_NORMALIZED, getAuthHeaders, STORAGE_KEYS } from '@/config/environment';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,15 +17,13 @@ async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  
-  const accessToken = localStorage.getItem('hst.auth.accessToken');
+  const url = `${API_BASE_URL}${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      ...getAuthHeaders(),
       ...options?.headers,
     },
   });
@@ -35,8 +32,8 @@ async function fetchApi<T>(
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
     if (response.status === 401) {
       // Clear auth and redirect to login
-      localStorage.removeItem('hst.auth.accessToken');
-      localStorage.removeItem('hst.auth.refreshToken');
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       window.location.href = '/login';
       throw new Error('Your session has expired. Please log in again.');
     }
@@ -48,18 +45,7 @@ async function fetchApi<T>(
 }
 
 export function getApiUrl(endpoint: string): string {
-  return `${API_BASE}${endpoint}`;
-}
-
-export function getAuthHeaders(): Record<string, string> {
-  const accessToken = localStorage.getItem('hst.auth.accessToken');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-  return headers;
+  return `${API_BASE_URL}${endpoint}`;
 }
 
 export { fetchApi };

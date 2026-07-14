@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gate Pass - GP-2026-00007</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    color: #000;
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20px;
+  }
+  .gate-pass {
+    width: 100%;
+    border: 2px solid #000;
+    padding: 20px;
+  }
+  .header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  .header h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .header h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .control-number {
+    text-align: right;
+    font-size: 11pt;
+    margin-top: 5px;
+  }
+  .control-number span {
+    font-weight: bold;
+    color: #c00;
+    font-size: 13pt;
+    border-bottom: 1px solid #c00;
+  }
+  .section { margin-bottom: 12px; }
+  .row {
+    display: flex;
+    margin-bottom: 6px;
+    align-items: baseline;
+    min-height: 24px;
+  }
+  .label {
+    font-weight: bold;
+    min-width: 100px;
+    font-size: 11pt;
+  }
+  .value {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    padding: 2px 4px;
+    min-height: 22px;
+    font-size: 11pt;
+  }
+  .checkbox-row {
+    display: flex;
+    gap: 15px;
+    margin: 8px 0;
+    align-items: center;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11pt;
+  }
+  .checkbox-box {
+    width: 16px; height: 16px;
+    border: 2px solid #000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    gap: 15px;
+  }
+  .sig-box {
+    flex: 1;
+    text-align: center;
+    min-height: 140px;
+  }
+  .sig-title {
+    font-weight: bold;
+    font-size: 11pt;
+    margin-bottom: 2px;
+  }
+  .sig-sub {
+    font-size: 9pt;
+    font-style: italic;
+    margin-bottom: 30px;
+    color: #444;
+  }
+  .sig-image {
+    max-width: 120px;
+    max-height: 60px;
+    margin: 0 auto 8px;
+    display: block;
+  }
+  .sig-line {
+    border-top: 1px solid #000;
+    padding-top: 4px;
+    margin-top: 35px;
+  }
+  .sig-name { font-weight: bold; font-size: 10pt; }
+  .sig-date { font-size: 9pt; color: #444; }
+  .footer {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 2px solid #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .qr-code img {
+    width: 90px;
+    height: 90px;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    background: #4caf50;
+    color: white;
+    font-weight: bold;
+    font-size: 10pt;
+    border: 1px solid #388e3c;
+  }
+  .status-badge.pending { background: #ff9800; border-color: #f57c00; }
+  .status-badge.rejected { background: #f44336; border-color: #d32f2f; }
+  .status-badge.released { background: #2196f3; border-color: #1976d2; }
+</style>
+</head>
+<body>
+<div class="gate-pass">
+  <div class="header">
+    <h1>HS TECHNOLOGIES (PHILS.), INC.</h1>
+    <h2>GATE PASS / OFFICIAL BUSINESS ALLOWANCE / REQUEST FOR CAR</h2>
+    <div class="control-number">
+      Control No.: <span>GP-2026-00007</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="row">
+      <div class="label">Employee:</div>
+      <div class="value">System Employee</div>
+      <div class="label" style="min-width:90px;margin-left:10px;">Department:</div>
+      <div class="value">Headquarters</div>
+    </div>
+    <div class="row">
+      <div class="label">Date:</div>
+      <div class="value" style="flex:0.5;">July 14, 2026</div>
+      <div class="label" style="min-width:70px;margin-left:10px;">Time Out:</div>
+      <div class="value" style="flex:0.4;">12:00 AM</div>
+      <div class="label" style="min-width:60px;margin-left:10px;">Time In:</div>
+      <div class="value" style="flex:0.4;">12:00 AM</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="row">
+      <div class="label">Destination:</div>
+      <div class="value">Test1</div>
+    </div>
+    <div class="row">
+      <div class="label">Purpose:</div>
+      <div class="value">Test1</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="checkbox-row">
+      <div class="checkbox-item">
+        <span class="checkbox-box"></span>
+        <span>OFFICIAL BUSINESS</span>
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox-box"></span>
+        <span>PERSONAL</span>
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox-box"></span>
+        <span>WITH CAR</span>
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox-box">✓</span>
+        <span>WITHOUT CAR</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">Vehicle:</div>
+      <div class="value" style="flex:0.8;"></div>
+      <div class="label" style="min-width:70px;margin-left:10px;">Driver:</div>
+      <div class="value" style="flex:0.8;">Test1</div>
+    </div>
+    <div class="row">
+      <div class="label">Transportation:</div>
+      <div class="value" style="flex:0.8;">company_vehicle</div>
+    </div>
+    <div class="row">
+      <div class="label">Remarks:</div>
+      <div class="value">Test1</div>
+    </div>
+  </div>
+
+  <div class="signatures">
+    <div class="sig-box">
+      <div class="sig-title">RECOMMENDED BY:</div>
+      <div class="sig-sub">(Supervisor)</div>
+      <div style="height:60px;"></div>
+      <div class="sig-line">
+        <div class="sig-name">Supervisor</div>
+        <div class="sig-date">July 14, 2026</div>
+      </div>
+    </div>
+
+    <div class="sig-box">
+      <div class="sig-title">NOTED BY:</div>
+      <div class="sig-sub">(Car Assignee)</div>
+      <div style="height:60px;"></div>
+      <div class="sig-line">
+        <div class="sig-name">Administrator</div>
+        <div class="sig-date">July 14, 2026</div>
+      </div>
+    </div>
+
+    <div class="sig-box">
+      <div class="sig-title">APPROVED BY:</div>
+      <div class="sig-sub">(General Administration)</div>
+      <div style="height:60px;"></div>
+      <div class="sig-line">
+        <div class="sig-name">___________________________</div>
+        <div class="sig-date"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>
+      <strong>Status:</strong>
+      <span class="status-badge approved">APPROVED</span>
+    </div>
+    
+      <div class="qr-code" style="text-align:center;">
+        <img src="data:image/png;base64,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" alt="QR Code" />
+        <div style="font-size:8pt;margin-top:2px;">Scan to verify</div>
+      </div>
+    
+  </div>
+</div>
+</body>
+</html>

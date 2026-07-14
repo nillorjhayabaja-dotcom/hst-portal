@@ -50,16 +50,11 @@ export function UniversalDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side={side} className={cn("w-full p-0", width, className)}>
         <SheetHeader className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <SheetTitle className="text-lg truncate">{title}</SheetTitle>
-              {description && (
-                <SheetDescription className="text-xs mt-0.5">{description}</SheetDescription>
-              )}
-            </div>
-            <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onClose}>
-              <X className="size-4" />
-            </Button>
+          <div className="min-w-0">
+            <SheetTitle className="text-lg truncate">{title}</SheetTitle>
+            {description && (
+              <SheetDescription className="text-xs mt-0.5">{description}</SheetDescription>
+            )}
           </div>
         </SheetHeader>
 
@@ -70,29 +65,31 @@ export function UniversalDrawer({
             className="flex flex-col h-[calc(100vh-73px)]"
           >
             <div className="border-b border-border px-6">
-              <TabsList className="h-10 w-full justify-start gap-0 bg-transparent p-0">
-                {tabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className={cn(
-                      "relative rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium transition-colors",
-                      "data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none",
-                      "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {tab.icon}
-                      {tab.label}
-                      {tab.badge != null && tab.badge > 0 && (
-                        <span className="grid size-4 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                          {tab.badge}
-                        </span>
+              <div className="overflow-x-auto scrollbar-thin -mx-6 px-6">
+                <TabsList className="h-10 w-max justify-start gap-0 bg-transparent p-0">
+                  {tabs.map((tab) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className={cn(
+                        "relative rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap",
+                        "data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none",
+                        "text-muted-foreground hover:text-foreground",
                       )}
-                    </span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {tab.icon}
+                        {tab.label}
+                        {tab.badge != null && tab.badge > 0 && (
+                          <span className="grid size-4 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                            {tab.badge}
+                          </span>
+                        )}
+                      </span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
             </div>
             <div className="flex-1 overflow-hidden">
               {tabs.map((tab) => (

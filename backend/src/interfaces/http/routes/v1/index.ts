@@ -12,6 +12,7 @@ import workflowRoutes from './workflow.routes';
 import attachmentRoutes from './attachment.routes';
 import commentRoutes from './comment.routes';
 import verificationRoutes from './verification.routes';
+import approvalRoutes from './approval.routes';
 import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
@@ -33,6 +34,7 @@ router.use('/workflows', workflowRoutes);
 router.use('/attachments', attachmentRoutes);
 router.use('/comments', commentRoutes);
 router.use('/verification', verificationRoutes);
+router.use('/approval-requests', approvalRoutes);
 router.use('/dashboard', dashboardRoutes);
 
 export default router;
