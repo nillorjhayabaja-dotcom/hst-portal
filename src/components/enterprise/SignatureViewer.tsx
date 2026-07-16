@@ -2,6 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { API_BASE_NORMALIZED } from "@/config/environment";
 
 interface SignatureViewerProps {
   open: boolean;
@@ -22,7 +23,7 @@ export function SignatureViewer({
 }: SignatureViewerProps) {
   const handleDownload = () => {
     const link = document.createElement("a");
-    link.href = `http://localhost:3001${signaturePath}`;
+    link.href = `${API_BASE_NORMALIZED}${signaturePath}`;
     link.download = fileName || "signature.png";
     document.body.appendChild(link);
     link.click();
@@ -49,7 +50,7 @@ export function SignatureViewer({
         <div className="py-4">
           <div className="bg-white border rounded-lg p-4 flex items-center justify-center">
             <img
-              src={`http://localhost:3001${signaturePath}`}
+              src={`${API_BASE_NORMALIZED}${signaturePath}`}
               alt="Electronic Signature"
               className="max-w-full h-auto max-h-[500px] object-contain"
               onError={(e) => {

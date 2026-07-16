@@ -1,5 +1,6 @@
 // SignatureThumbnail - Reusable component for displaying small signature thumbnails
 import { CheckCircle2 } from "lucide-react";
+import { API_BASE_NORMALIZED } from "@/config/environment";
 
 interface SignatureThumbnailProps {
   signaturePath: string;
@@ -22,7 +23,7 @@ export function SignatureThumbnail({
     <div className="flex items-center gap-2">
       <div className={`${SIZE_CLASSES[size]} flex-shrink-0 relative`}>
         <img
-          src={`http://localhost:3001${signaturePath}`}
+          src={`${API_BASE_NORMALIZED}${signaturePath}`}
           alt="Signature"
           className={`${SIZE_CLASSES[size]} object-contain bg-white border rounded`}
           onError={(e) => {

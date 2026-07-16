@@ -1,21 +1,57 @@
 // Guard Portal - Security personnel interface for gate pass verification
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { gatePassApi, type GatePass, type WorkflowStatus } from "@/services/gate-pass-api";
 import { printGatePass, type GatePassPDFData } from "@/services/gate-pass-pdf.service";
-import { QrCode, Printer, CheckCircle, XCircle, Search, Shield } from "lucide-react";
+import { QrCode, Printer, CheckCircle, XCircle, Search, Shield, Clock, Archive, Filter, ListFilter, History, RefreshCw } from "lucide-react";
+
+type SecurityTab = "pending" | "released_today" | "completed" | "archived";
 
 export function GuardPortal() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [gatePass, setGatePass] = useState<GatePass | null>(null);
   const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus | null>(null);
+  const [activeTab, setActiveTab] = useState<SecurityTab>("pending");
+  const [releasedList, setReleasedList] = useState<GatePass[]>([]);
+  const [gatePassList, setGatePassList] = useState<GatePass[]>([]);
+  const [showReleaseDrawer, setShowReleaseDrawer] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<string>("");
   const [releaseData, setReleaseData] = useState({
     kmReadingStart: "",
     kmReadingEnd: "",
     withMeal: false,
     mealAmount: 0,
+    transportationType: "Company Vehicle",
+    vehiclePlate: "",
+    driverName: "",
+    remarks: "",
   });
+
+  // Load gate pass list based on active tab
+  const loadGatePassList = useCallback(async () => {
+    setLoading(true);
+    try {
+      const statusMap: Record<SecurityTab, string | undefined> = {
+        pending: "approved",
+        released_today: "released",
+        completed: "completed",
+        archived: undefined,
+      };
+      const status = statusMap[activeTab];
+      const result = await gatePassApi.getAll({ status, pageSize: 50 });
+      setGatePassList(Array.isArray(result.data) ? result.data : []);
+    } catch (error) {
+      console.error("Failed to load gate passes:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    loadGatePassList();
+  }, [loadGatePassList]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -25,15 +61,12 @@ export function GuardPortal() {
 
     setLoading(true);
     try {
-      // Try to find by QR token first, then by control number
       let result;
       try {
         result = await gatePassApi.verifyQRToken(searchQuery.trim());
-        // If successful, extract gate pass data
         const gatePassData = result.data?.gatePass || result;
         setGatePass(gatePassData);
         
-        // Get workflow status
         const workflow = await gatePassApi.getWorkflowStatus(gatePassData.requestId);
         setWorkflowStatus(workflow);
 
@@ -43,7 +76,6 @@ export function GuardPortal() {
           toast.success("Gate pass found");
         }
       } catch (qrError: any) {
-        // If QR verification fails, try searching by request ID
         try {
           const gatePassData = await gatePassApi.getByRequestId(searchQuery.trim());
           setGatePass(gatePassData);
@@ -77,14 +109,12 @@ export function GuardPortal() {
 
     setLoading(true);
     try {
-      // Use the new QR verification endpoint
       await gatePassApi.confirmQRVerification(gatePass.qrToken, {
         timeOut: new Date().toISOString(),
       });
 
       toast.success("Exit verified successfully - Gate pass completed");
       
-      // Refresh data
       const updated = await gatePassApi.getByRequestId(gatePass.requestId);
       setGatePass(updated);
       const workflow = await gatePassApi.getWorkflowStatus(gatePass.requestId);
@@ -97,10 +127,57 @@ export function GuardPortal() {
     }
   };
 
+  const handleReleaseEmployee = async () => {
+    if (!selectedToken) {
+      toast.error("No QR token to process");
+      return;
+    }
+
+    // Validate vehicle fields if transportation type requires vehicle
+    if (releaseData.transportationType !== "Commute") {
+      if (!releaseData.vehiclePlate.trim()) {
+        toast.error("Vehicle plate number is required");
+        return;
+      }
+      if (!releaseData.driverName.trim()) {
+        toast.error("Driver name is required");
+        return;
+      }
+    }
+
+    setScanning(true);
+    try {
+      const result = await gatePassApi.confirmQRVerification(selectedToken, {
+        timeOut: new Date().toISOString(),
+        kmReadingStart: releaseData.kmReadingStart ? Number(releaseData.kmReadingStart) : undefined,
+        kmReadingEnd: releaseData.kmReadingEnd ? Number(releaseData.kmReadingEnd) : undefined,
+        withMeal: releaseData.withMeal,
+        mealAmount: releaseData.withMeal ? releaseData.mealAmount : undefined,
+        remarks: [
+          releaseData.remarks || undefined,
+          `Transport: ${releaseData.transportationType}`,
+          releaseData.vehiclePlate ? `Plate: ${releaseData.vehiclePlate}` : undefined,
+          releaseData.driverName ? `Driver: ${releaseData.driverName}` : undefined,
+        ].filter(Boolean).join(" | "),
+      });
+
+      toast.success("Employee released successfully");
+      setShowReleaseDrawer(false);
+      setSelectedToken("");
+      setGatePass(null);
+      setWorkflowStatus(null);
+      loadGatePassList();
+    } catch (error: any) {
+      console.error("Release error:", error);
+      toast.error(error?.message || "Failed to release employee");
+    } finally {
+      setScanning(false);
+    }
+  };
+
   const handlePrint = () => {
     if (!gatePass || !workflowStatus) return;
 
-    // Extract signature information from workflow actions
     const signatures = {
       recommendedBy: workflowStatus.actions.find(a => a.action === 'approve' && 
         (a.metadata?.stepName?.toLowerCase().includes('recommend') || 
@@ -124,13 +201,25 @@ export function GuardPortal() {
       },
       destination: gatePass.destination || "N/A",
       purpose: gatePass.purpose,
-      transportation: gatePass.transportation || "N/A",
+      transportation:
+        gatePass.transportationAssignment?.transportationType ||
+        gatePass.transportation ||
+        "N/A",
       isOfficialBusiness: true,
       isPersonal: false,
-      withCar: !!gatePass.vehicle,
-      withoutCar: !gatePass.vehicle,
-      plateNumber: gatePass.vehicle?.plateNumber,
-      driverName: gatePass.driverName || "",
+      withCar:
+        gatePass.transportationAssignment?.transportationType === "Company Vehicle" ||
+        !!gatePass.vehicle,
+      withoutCar:
+        gatePass.transportationAssignment?.transportationType === "Commute" ||
+        !gatePass.vehicle,
+      plateNumber:
+        gatePass.transportationAssignment?.vehiclePlate ||
+        gatePass.vehicle?.plateNumber,
+      driverName:
+        gatePass.transportationAssignment?.driverName ||
+        gatePass.driverName ||
+        "",
       remarks: "",
       dateFrom: new Date(gatePass.createdAt).toLocaleDateString(),
       dateTo: new Date(gatePass.expectedReturn || gatePass.createdAt).toLocaleDateString(),
@@ -158,8 +247,14 @@ export function GuardPortal() {
     printGatePass(pdfData);
   };
 
-  // Security can verify exit if gate pass has QR code and not yet verified
   const canVerify = gatePass && workflowStatus?.status === "approved" && gatePass.qrCode && !gatePass.isUsed;
+
+  const tabConfig: Array<{ id: SecurityTab; label: string; icon: React.ReactNode }> = [
+    { id: "pending", label: "Pending Verification", icon: <Clock className="w-4 h-4" /> },
+    { id: "released_today", label: "Released Today", icon: <CheckCircle className="w-4 h-4" /> },
+    { id: "completed", label: "Completed", icon: <History className="w-4 h-4" /> },
+    { id: "archived", label: "Archived", icon: <Archive className="w-4 h-4" /> },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -168,10 +263,18 @@ export function GuardPortal() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="w-8 h-8 text-blue-600" />
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">Guard Portal</h1>
               <p className="text-sm text-gray-600">Gate Pass Verification & Release</p>
             </div>
+            <button
+              onClick={loadGatePassList}
+              disabled={loading}
+              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 text-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           </div>
 
           {/* Search */}
@@ -198,6 +301,81 @@ export function GuardPortal() {
           </div>
         </div>
 
+        {/* Security History Tabs */}
+        <div className="bg-white rounded-lg shadow-md mb-6">
+          <div className="flex border-b border-gray-200 overflow-x-auto">
+            {tabConfig.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.id === "pending" && gatePassList.filter(g => g.status === "approved" && !g.isUsed).length > 0 && (
+                  <span className="ml-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                    {gatePassList.filter(g => g.status === "approved" && !g.isUsed).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content - Gate Pass List */}
+          <div className="p-4">
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">
+                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2" />
+                <p>Loading gate passes...</p>
+              </div>
+            ) : gatePassList.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <ListFilter className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p className="font-medium">No gate passes found</p>
+                <p className="text-sm">No records match the current filter</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {gatePassList.map((gp) => (
+                  <div
+                    key={gp.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      setGatePass(gp);
+                      gatePassApi.getWorkflowStatus(gp.requestId).then(setWorkflowStatus).catch(() => null);
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-semibold">{gp.controlNumber}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          gp.status === "released" || gp.securityReleasedAt
+                            ? "bg-green-100 text-green-800"
+                            : gp.isUsed
+                            ? "bg-gray-100 text-gray-600"
+                            : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {gp.securityReleasedAt ? "Released" : gp.isUsed ? "Completed" : gp.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 truncate mt-1">
+                        {gp.requester?.displayName} - {gp.destination || "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-400 text-right ml-4">
+                      {new Date(gp.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Gate Pass Details */}
         {gatePass && workflowStatus && (
           <div className="space-y-6">
@@ -221,20 +399,34 @@ export function GuardPortal() {
                     <p className="text-sm">Status: <span className="font-semibold uppercase">{workflowStatus.status}</span></p>
                   </div>
                 </div>
-                <button
-                  onClick={handlePrint}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print Gate Pass
-                </button>
+                <div className="flex gap-2">
+                  {canVerify && (
+                    <button
+                      onClick={() => {
+                        setSelectedToken(gatePass.qrToken || "");
+                        setShowReleaseDrawer(true);
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      Release Employee
+                    </button>
+                  )}
+                  <button
+                    onClick={handlePrint}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 text-sm"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print Gate Pass
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Gate Pass Information */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold mb-4 pb-2 border-b">Gate Pass Information</h3>
-               
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Requester</label>
@@ -256,19 +448,35 @@ export function GuardPortal() {
                   <p className="text-gray-900">{gatePass.purpose}</p>
                 </div>
                 
-                {gatePass.vehicle && (
+                {(gatePass.transportationAssignment || gatePass.vehicle) && (
                   <>
+                    <div>
+                      <label className="text-sm font-semibold text-gray-600">Transportation</label>
+                      <p className="text-gray-900">
+                        {gatePass.transportationAssignment?.transportationType ||
+                          gatePass.transportation ||
+                          "N/A"}
+                      </p>
+                    </div>
+
                     <div>
                       <label className="text-sm font-semibold text-gray-600">Vehicle</label>
                       <p className="text-gray-900">
-                        {gatePass.vehicle.brand} {gatePass.vehicle.model} ({gatePass.vehicle.plateNumber})
+                        {gatePass.transportationAssignment?.vehiclePlate ||
+                          (gatePass.vehicle
+                            ? `${gatePass.vehicle.brand} ${gatePass.vehicle.model} (${gatePass.vehicle.plateNumber})`
+                            : "N/A")}
                       </p>
                     </div>
-                    
-                    {gatePass.driverName && (
+
+                    {(gatePass.transportationAssignment?.driverName ||
+                      gatePass.driverName) && (
                       <div>
-                        <label className="text-sm font-semibold text-gray-600">Driver</label>
-                        <p className="text-gray-900">{gatePass.driverName}</p>
+                        <label className="text-sm font-semibold text-gray-600">Assigned Driver</label>
+                        <p className="text-gray-900">
+                          {gatePass.transportationAssignment?.driverName ||
+                            gatePass.driverName}
+                        </p>
                       </div>
                     )}
                   </>
@@ -354,28 +562,45 @@ export function GuardPortal() {
                   );
                 })}
                 
-                {/* Post-approval: Ready for Verification */}
-                {(workflowStatus.status === 'approved' || workflowStatus.status === 'released') && (
+                {/* QR Generated */}
+                {(workflowStatus.status === 'approved' ||
+                  workflowStatus.status === 'released' ||
+                  workflowStatus.status === 'completed') && (
                   <div className="flex items-start gap-3 pb-3 border-b">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600 shrink-0">
                       ✓
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold">Ready for Security Verification</p>
-                      <p className="text-sm text-gray-600">QR Code Generated</p>
+                      <p className="font-semibold text-green-700">QR Generated</p>
+                      <p className="text-sm text-gray-600">Ready for Security Verification</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Security Verification */}
+                {(workflowStatus.status === 'released' ||
+                  workflowStatus.status === 'completed') && (
+                  <div className="flex items-start gap-3 pb-3 border-b">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600 shrink-0">
+                      ✓
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-green-700">Security Verification</p>
+                      <p className="text-sm text-gray-600">QR successfully scanned by Security</p>
                     </div>
                   </div>
                 )}
 
                 {/* Released step */}
-                {workflowStatus.status === 'released' && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 shrink-0">
+                {(workflowStatus.status === 'released' ||
+                  workflowStatus.status === 'completed') && (
+                  <div className="flex items-start gap-3 pb-3 border-b">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600 shrink-0">
                       ✓
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold">Released</p>
-                      <p className="text-sm text-gray-600">Security</p>
+                      <p className="font-semibold text-green-700">Released</p>
+                      <p className="text-sm text-gray-600">Employee released by Security</p>
                       {gatePass.securityReleasedAt && (
                         <p className="text-xs text-gray-500">
                           {new Date(gatePass.securityReleasedAt).toLocaleString()}
@@ -384,25 +609,97 @@ export function GuardPortal() {
                     </div>
                   </div>
                 )}
+
+                {/* Completed */}
+                {(workflowStatus.status === 'completed' || gatePass.isUsed) && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600 shrink-0">
+                      ✓
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-green-700">Workflow Completed</p>
+                      <p className="text-sm text-gray-600">Gate pass workflow completed successfully</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Verify Exit Form - Only for approved gate passes with QR code not yet verified */}
+            {/* Verify Exit Form - Only for approved gate passes with QR code */}
             {canVerify && (
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-bold mb-4 pb-2 border-b">Verify Exit</h3>
+                <h3 className="text-lg font-bold mb-4 pb-2 border-b">Verify Exit & Release Employee</h3>
                  
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      <strong>Instructions:</strong> Scan the employee's QR code to verify their exit. 
-                      This will mark the gate pass as completed.
+                      <strong>Instructions:</strong> This is the final step before releasing the employee.
+                      Review the transportation assignment and add release details below.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Transportation Type
+                      </label>
+                      <select
+                        value={releaseData.transportationType}
+                        onChange={(e) => setReleaseData({ ...releaseData, transportationType: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Company Vehicle">Company Vehicle</option>
+                        <option value="Personal Vehicle">Personal Vehicle</option>
+                        <option value="Commute">Commute</option>
+                      </select>
+                    </div>
+
+                    {(releaseData.transportationType !== "Commute") && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Vehicle Plate Number <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={releaseData.vehiclePlate}
+                            onChange={(e) => setReleaseData({ ...releaseData, vehiclePlate: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g. ABC-1234"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Driver Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={releaseData.driverName}
+                            onChange={(e) => setReleaseData({ ...releaseData, driverName: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter driver's full name"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Security Remarks (Optional)
+                    </label>
+                    <textarea
+                      value={releaseData.remarks}
+                      onChange={(e) => setReleaseData({ ...releaseData, remarks: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Additional notes..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
                         KM Reading (Start)
                       </label>
                       <input
@@ -415,7 +712,7 @@ export function GuardPortal() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
                         KM Reading (End)
                       </label>
                       <input
@@ -457,32 +754,44 @@ export function GuardPortal() {
                   )}
 
                   <button
-                    onClick={handleVerifyExit}
-                    disabled={loading}
-                    className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setSelectedToken(gatePass.qrToken || "");
+                      handleReleaseEmployee();
+                    }}
+                    disabled={scanning}
+                    className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg font-bold"
                   >
-                    <CheckCircle className="w-5 h-5" />
-                    Verify Exit & Complete
+                    <CheckCircle className="w-6 h-6" />
+                    {scanning ? "Releasing..." : "Release Employee"}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Already Verified */}
-            {gatePass.isUsed && (
+            {/* Already Released banner */}
+            {(gatePass.isUsed || workflowStatus.status === "released") && (
               <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-8 h-8 text-green-600 shrink-0" />
                   <div>
-                    <p className="font-bold">Exit Verified - Gate Pass Completed</p>
-                    <p className="text-sm">
-                      Verified on: {new Date(gatePass.verifiedAt || gatePass.completedAt || '').toLocaleString()}
+                    <p className="font-bold text-green-800 text-lg">Already Released</p>
+                    <p className="text-sm text-green-700">
+                      This Gate Pass has already been released by Security.
                     </p>
-                    {gatePass.verifiedBy && (
-                      <p className="text-sm">
-                        Verified by: {gatePass.verifiedBy}
-                      </p>
+                    {gatePass.securityReleasedAt && (
+                      <>
+                        <p className="text-sm text-green-700 mt-1">
+                          Release Time: {new Date(gatePass.securityReleasedAt).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-green-700">
+                          Control Number: {gatePass.controlNumber}
+                        </p>
+                      </>
                     )}
+                    <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-800">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Completed
+                    </div>
                   </div>
                 </div>
               </div>
@@ -490,20 +799,25 @@ export function GuardPortal() {
           </div>
         )}
 
-        {/* Instructions */}
+        {/* Instructions - Empty State */}
         {!gatePass && (
           <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-blue-900 mb-2">Instructions</h3>
+            <h3 className="text-lg font-bold text-blue-900 mb-2">Security Guard Portal</h3>
             <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-              <li>Enter the gate pass control number in the search box above</li>
+              <li>Search gate passes by control number or scan the QR code</li>
               <li>Verify the gate pass details and approval status</li>
-              <li>Ensure all required approvals and signatures are present</li>
-              <li>Record the odometer readings and meal allowance (if applicable)</li>
-              <li>Click "Release Gate Pass" to authorize exit</li>
-              <li>Print the gate pass for the employee</li>
+              <li>Review transportation assignment from Noted By</li>
+              <li>Record odometer readings and meal allowance (if applicable)</li>
+              <li>Click "Release Employee" to authorize exit</li>
+              <li>Completed gate passes remain in the security history for auditing</li>
             </ul>
           </div>
         )}
+
+        {/* Log Count Summary */}
+        <div className="mt-4 text-center text-xs text-gray-400">
+          Showing {gatePassList.length} gate pass{gatePassList.length !== 1 ? 'es' : ''} in {activeTab.replace('_', ' ')} view
+        </div>
       </div>
     </div>
   );

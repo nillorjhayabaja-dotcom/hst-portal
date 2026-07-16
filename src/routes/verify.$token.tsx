@@ -2,10 +2,28 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Shield, CheckCircle, XCircle, Clock, Download, Printer } from "lucide-react";
+import {
+  Shield,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Download,
+  Printer,
+  Car,
+  User,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { useAuth } from "@/contexts/AuthContext";
 import { gatePassApi } from "@/services/gate-pass-api";
 
@@ -27,6 +45,14 @@ function VerifyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
+  const [releaseDrawerOpen, setReleaseDrawerOpen] = useState(false);
+
+  const [releaseForm, setReleaseForm] = useState({
+    transportationType: "",
+    vehiclePlate: "",
+    driverName: "",
+    remarks: "",
+  });
 
   useEffect(() => {
     if (token) {
@@ -52,20 +78,44 @@ function VerifyPage() {
   const handleRelease = async () => {
     if (!token || !user) return;
 
+    const requiresVehicle =
+      releaseForm.transportationType === "Company Vehicle" ||
+      releaseForm.transportationType === "Personal Vehicle";
+
+    if (
+      requiresVehicle &&
+      (!releaseForm.vehiclePlate.trim() ||
+        !releaseForm.driverName.trim())
+    ) {
+      toast.error("Vehicle plate number and driver name are required");
+      return;
+    }
+
     try {
       setReleasing(true);
+
       const timeOut = new Date().toISOString();
 
       await gatePassApi.confirmQRVerification(token, {
         timeOut,
-        kmReadingStart: 0,
-        kmReadingEnd: 0,
-        withMeal: false,
-        mealAmount: 0,
+        remarks: JSON.stringify({
+          transportationType:
+            releaseForm.transportationType ||
+            gatePass.transportationAssignment?.transportationType,
+          vehiclePlate:
+            releaseForm.vehiclePlate ||
+            gatePass.transportationAssignment?.vehiclePlate,
+          driverName:
+            releaseForm.driverName ||
+            gatePass.transportationAssignment?.driverName,
+          securityRemarks: releaseForm.remarks,
+        }),
       });
 
-      toast.success("Gate pass released successfully");
-      // Refresh data
+      toast.success("Gate Pass released successfully");
+
+      setReleaseDrawerOpen(false);
+
       await validateToken(token);
     } catch (err: any) {
       toast.error(err?.message || "Failed to release gate pass");
@@ -266,12 +316,25 @@ function VerifyPage() {
               {canRelease ? (
                 <>
                   <Button
-                    onClick={handleRelease}
+                    onClick={() => {
+                      setReleaseForm({
+                        transportationType:
+                          gatePass.transportationAssignment
+                            ?.transportationType || "",
+                        vehiclePlate:
+                          gatePass.transportationAssignment?.vehiclePlate || "",
+                        driverName:
+                          gatePass.transportationAssignment?.driverName || "",
+                        remarks: "",
+                      });
+
+                      setReleaseDrawerOpen(true);
+                    }}
                     disabled={releasing}
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    {releasing ? "Releasing..." : "Release Gate Pass"}
+                    Release Employee
                   </Button>
                   <div className="flex gap-2">
                     <Button onClick={handlePrint} variant="outline" className="flex-1">
@@ -316,6 +379,234 @@ function VerifyPage() {
             </CardContent>
           </Card>
         )}
+
+        <Drawer
+          open={releaseDrawerOpen}
+          onOpenChange={setReleaseDrawerOpen}
+        >
+          <DrawerContent className="max-h-[95vh] overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle className="text-2xl">
+                Release Gate Pass
+              </DrawerTitle>
+
+              <DrawerDescription>
+                This is the LAST STEP before releasing the employee.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="px-4 pb-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Employee Name
+                  </p>
+                  <p className="font-semibold">
+                    {request.requester.employees?.firstName}{" "}
+                    {request.requester.employees?.lastName}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Control Number
+                  </p>
+                  <p className="font-semibold">
+                    {request.controlNumber}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Department
+                  </p>
+                  <p className="font-semibold">
+                    {request.department?.name || "N/A"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Destination
+                  </p>
+                  <p className="font-semibold">
+                    {gatePass.destination || "N/A"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Purpose
+                  </p>
+                  <p className="font-semibold">
+                    {gatePass.purpose}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Expected Return
+                  </p>
+                  <p className="font-semibold">
+                    {gatePass.expectedReturn
+                      ? new Date(
+                          gatePass.expectedReturn,
+                        ).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Car className="w-5 h-5 text-green-600" />
+                  <h3 className="font-semibold text-lg">
+                    Release Information
+                  </h3>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Transportation Type
+                  </label>
+
+                  <select
+                    value={releaseForm.transportationType}
+                    onChange={(e) =>
+                      setReleaseForm({
+                        ...releaseForm,
+                        transportationType: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Select transportation</option>
+                    <option value="Company Vehicle">
+                      Company Vehicle
+                    </option>
+                    <option value="Personal Vehicle">
+                      Personal Vehicle
+                    </option>
+                    <option value="Commute">Commute</option>
+                  </select>
+                </div>
+
+                {(releaseForm.transportationType ===
+                  "Company Vehicle" ||
+                  releaseForm.transportationType ===
+                    "Personal Vehicle") && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Vehicle Plate Number
+                      </label>
+
+                      <input
+                        value={releaseForm.vehiclePlate}
+                        onChange={(e) =>
+                          setReleaseForm({
+                            ...releaseForm,
+                            vehiclePlate: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded-lg px-3 py-2"
+                        placeholder="Enter plate number"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Driver Name
+                      </label>
+
+                      <input
+                        value={releaseForm.driverName}
+                        onChange={(e) =>
+                          setReleaseForm({
+                            ...releaseForm,
+                            driverName: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded-lg px-3 py-2"
+                        placeholder="Enter driver name"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Security Remarks
+                  </label>
+
+                  <textarea
+                    value={releaseForm.remarks}
+                    onChange={(e) =>
+                      setReleaseForm({
+                        ...releaseForm,
+                        remarks: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-lg px-3 py-2 min-h-[100px]"
+                    placeholder="Optional remarks"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-lg border p-4 bg-green-50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="w-4 h-4 text-green-700" />
+                      <p className="text-xs text-muted-foreground">
+                        Released By
+                      </p>
+                    </div>
+
+                    <p className="font-semibold">
+                      {user?.email || "Security Guard"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border p-4 bg-green-50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="w-4 h-4 text-green-700" />
+                      <p className="text-xs text-muted-foreground">
+                        Release Time
+                      </p>
+                    </div>
+
+                    <p className="font-semibold">
+                      {new Date().toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DrawerFooter>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setReleaseDrawerOpen(false)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  onClick={handleRelease}
+                  disabled={releasing}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+
+                  {releasing
+                    ? "Releasing Employee..."
+                    : "Release Employee"}
+                </Button>
+              </div>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">

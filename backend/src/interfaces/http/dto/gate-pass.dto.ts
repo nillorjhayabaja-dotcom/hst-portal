@@ -51,7 +51,16 @@ export interface GatePassListItem {
 
 export interface GatePassDetail extends GatePassListItem {
   items?: any;
-  driverName?: string;
+  transportationAssignment?: {
+    id?: string;
+    transportationType?: string;
+    vehicleId?: string;
+    vehiclePlate?: string;
+    driverName?: string;
+    assignedBy?: string;
+    assignedAt?: string;
+    remarks?: string;
+  };
   expectedReturn?: string;
   actualReturn?: string;
   qrCode?: string;
@@ -135,7 +144,20 @@ export function mapGatePassToDetail(gp: any): GatePassDetail {
   return {
     ...listItem,
     items: gp.items,
-    driverName: gp.driverName,
+    transportationAssignment: gp.transportationAssignment
+      ? {
+          id: gp.transportationAssignment.id,
+          transportationType:
+            gp.transportationAssignment.transportationType,
+          vehicleId: gp.transportationAssignment.vehicleId,
+          vehiclePlate: gp.transportationAssignment.vehiclePlate,
+          driverName: gp.transportationAssignment.driverName,
+          assignedBy: gp.transportationAssignment.assignedBy,
+          assignedAt:
+            gp.transportationAssignment.assignedAt?.toISOString(),
+          remarks: gp.transportationAssignment.remarks,
+        }
+      : undefined,
     expectedReturn: gp.expectedReturn?.toISOString(),
     actualReturn: gp.actualReturn?.toISOString(),
     qrCode: gp.qrCode,

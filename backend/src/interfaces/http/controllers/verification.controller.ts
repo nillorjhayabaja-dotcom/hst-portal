@@ -111,6 +111,14 @@ export const verificationController = {
           select: { employeeNumber: true },
         });
 
+        const clientIp =
+          (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          "unknown";
+
+        const deviceInfo = req.headers["sec-ch-ua-platform"] || "unknown";
+        const browserInfo = req.headers["user-agent"] || "unknown";
+
         const result = await gatePassVerificationService.releaseGatePass(
           token,
           user.id,
@@ -122,8 +130,11 @@ export const verificationController = {
             mealAmount,
             timeOut: timeOut ? new Date(timeOut) : new Date(),
             timeIn: timeIn ? new Date(timeIn) : undefined,
-            remarks,
-          }
+            remarks: remarks || "Released via QR security scan",
+            ipAddress: clientIp,
+            device: String(deviceInfo),
+            browser: String(browserInfo),
+          } as any
         );
 
         // Audit log for release
@@ -138,7 +149,10 @@ export const verificationController = {
             kmReadingEnd,
             withMeal,
             mealAmount,
-            releasedAt: new Date().toISOString(),
+              releasedAt: new Date().toISOString(),
+              ipAddress: clientIp,
+              device: String(deviceInfo),
+              browser: String(browserInfo),
           },
         });
 

@@ -519,12 +519,55 @@ model GatePass {
   request            ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   vehicle            Vehicle?        @relation(fields: [vehicleId], references: [id])
   qrScanLogs         QRScanLog[]
-  verifications       Verification[]
+  verifications      Verification[]
   gatePassVerifications GatePassVerification[]
+  transportationAssignment GatePassTransportAssignment?
 
   @@index([qrToken])
   @@index([approvalStage])
   @@map("gate_passes")
+}
+
+model GatePassTransportAssignment {
+  id                 String    @id @default(uuid())
+  gatePassId         String    @unique @map("gate_pass_id")
+  vehicleId          String?   @map("vehicle_id")
+  transportationType String    @map("transportation_type")
+  vehiclePlate       String?   @map("vehicle_plate")
+  driverName         String?   @map("driver_name")
+  assignedBy         String    @map("assigned_by")
+  assignedAt         DateTime  @default(now()) @map("assigned_at")
+  remarks            String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  gatePass           GatePass  @relation(fields: [gatePassId], references: [id], onDelete: Cascade)
+  vehicle            Vehicle?  @relation(fields: [vehicleId], references: [id])
+
+  @@index([gatePassId])
+  @@index([vehicleId])
+  @@map("transportation_assignments")
+}
+
+model SecurityTripLog {
+  id          String    @id @default(uuid())
+  gatePassId  String    @map("gate_pass_id")
+  vehicleId   String?   @map("vehicle_id")
+  kmStart     Float?    @map("km_start")
+  kmEnd       Float?    @map("km_end")
+  timeOut     DateTime? @map("time_out")
+  timeIn      DateTime? @map("time_in")
+  checkedBy   String    @map("checked_by")
+  remarks     String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  gatePass    GatePass  @relation(fields: [gatePassId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle?  @relation(fields: [vehicleId], references: [id])
+
+  @@index([gatePassId])
+  @@index([vehicleId])
+  @@map("security_trip_logs")
 }
 
 model Verification {
@@ -680,6 +723,8 @@ model Vehicle {
   gatePasses           GatePass[]
   maintenance          VehicleMaintenance[]
   reservations         VehicleReservation[]
+  transportationAssignments GatePassTransportAssignment[]
+  securityTripLogs     SecurityTripLog[]
   assignedDepartment   Department?          @relation(fields: [assignedDepartmentId], references: [id])
   assignedDriver       Employee?            @relation("VehicleDriver", fields: [assignedDriverId], references: [id])
 

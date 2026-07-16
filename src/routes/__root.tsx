@@ -80,14 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HST Enterprise Portal — Manufacturing ERP" },
+      { title: "HST REQUEST PORTAL" },
       {
         name: "description",
         content:
           "HST Enterprise Portal: a role-based manufacturing ERP for gate passes, leave, MRF, purchasing, approvals and analytics across every department.",
       },
       { name: "author", content: "HST Enterprise" },
-      { property: "og:title", content: "HST Enterprise Portal — Manufacturing ERP" },
+      { property: "og:title", content: "HST REQUEST PORTAL" },
       {
         property: "og:description",
         content: "Secure, modular, role-based ERP for manufacturing operations and approvals.",
@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/hst-portal/src/assets/hst-logo.png", type: "image/png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

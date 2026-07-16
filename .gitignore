@@ -20,6 +20,26 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Environment files
+.env
+.env.production
+.env.local
+.env.development
+
+# Backend storage
+uploads/
+backend/uploads/
+
+# Backend build
+backend/dist/
+
+# Logs
+backend/logs/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

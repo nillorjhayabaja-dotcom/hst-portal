@@ -33,6 +33,8 @@ import {
   Shield,
   CheckCircle,
   Printer,
+  TruckIcon,
+  UserCheck,
 } from "lucide-react";
 import {
   getEmployeeDisplayName,
@@ -67,7 +69,20 @@ export function GatePassDetailsDrawer({
   const userRoleName = user?.role?.toLowerCase() || '';
 
   // Determine if request is already in a terminal state (no more approval actions needed)
-  const isTerminal = ['approved', 'completed', 'rejected', 'released'].includes(gatePass.status);
+  const normalizedStatus = (workflowStatus?.status || gatePass.status || '').toLowerCase();
+  const isCompletedWorkflow =
+    normalizedStatus === 'completed' ||
+    !!gatePass.completedAt ||
+    !!gatePass.securityReleasedAt ||
+    !!gatePass.isUsed;
+
+  const isTerminal = ['approved', 'completed', 'rejected', 'released'].includes(normalizedStatus);
+
+  // Single source of truth for QR visibility
+  const shouldShowQRCode =
+    !!gatePass.qrCode &&
+    !isCompletedWorkflow &&
+    !gatePass.securityReleasedAt;
 
   // Fetch comments and attachments on open
   useEffect(() => {
@@ -126,6 +141,12 @@ export function GatePassDetailsDrawer({
     );
     return currentStep || null;
   };
+
+  // Transportation assignment state for Noted By step
+  const [transportType, setTransportType] = useState<string>("");
+  const [vehiclePlate, setVehiclePlate] = useState<string>("");
+  const [driverName, setDriverName] = useState<string>("");
+  const [transportRemarks, setTransportRemarks] = useState<string>("");
 
   // Normalize role name for comparison (remove spaces, hyphens, underscores, lowercase)
   const normalizeRole = (role: string): string => {
@@ -205,13 +226,24 @@ export function GatePassDetailsDrawer({
       }
 
       const actionEndpoint = getStepActionEndpoint(currentStep.name || '');
+      const isNotedStep = normalizeRole(currentStep.name || '').includes('noted');
+
+      // Build transportation assignment if Noted By step
+      const transportAssignment = isNotedStep && transportType
+        ? {
+            transportationType: transportType,
+            vehiclePlate: (transportType === "Company Vehicle" || transportType === "Personal Vehicle") ? vehiclePlate : undefined,
+            driverName: (transportType === "Company Vehicle" || transportType === "Personal Vehicle") ? driverName : undefined,
+            remarks: transportRemarks || undefined,
+          }
+        : undefined;
 
       switch (actionEndpoint) {
         case 'recommend':
           await gatePassApi.recommend(workflowStatus.requestId, note, signature);
           break;
         case 'noted':
-          await gatePassApi.noted(workflowStatus.requestId, note, signature);
+          await gatePassApi.noted(workflowStatus.requestId, note, signature, transportAssignment);
           break;
         case 'gado_approve':
           await gatePassApi.gadoApprove(workflowStatus.requestId, note, signature);
@@ -295,6 +327,31 @@ export function GatePassDetailsDrawer({
       },
     ];
 
+    // Insert Transportation Assigned event after recommended step
+    const recommendedStep = steps.find((s: any) => normalizeRole(s.name).includes('recommend'));
+    const notedStep = steps.find((s: any) => normalizeRole(s.name).includes('noted'));
+    const approvedStep = steps.find((s: any) => normalizeRole(s.name).includes('approve'));
+
+    // Add Transportation Assigned after Noted By approves
+    if (notedStep && notedStep.status === 'approved') {
+      events.push({
+        id: 'transport_assigned',
+        status: 'Transportation Assigned',
+        actor: notedStep.actor?.displayName || '',
+        role: 'Noted By',
+        date: notedStep.actedAt
+          ? new Date(notedStep.actedAt).toLocaleString()
+          : '',
+        note: gatePass.transportationAssignment?.transportationType
+          ? `Vehicle: ${gatePass.transportationAssignment.transportationType} | Plate: ${gatePass.transportationAssignment.vehiclePlate || 'N/A'} | Driver: ${gatePass.transportationAssignment.driverName || 'N/A'}`
+          : 'Transportation assignment completed',
+        icon: 'TruckIcon',
+        completed: true,
+        current: false,
+        rejected: false,
+      });
+    }
+
     // Map workflow steps to timeline events
     steps.forEach((step: any) => {
       const action = actions.find(
@@ -315,8 +372,10 @@ export function GatePassDetailsDrawer({
           : action?.createdAt
           ? new Date(action.createdAt).toLocaleString()
           : '',
-        note: step.note || action?.note || undefined,
-        icon: isCompleted ? 'CheckCircle' : isRejected ? 'XCircle' : 'Clock',
+        note: (step.name && normalizeRole(step.name).includes('noted') && gatePass.transportationAssignment?.transportationType)
+          ? `Transport: ${gatePass.transportationAssignment.transportationType}`
+          : step.note || action?.note || undefined,
+        icon: isCompleted ? (normalizeRole(step.name).includes('noted') ? 'TruckIcon' : 'CheckCircle') : isRejected ? 'XCircle' : 'Clock',
         completed: isCompleted,
         current: isCurrent,
         rejected: isRejected,
@@ -344,7 +403,9 @@ export function GatePassDetailsDrawer({
       });
 
       // Waiting for Security Scan step
-      if (gatePass.qrCode && !gatePass.isUsed) {
+      if (gatePass.qrCode) {
+        const waitingCompleted = isCompletedWorkflow;
+
         events.push({
           id: 'waiting_scan',
           status: 'Waiting for Security Scan',
@@ -353,16 +414,18 @@ export function GatePassDetailsDrawer({
           date: gatePass.qrGeneratedAt
             ? new Date(gatePass.qrGeneratedAt).toLocaleString()
             : new Date().toLocaleString(),
-          note: 'Present QR code to security guard',
-          icon: 'Clock',
-          completed: false,
-          current: true,
+          note: waitingCompleted
+            ? 'QR successfully scanned by security'
+            : 'Present QR code to security guard',
+          icon: waitingCompleted ? 'CheckCircle' : 'Clock',
+          completed: waitingCompleted,
+          current: !waitingCompleted,
           rejected: false,
         });
       }
 
       // Security Verified step
-      if (gatePass.isUsed || status === 'completed') {
+      if (isCompletedWorkflow) {
         events.push({
           id: 'security_verified',
           status: 'Security Verified',
@@ -382,7 +445,7 @@ export function GatePassDetailsDrawer({
       }
 
       // Completed step
-      if (status === 'completed') {
+      if (isCompletedWorkflow) {
         events.push({
           id: 'completed',
           status: 'Completed',
@@ -431,7 +494,7 @@ export function GatePassDetailsDrawer({
       uploadedAt: a.createdAt,
     }));
 
-    const hasQRCode = !!gatePass.qrCode;
+    const hasQRCode = shouldShowQRCode;
 
     const tabs: DrawerTab[] = [
       {
@@ -466,25 +529,6 @@ export function GatePassDetailsDrawer({
                 label="Destination"
                 value={gatePass.destination || "N/A"}
               />
-              <DetailField
-                icon={Car}
-                label="Transportation"
-                value={gatePass.transportation || "N/A"}
-              />
-              {gatePass.vehicle && (
-                <DetailField
-                  icon={Truck}
-                  label="Vehicle"
-                  value={`${gatePass.vehicle.plateNumber}${gatePass.vehicle.brand ? ` (${gatePass.vehicle.brand})` : ''}`}
-                />
-              )}
-              {gatePass.driverName && (
-                <DetailField
-                  icon={User}
-                  label="Driver"
-                  value={gatePass.driverName}
-                />
-              )}
               <DetailField
                 icon={Clock}
                 label="Expected Return"
@@ -557,6 +601,121 @@ export function GatePassDetailsDrawer({
                           Print
                         </Button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {isCompletedWorkflow && (
+              <>
+                <Separator />
+                <div className="bg-green-50 dark:bg-green-950/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="size-6 text-green-600 mt-0.5" />
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-bold text-green-900 dark:text-green-100">
+                        Gate Pass Successfully Released
+                      </h4>
+                      <div className="text-sm text-green-800 dark:text-green-200 space-y-1">
+                        <p>
+                          <span className="font-semibold">Released by:</span>{" "}
+                          Security Guard
+                        </p>
+                        <p>
+                          <span className="font-semibold">Released Time:</span>{" "}
+                          {gatePass.securityReleasedAt
+                            ? new Date(gatePass.securityReleasedAt).toLocaleString()
+                            : gatePass.completedAt
+                            ? new Date(gatePass.completedAt).toLocaleString()
+                            : "Completed"}
+                        </p>
+                      </div>
+                      <p className="text-xs text-green-700 dark:text-green-300">
+                        This Gate Pass has already been used. QR code access has been disabled.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Transportation Assignment - Show when Noted By step is current */}
+            {!isTerminal && getCurrentStepInfo() && normalizeRole(getCurrentStepInfo()?.name || '').includes('noted') && (isCurrentApprover() || isSuperAdmin()) && (
+              <>
+                <Separator />
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
+                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 mb-3 flex items-center gap-2">
+                    <TruckIcon className="size-5" />
+                    Transportation Assignment
+                  </h4>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mb-4">
+                    Assign transportation for this gate pass. This information will appear on the official Gate Pass PDF.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                        Transportation Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={transportType}
+                        onChange={(e) => {
+                          setTransportType(e.target.value);
+                          if (e.target.value === "Commute") {
+                            setVehiclePlate("");
+                            setDriverName("");
+                          }
+                        }}
+                        className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-amber-100"
+                      >
+                        <option value="">Select type...</option>
+                        <option value="Company Vehicle">Company Vehicle</option>
+                        <option value="Personal Vehicle">Personal Vehicle</option>
+                        <option value="Commute">Commute</option>
+                      </select>
+                    </div>
+
+                    {(transportType === "Company Vehicle" || transportType === "Personal Vehicle") && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                            Vehicle Plate Number <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={vehiclePlate}
+                            onChange={(e) => setVehiclePlate(e.target.value)}
+                            placeholder="e.g. ABC-1234"
+                            className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-amber-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                            Driver Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={driverName}
+                            onChange={(e) => setDriverName(e.target.value)}
+                            placeholder="Enter driver's full name"
+                            className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-amber-100"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                        Remarks (Optional)
+                      </label>
+                      <textarea
+                        value={transportRemarks}
+                        onChange={(e) => setTransportRemarks(e.target.value)}
+                        placeholder="Additional notes about transportation..."
+                        rows={2}
+                        className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-amber-100"
+                      />
                     </div>
                   </div>
                 </div>
@@ -693,6 +852,24 @@ export function GatePassDetailsDrawer({
                     </p>
                   </div>
                 </>
+              ) : isCompletedWorkflow ? (
+                <div className="text-center max-w-md">
+                  <CheckCircle className="w-16 h-16 mx-auto text-green-600 mb-3" />
+                  <p className="text-lg font-semibold text-green-700 dark:text-green-400">
+                    Gate Pass Successfully Released
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This QR code has already been used and is no longer valid.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Released at{" "}
+                    {gatePass.securityReleasedAt
+                      ? new Date(gatePass.securityReleasedAt).toLocaleString()
+                      : gatePass.completedAt
+                      ? new Date(gatePass.completedAt).toLocaleString()
+                      : "Completed"}
+                  </p>
+                </div>
               ) : (
                 <div className="text-center">
                   <QrCode className="w-16 h-16 mx-auto text-muted-foreground mb-2" />
@@ -739,6 +916,23 @@ export function GatePassDetailsDrawer({
         open={showApprove}
         onOpenChange={setShowApprove}
         onConfirm={async (note: string, signature: File) => {
+          // If Noted By step, validate transportation assignment before approving
+          const currentStep = getCurrentStepInfo();
+          const isNotedStep = currentStep && normalizeRole(currentStep.name || '').includes('noted');
+          if (isNotedStep) {
+            if (!transportType) {
+              toast.error("Please select a transportation type before approving");
+              return;
+            }
+            if ((transportType === "Company Vehicle" || transportType === "Personal Vehicle") && !vehiclePlate) {
+              toast.error("Vehicle plate number is required for vehicle transportation");
+              return;
+            }
+            if ((transportType === "Company Vehicle" || transportType === "Personal Vehicle") && !driverName) {
+              toast.error("Driver name is required for vehicle transportation");
+              return;
+            }
+          }
           await handleApprove(note, signature);
         }}
         loading={loading}

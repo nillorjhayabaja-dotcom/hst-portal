@@ -1,8 +1,12 @@
 # HST Enterprise Portal - Cloudflare Workers Configuration
-# Deployment: https://hst-portal.workers.dev
+# Deployment: https://hst-portal.rjabaja.workers.dev
+# Frontend only - Backend is exposed via Cloudflare Tunnel
+# 
+# NOTE: Nitro generates .output/server/wrangler.json which overrides this file
+# during deployment. This file serves as the source of truth for Nitro.
+# Nitro handles static assets via the "assets" binding automatically.
 
 name = "hst-portal"
-account_id = "c17088f811d1ae75fb6d7cb5ae94eccf"
 compatibility_date = "2026-07-14"
 compatibility_flags = ["nodejs_compat"]
 
@@ -10,3 +14,10 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "production"
 APP_NAME = "HST Enterprise Portal"
+VITE_API_BASE_URL = "https://hst-portal-api.rjabaja.workers.dev/api/v1"
+VITE_APP_NAME = "HST Enterprise Portal"
+VITE_ENV = "production"
+VITE_ENABLE_ANALYTICS = "false"
+VITE_ENABLE_DEBUG = "false"
+VITE_API_TIMEOUT = "30000"
+VITE_API_RETRY_ATTEMPTS = "3"

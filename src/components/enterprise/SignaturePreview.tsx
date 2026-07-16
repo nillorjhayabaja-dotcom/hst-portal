@@ -1,5 +1,6 @@
 // SignaturePreview - Reusable component for previewing signatures in approval history
 import { useState } from "react";
+import { API_BASE_NORMALIZED } from "@/config/environment";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignatureViewer } from "./SignatureViewer";
@@ -52,7 +53,7 @@ export function SignaturePreview({
       <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <div className="flex-shrink-0">
           <img
-            src={`http://localhost:3001${signaturePath}`}
+            src={`${API_BASE_NORMALIZED}${signaturePath}`}
             alt="Signature"
             className="h-12 w-auto object-contain bg-white border rounded"
             onError={(e) => {

@@ -24,7 +24,7 @@ router.get('/signature/my', ...gatePassController.getUserSignature);
 // HST Gate Pass step-specific endpoints
 router.post('/:requestId/recommend', ...gatePassController.recommend);
 router.post('/:requestId/noted', ...gatePassController.noted);
-router.post('/:requestId/gado-approve', ...gatePassController.gadoApprove);
+router.post('/:requestId/admin-approve', ...gatePassController.adminApprove);
 router.post('/:requestId/release', ...gatePassController.release);
 router.post('/:requestId/print', ...gatePassController.incrementPrintCount);
 

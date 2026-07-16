@@ -34,11 +34,13 @@ export function getApiUrl(endpoint: string): string {
 }
 
 // Helper function to get auth headers
-export function getAuthHeaders(): Record<string, string> {
+export function getAuthHeaders(includeJsonContentType = true): Record<string, string> {
   const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  
+  if (includeJsonContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
   
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;

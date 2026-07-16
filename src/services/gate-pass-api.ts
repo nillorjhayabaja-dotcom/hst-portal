@@ -49,6 +49,19 @@ export interface UserInfo {
   };
 }
 
+export interface TransportationAssignment {
+  id?: string;
+  transportationType?: string;
+  vehiclePlate?: string;
+  driverName?: string;
+  remarks?: string;
+  assignedAt?: string;
+  assignedBy?: {
+    id?: string;
+    displayName?: string;
+  };
+}
+
 export interface GatePass {
   id: string;
   requestId: string;
@@ -58,6 +71,7 @@ export interface GatePass {
   transportation?: string;
   plateNumber?: string;
   driverName?: string;
+  transportationAssignment?: TransportationAssignment;
   items?: any;
   expectedReturn?: string;
   actualReturn?: string;
@@ -97,6 +111,35 @@ export interface GatePass {
       name: string;
     };
     status: string;
+  };
+}
+
+export interface QRScanReleaseResponse {
+  success: boolean;
+  code?: string;
+  message?: string;
+  request: {
+    controlNumber: string;
+    requester?: {
+      displayName?: string;
+    };
+    department?: {
+      id?: string;
+      name?: string;
+      code?: string;
+    };
+  };
+  verification: {
+    status: string;
+    releasedAt?: string;
+    releasedBy?: string;
+  };
+  gatePass?: {
+    destination?: string;
+    purpose?: string;
+    transportationMode?: string;
+    vehiclePlate?: string;
+    driverName?: string;
   };
 }
 
@@ -167,10 +210,6 @@ export const gatePassApi = {
   async submit(data: {
     purpose: string;
     destination?: string;
-    transportation?: string;
-    plateNumber?: string;
-    vehicleId?: string;
-    driverName?: string;
     items?: any;
     expectedReturn?: string;
     notes?: string;
@@ -242,7 +281,7 @@ export const gatePassApi = {
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(false),
     });
 
     if (!response.ok) {
@@ -265,7 +304,7 @@ export const gatePassApi = {
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(false),
     });
 
     if (!response.ok) {
@@ -277,17 +316,40 @@ export const gatePassApi = {
     return data.data || data;
   },
 
-  async noted(requestId: string, note?: string, signature?: File) {
+  async noted(
+    requestId: string,
+    note?: string,
+    signature?: File,
+    transportationAssignment?: {
+      transportationType?: string;
+      vehiclePlate?: string;
+      driverName?: string;
+      remarks?: string;
+    }
+  ) {
     const formData = new FormData();
     formData.append('requestId', requestId);
-    if (note) formData.append('note', note);
-    if (signature) formData.append('signature', signature);
+
+    if (note) {
+      formData.append('note', note);
+    }
+
+    if (signature) {
+      formData.append('signature', signature);
+    }
+
+    if (transportationAssignment) {
+      formData.append(
+        'transportationAssignment',
+        JSON.stringify(transportationAssignment)
+      );
+    }
 
     const url = `${API_BASE_URL}/gate-pass/${requestId}/noted`;
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(false),
     });
 
     if (!response.ok) {
@@ -309,7 +371,7 @@ export const gatePassApi = {
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(false),
     });
 
     if (!response.ok) {
@@ -336,6 +398,10 @@ export const gatePassApi = {
   },
 
   async release(requestId: string, data: {
+    transportationType?: string;
+    vehiclePlate?: string;
+    driverName?: string;
+    remarks?: string;
     kmReadingStart?: number;
     kmReadingEnd?: number;
     withMeal?: boolean;
@@ -398,6 +464,13 @@ export const gatePassApi = {
   async incrementPrintCount(requestId: string) {
     return fetchApi<any>(`/gate-pass/${requestId}/print`, {
       method: 'POST',
+    });
+  },
+
+  async scanAndRelease(token: string) {
+    return fetchApi<QRScanReleaseResponse>(`/verification/verify/${token}/release`, {
+      method: 'POST',
+      body: JSON.stringify({}),
     });
   },
 

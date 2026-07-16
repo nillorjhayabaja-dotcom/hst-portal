@@ -4,7 +4,6 @@ import { notificationService } from '../../infrastructure/notifications/notifica
 import { fileStorageService } from '../../infrastructure/storage/file-storage.service';
 import { NotFoundError, ValidationError, ApprovalSignatureRequiredError } from '../../shared/errors';
 import { workflowEngine } from '../../infrastructure/workflow/workflow-engine.service';
-import { qrTokenService } from './qr-token.service';
 import { gatePassVerificationService } from './gate-pass-verification.service';
 import { GatePassPDFService } from './gate-pass-pdf.service';
 
@@ -28,7 +27,7 @@ export class GatePassWorkflowService {
     note?: string,
     signature?: { originalname: string; mimetype: string; size: number; stream: any }
   ): Promise<ApprovalStepResult> {
-    const request = await prisma.approvalRequest.findUnique({
+    const request: any = await (prisma.approvalRequest.findUnique as any)({
       where: { id: requestId },
       include: {
         gatePass: true,
@@ -43,6 +42,9 @@ export class GatePassWorkflowService {
             },
           },
         },
+        requester: {
+          select: { id: true, displayName: true },
+        },
       },
     });
 
@@ -55,7 +57,7 @@ export class GatePassWorkflowService {
     }
 
     // Get the current pending step
-    const currentStep = request.steps[0];
+    const currentStep = request.steps?.[0];
     if (!currentStep) {
       return {
         success: false,
@@ -63,6 +65,17 @@ export class GatePassWorkflowService {
         message: 'No pending approval steps found',
       };
     }
+
+    // Ensure workflow steps are accessible
+    const workflowSteps = request.workflow?.steps || [];
+    const totalSteps = workflowSteps.length;
+
+    if (totalSteps === 0) {
+      throw new ValidationError('Workflow configuration is missing. Please contact administrator.');
+    }
+
+    const currentIndex = workflowSteps.findIndex((s: any) => s.id === currentStep.id);
+    const currentStepIndex = currentIndex >= 0 ? currentIndex : (currentStep.stepOrder - 1);
 
     // Verify the actor is assigned to the current step
     if (currentStep.actorId && currentStep.actorId !== actorId) {
@@ -162,7 +175,7 @@ export class GatePassWorkflowService {
           data: {
             status: 'approved',
             completedAt: new Date(),
-            currentStepIndex: request.workflow!.steps.length,
+            currentStepIndex: totalSteps,
           },
         });
 
@@ -193,8 +206,10 @@ export class GatePassWorkflowService {
         };
       } else if (nextStepResult.skipStep) {
         // Skip to next step (e.g., car assignee not needed)
-        await this.advanceToNextStep(request, nextStepResult.nextStepOrder!);
-        
+        if (nextStepResult.nextStepOrder !== undefined) {
+          await this.advanceToNextStep(request, nextStepResult.nextStepOrder);
+        }
+
         return {
           success: true,
           nextStep: nextStepResult.nextStepName,
@@ -203,10 +218,11 @@ export class GatePassWorkflowService {
         };
       } else {
         // Move to next step
-        await this.advanceToNextStep(request, nextStepResult.nextStepOrder!);
-
-        // Notify next approver
-        await this.notifyNextApprover(request, nextStepResult.nextStepOrder!);
+        if (nextStepResult.nextStepOrder !== undefined) {
+          await this.advanceToNextStep(request, nextStepResult.nextStepOrder);
+          // Notify next approver
+          await this.notifyNextApprover(request, nextStepResult.nextStepOrder);
+        }
 
         return {
           success: true,
@@ -218,7 +234,8 @@ export class GatePassWorkflowService {
     } catch (error) {
       // Log error but don't rollback signature - it can be cleaned up later if needed
       console.error('Workflow approval error:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new ValidationError(`Failed to process approval: ${errorMessage}`);
     }
   }
 
@@ -235,12 +252,14 @@ export class GatePassWorkflowService {
     nextStepName?: string;
     message?: string;
   }> {
-    if (!request.workflow) {
+    const workflowSteps = request.workflow?.steps || [];
+
+    if (workflowSteps.length === 0) {
       return { isComplete: true };
     }
 
     const currentOrder = currentStep.stepOrder;
-    const remainingSteps = request.workflow.steps.filter(
+    const remainingSteps = workflowSteps.filter(
       (s: any) => s.stepOrder > currentOrder
     );
 
@@ -348,7 +367,8 @@ export class GatePassWorkflowService {
    * Notify the next approver
    */
   private async notifyNextApprover(request: any, nextStepOrder: number) {
-    const nextStep = request.workflow?.steps.find((s: any) => s.stepOrder === nextStepOrder);
+    const workflowSteps = request.workflow?.steps || [];
+    const nextStep = workflowSteps.find((s: any) => s.stepOrder === nextStepOrder);
     if (!nextStep) return;
 
     // Get all users with the required role
@@ -359,14 +379,19 @@ export class GatePassWorkflowService {
 
     // Send notifications
     for (const userRole of usersWithRole) {
-      await notificationService.notifyUser(userRole.user.id, {
-        title: `Gate Pass Approval Required`,
-        message: `Gate pass ${request.controlNumber} requires your approval`,
-        actionUrl: `/app/m/gate-pass/request/${request.id}`,
-        requestId: request.id,
-        controlNumber: request.controlNumber,
-        metadata: { moduleId: 'gate-pass', stepName: nextStep.name },
-      });
+      try {
+        await notificationService.notifyUser(userRole.user.id, {
+          title: `Gate Pass Approval Required`,
+          message: `Gate pass ${request.controlNumber} requires your approval`,
+          actionUrl: `/app/m/gate-pass/request/${request.id}`,
+          requestId: request.id,
+          controlNumber: request.controlNumber,
+          metadata: { moduleId: 'gate-pass', stepName: nextStep.name },
+        });
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+        // Continue even if notification fails
+      }
     }
   }
 

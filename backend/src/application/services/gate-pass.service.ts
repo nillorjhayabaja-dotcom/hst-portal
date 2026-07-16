@@ -61,10 +61,6 @@ export class GatePassService {
   async submit(data: {
     purpose: string;
     destination?: string;
-    transportation?: string;
-    plateNumber?: string;
-    vehicleId?: string;
-    driverName?: string;
     items?: any;
     expectedReturn?: Date;
     notes?: string;
@@ -74,21 +70,6 @@ export class GatePassService {
     console.log('[SUBMIT] Starting gate pass submission for user:', data.requesterId);
     console.log('[SUBMIT] Data:', JSON.stringify({ ...data, requesterId: data.requesterId }));
     
-    let resolvedVehicleId: string | undefined = data.vehicleId;
-    let resolvedPlateNumber: string | undefined;
-
-    if (data.plateNumber) {
-      const vehicle = await gatePassRepository.getVehicleByPlateNumber(data.plateNumber);
-      if (vehicle) {
-        resolvedVehicleId = vehicle.id;
-      } else {
-        // Plate number entered doesn't match a registered vehicle.
-        // Store it as a free-text value on the gate pass instead of linking to a vehicle FK.
-        console.warn(`[SUBMIT] Vehicle plate number not found in system: ${data.plateNumber}. Storing as text.`);
-        resolvedPlateNumber = data.plateNumber;
-      }
-    }
-
     const started = await workflowEngine.startRequest({
       moduleId: 'gate-pass',
       title: data.purpose,
@@ -101,10 +82,6 @@ export class GatePassService {
     const gatePass = await gatePassRepository.create({
       requestId: started.id,
       purpose: data.purpose,
-      transportation: data.transportation,
-      vehicleId: resolvedVehicleId,
-      plateNumber: resolvedPlateNumber,
-      driverName: data.driverName,
       items: data.items,
       destination: data.destination,
       expectedReturn: data.expectedReturn,
@@ -143,9 +120,6 @@ export class GatePassService {
   async create(data: {
     requestId: string;
     purpose: string;
-    transportation?: string;
-    vehicleId?: string;
-    driverName?: string;
     items?: any;
     destination?: string;
     expectedReturn?: Date;
@@ -156,9 +130,6 @@ export class GatePassService {
     const gatePass = await gatePassRepository.create({
       requestId: data.requestId,
       purpose: data.purpose,
-      transportation: data.transportation,
-      vehicleId: data.vehicleId,
-      driverName: data.driverName,
       items: data.items,
       destination: data.destination,
       expectedReturn: data.expectedReturn,
@@ -177,9 +148,6 @@ export class GatePassService {
     id: string,
     data: {
       purpose?: string;
-      transportation?: string;
-      vehicleId?: string;
-      driverName?: string;
       items?: any;
       destination?: string;
       expectedReturn?: Date;
@@ -416,14 +384,30 @@ export class GatePassService {
     actorName: string,
     stepName: string,
     note?: string,
-    signature?: { originalname: string; mimetype: string; size: number; stream: any }
+    signature?: { originalname: string; mimetype: string; size: number; stream: any },
+    transportationAssignment?: {
+      transportationType?: string;
+      vehiclePlate?: string;
+      driverName?: string;
+      remarks?: string;
+    }
   ) {
+    const enrichedNote = transportationAssignment
+      ? `${note || ''}
+
+Transportation Assignment:
+Type: ${transportationAssignment.transportationType || 'N/A'}
+Plate: ${transportationAssignment.vehiclePlate || 'N/A'}
+Driver: ${transportationAssignment.driverName || 'N/A'}
+Remarks: ${transportationAssignment.remarks || 'N/A'}`
+      : note;
+
     const result = await gatePassWorkflowService.approveStep(
       requestId,
       actorId,
       actorName,
       stepName,
-      note,
+      enrichedNote,
       signature
     );
 
@@ -432,7 +416,34 @@ export class GatePassService {
     }
 
     const gatePass = await gatePassRepository.findByRequestId(requestId);
-    return gatePass;
+
+    if (gatePass && transportationAssignment) {
+      await auditService.record(
+        'transportation_assignment',
+        'gate_pass',
+        {
+          actorId,
+          entityId: gatePass.id,
+          metadata: {
+            requestId,
+            assignment: transportationAssignment,
+          },
+        }
+      );
+
+      await gatePassRepository.updateByRequestId(requestId, {
+        transportation:
+          transportationAssignment.transportationType || null,
+        plateNumber:
+          transportationAssignment.vehiclePlate || null,
+        driverName:
+          transportationAssignment.driverName || null,
+        notedBy: actorId,
+        notedAt: new Date(),
+      });
+    }
+
+    return await gatePassRepository.findByRequestId(requestId);
   }
 
   async releaseGatePass(

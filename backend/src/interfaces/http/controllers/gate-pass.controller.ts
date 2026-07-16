@@ -46,10 +46,6 @@ export const gatePassController = {
         const result = await gatePassService.submit({
           purpose: body.purpose,
           destination: body.destination,
-          transportation: body.transportation,
-          plateNumber: body.plateNumber,
-          vehicleId: body.vehicleId,
-          driverName: body.driverName,
           items: body.items,
           expectedReturn: body.expectedReturn ? new Date(body.expectedReturn) : undefined,
           notes: body.notes,
@@ -148,9 +144,6 @@ export const gatePassController = {
         const gatePass = await gatePassService.create({
           requestId: body.requestId,
           purpose: body.purpose,
-          transportation: body.transportation,
-          vehicleId: body.vehicleId,
-          driverName: body.driverName,
           items: body.items,
           destination: body.destination,
           expectedReturn: body.expectedReturn ? new Date(body.expectedReturn) : undefined,
@@ -177,9 +170,6 @@ export const gatePassController = {
 
         const gatePass = await gatePassService.update(req.params.id, {
           purpose: body.purpose,
-          transportation: body.transportation,
-          vehicleId: body.vehicleId,
-          driverName: body.driverName,
           items: body.items,
           destination: body.destination,
           expectedReturn: body.expectedReturn ? new Date(body.expectedReturn) : undefined,
@@ -233,7 +223,7 @@ export const gatePassController = {
           if (err.code === 'LIMIT_FILE_SIZE') {
             return next(new SignatureUploadFailedError('Signature file size exceeds 2MB limit'));
           }
-          return next();
+          return next(err);
         }
         next();
       });
@@ -395,7 +385,7 @@ export const gatePassController = {
           if (err.code === 'LIMIT_FILE_SIZE') {
             return next(new SignatureUploadFailedError('Signature file size exceeds 2MB limit'));
           }
-          return next();
+          return next(err);
         }
         next();
       });
@@ -403,7 +393,8 @@ export const gatePassController = {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = req.user as AuthUser;
-        const { requestId, note } = req.body;
+        const requestId = req.params.requestId || req.body.requestId;
+        const { note } = req.body;
         const file = (req as any).file;
 
         const signature = file ? multerFileToSignature(file) : undefined;
@@ -432,7 +423,7 @@ export const gatePassController = {
           if (err.code === 'LIMIT_FILE_SIZE') {
             return next(new SignatureUploadFailedError('Signature file size exceeds 2MB limit'));
           }
-          return next();
+          return next(err);
         }
         next();
       });
@@ -440,10 +431,15 @@ export const gatePassController = {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = req.user as AuthUser;
-        const { requestId, note } = req.body;
+        const requestId = req.params.requestId || req.body.requestId;
+        const { note } = req.body;
         const file = (req as any).file;
 
         const signature = file ? multerFileToSignature(file) : undefined;
+
+        const transportationAssignment = req.body.transportationAssignment
+          ? JSON.parse(req.body.transportationAssignment)
+          : undefined;
 
         const gatePass = await gatePassService.approveStep(
           requestId,
@@ -451,7 +447,8 @@ export const gatePassController = {
           user.displayName,
           'noted',
           note,
-          signature
+          signature,
+          transportationAssignment
         );
         res.json({ success: true, data: gatePass, message: 'Gate pass noted successfully' });
       } catch (err) {
@@ -460,7 +457,7 @@ export const gatePassController = {
     },
   ],
 
-  gadoApprove: [
+  adminApprove: [
     authenticate,
     requirePermission('gate-pass', 'approve'),
     (req: Request, res: Response, next: NextFunction) => {
@@ -477,7 +474,8 @@ export const gatePassController = {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = req.user as AuthUser;
-        const { requestId, note } = req.body;
+        const requestId = req.params.requestId || req.body.requestId;
+        const { note } = req.body;
         const file = (req as any).file;
 
         const signature = file ? multerFileToSignature(file) : undefined;
@@ -486,11 +484,11 @@ export const gatePassController = {
           requestId,
           user.id,
           user.displayName,
-          'approved_by_gad',
+          'approved_by_admin_manager',
           note,
           signature
         );
-        res.json({ success: true, data: gatePass, message: 'Gate pass approved by GAD successfully' });
+        res.json({ success: true, data: gatePass, message: 'Gate pass approved by Admin Manager successfully' });
       } catch (err) {
         next(err);
       }

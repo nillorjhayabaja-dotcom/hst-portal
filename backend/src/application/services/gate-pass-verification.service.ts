@@ -207,6 +207,21 @@ export class GatePassVerificationService {
                 brand: true,
                 model: true,
                 vehicleType: true,
+                status: true,
+              },
+            },
+            transportationAssignment: {
+              include: {
+                vehicle: {
+                  select: {
+                    id: true,
+                    plateNumber: true,
+                    brand: true,
+                    model: true,
+                    vehicleType: true,
+                    status: true,
+                  },
+                },
               },
             },
           },
@@ -291,7 +306,21 @@ export class GatePassVerificationService {
 
     return {
       success: true,
-      gatePass,
+      gatePass: {
+        ...gatePass,
+        transportationAssignment:
+          (gatePass as any).transportationAssignment,
+        transportationMode:
+          (gatePass as any).transportationAssignment
+            ?.transportationType ||
+          gatePass.transportation,
+        vehiclePlate:
+          (gatePass as any).transportationAssignment
+            ?.vehiclePlate || gatePass.plateNumber,
+        driverName:
+          (gatePass as any).transportationAssignment
+            ?.driverName || gatePass.driverName,
+      },
       request,
       verification: {
         ...verification,
@@ -316,6 +345,9 @@ export class GatePassVerificationService {
       timeOut: Date;
       timeIn?: Date;
       remarks?: string;
+      ipAddress?: string;
+      device?: string;
+      browser?: string;
     }
   ): Promise<VerificationResult> {
     const verification = await prisma.gatePassVerification.findUnique({
@@ -340,19 +372,35 @@ export class GatePassVerificationService {
     const gatePass = verification.gatePass;
     const request = gatePass.request;
 
-    if (request.status !== 'approved') {
-      throw new ValidationError('Gate pass must be approved before release');
-    }
-
+    // Check for already released BEFORE checking request status.
+    // After the first successful release, the request status is changed
+    // to 'completed', which would cause a ValidationError (HTTP 400)
+    // if we checked it first. The ALREADY_RELEASED response must take
+    // priority so the scanner can stop processing this QR properly.
     if (verification.status === 'released') {
       return {
         success: false,
-        gatePass,
-        request,
-        verification,
-        message: 'Gate pass already released',
+        gatePass: {
+          ...gatePass,
+          transportationMode: (gatePass as any).transportationMode,
+          vehiclePlate: (gatePass as any).vehiclePlate,
+          driverName: (gatePass as any).driverName,
+        },
+        request: {
+          ...request,
+          department: (request as any).department,
+        },
+        verification: {
+          ...verification,
+          releasedBy: securityUserName,
+        },
+        message: 'This Gate Pass has already been released by Security.',
         code: 'ALREADY_RELEASED',
       };
+    }
+
+    if (request.status !== 'approved') {
+      throw new ValidationError('Gate pass must be approved before release');
     }
 
     // Get security guard's employee record
@@ -380,9 +428,9 @@ export class GatePassVerificationService {
           releasedAt: data.timeOut,
           releasedBy: securityUserId,
           guardEmployeeId: guardEmployee?.id,
-          guardIPAddress: undefined, // Will be set by controller
-          guardDevice: undefined,
-          guardBrowser: undefined,
+          guardIPAddress: data.ipAddress,
+          guardDevice: data.device,
+          guardBrowser: data.browser,
           remarks: data.remarks,
         },
       });
@@ -440,6 +488,9 @@ export class GatePassVerificationService {
             mealAmount: data.mealAmount,
             guardName: securityUserName,
             guardEmployeeNumber: guardEmployee?.employeeNumber,
+            ipAddress: data.ipAddress,
+            device: data.device,
+            browser: data.browser,
           },
         },
       });
@@ -458,6 +509,9 @@ export class GatePassVerificationService {
           mealAmount: data.mealAmount,
           releasedAt: data.timeOut,
           guardName: securityUserName,
+          ipAddress: data.ipAddress,
+          device: data.device,
+          browser: data.browser,
         },
       });
 
@@ -487,10 +541,10 @@ export class GatePassVerificationService {
       });
     }
 
-    // Notify GAD
-    const gadStep = requestWithSteps?.steps.find((s: any) => s.name.toLowerCase().includes('gad'));
-    if (gadStep?.actorId) {
-      await notificationService.notifyUser(gadStep.actorId, {
+    // Notify Admin Manager
+    const adminStep = requestWithSteps?.steps.find((s: any) => s.name.toLowerCase().includes('admin'));
+    if (adminStep?.actorId) {
+      await notificationService.notifyUser(adminStep.actorId, {
         title: 'Gate Pass Successfully Completed',
         message: `Gate pass ${request.controlNumber} has been released by security`,
         actionUrl: '/app/m/gate-pass',
@@ -502,10 +556,22 @@ export class GatePassVerificationService {
 
     return {
       success: true,
-      gatePass: result.gatePass,
-      request: result.request,
-      verification: result.verification,
+      gatePass: {
+        ...result.gatePass,
+        transportationMode: (result.gatePass as any).transportationMode,
+        vehiclePlate: (result.gatePass as any).vehiclePlate,
+        driverName: (result.gatePass as any).driverName,
+      },
+      request: {
+        ...result.request,
+        department: (request as any).department,
+      },
+      verification: {
+        ...result.verification,
+        releasedBy: securityUserName,
+      },
       message: 'Gate pass released successfully',
+      code: 'RELEASE_COMPLETED',
     };
   }
 

@@ -6,9 +6,7 @@ import { toast } from "sonner";
 import {
   FormInput,
   FormTextarea,
-  FormSelect,
   FormDatePicker,
-  FormField,
   FormRow,
   FormSection,
   FormActions,
@@ -29,13 +27,6 @@ interface GatePassFormProps {
   onSuccess?: () => void;
 }
 
-const TRANSPORTATION_OPTIONS = [
-  { value: "company_vehicle", label: "Company Vehicle" },
-  { value: "personal_vehicle", label: "Personal Vehicle" },
-  { value: "third_party", label: "Third Party / Delivery" },
-  { value: "on_foot", label: "On Foot / No Vehicle" },
-];
-
 export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProps) {
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
@@ -43,9 +34,6 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
   // Form fields
   const [purpose, setPurpose] = useState("");
   const [destination, setDestination] = useState("");
-  const [transportation, setTransportation] = useState("");
-  const [vehicleId, setVehicleId] = useState("");
-  const [driverName, setDriverName] = useState("");
   const [expectedReturn, setExpectedReturn] = useState<Date | undefined>(undefined);
   const [notes, setNotes] = useState("");
 
@@ -57,9 +45,6 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
     if (open) {
       setPurpose("");
       setDestination("");
-      setTransportation("");
-      setVehicleId("");
-      setDriverName("");
       setExpectedReturn(undefined);
       setNotes("");
       setErrors({});
@@ -92,10 +77,6 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
       const result = await gatePassApi.submit({
         purpose: purpose.trim(),
         destination: destination.trim(),
-        transportation: transportation || undefined,
-        plateNumber: vehicleId || undefined,
-        vehicleId: undefined,
-        driverName: driverName || undefined,
         expectedReturn: expectedReturn?.toISOString(),
         notes: notes || undefined,
       });
@@ -154,38 +135,16 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
             onChange={(e) => setNotes(e.target.value)}
           />
 
-          {/* Transportation Details */}
-          <FormSection title="Transportation" description="Vehicle and driver information (optional)" />
+          <FormSection
+            title="Return Information"
+            description="Expected return schedule for this request"
+          />
 
-          <FormRow cols={2}>
-            <FormSelect
-              label="Transportation Mode"
-              placeholder="Select mode..."
-              value={transportation}
-              onValueChange={setTransportation}
-              options={TRANSPORTATION_OPTIONS}
-            />
-            <FormDatePicker
-              label="Expected Return"
-              value={expectedReturn}
-              onChange={setExpectedReturn}
-            />
-          </FormRow>
-
-          <FormRow cols={2}>
-            <FormInput
-              label="Vehicle Plate Number"
-              placeholder="e.g. ABC-1234"
-              value={vehicleId}
-              onChange={(e) => setVehicleId(e.target.value)}
-            />
-            <FormInput
-              label="Driver Name"
-              placeholder="Full name of driver"
-              value={driverName}
-              onChange={(e) => setDriverName(e.target.value)}
-            />
-          </FormRow>
+          <FormDatePicker
+            label="Expected Return"
+            value={expectedReturn}
+            onChange={setExpectedReturn}
+          />
 
           {/* Items notice */}
           <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4">

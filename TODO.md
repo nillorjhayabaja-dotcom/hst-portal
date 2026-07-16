@@ -1,52 +1,103 @@
-# Phase 8 - Remove Mock Environment & Transition to Real DB Authentication
+# HST Enterprise Portal - Production Migration Checklist
 
-## Step 1 (frontend): Remove demo role UI
+## Phase 1 - Infrastructure Audit ✅ (Already Complete)
+- [x] AUDIT_REPORT.md generated
+- [x] Hardcoded localhost URLs identified
+- [x] Configuration gaps documented
 
-- [ ] Delete `src/components/app/RoleSwitcher.tsx`
-- [ ] Remove RoleSwitcher import/render usage from layout/app shell
-- [ ] Remove any floating demo panel styles/refs
+## Phase 2 - Cloudflare Workers Frontend
+- [ ] Update wrangler.toml with proper configuration (main entry, routes, env vars)
+- [ ] Create .env.production with production API URL
+- [ ] Configure SPA routing for Workers
+- [ ] Build frontend successfully
+- [ ] Deploy to Cloudflare Workers
 
-## Step 2 (frontend): Remove role mutation from AuthContext
+## Phase 3 - Cloudflare Tunnel
+- [ ] Update setup-tunnel.ps1
+- [ ] Create cloudflared config.yml
+- [ ] Configure ingress rules (API only, no DB/storage)
 
-- [ ] Update `src/contexts/AuthContext.tsx` to remove `switchRole` API and demo-only mutation
-- [ ] Remove `switchRole` from context type/value
+## Phase 4 - Backend Production Hardening
+- [ ] Add compression middleware
+- [ ] Add trust proxy
+- [ ] Add secure cookie configuration
+- [ ] Add health check endpoint
+- [ ] Add graceful shutdown improvements
+- [ ] Restrict CORS to production domain
+- [ ] Create PM2 ecosystem.config.cjs
+- [ ] Create Windows service setup script
+- [ ] Create .env.production for backend
 
-## Step 3 (frontend): Remove frontend mock datasets
+## Phase 5 - PostgreSQL (Local - Verify)
+- [ ] Verify DATABASE_URL points to localhost:5432
+- [ ] Document PostgreSQL configuration
 
-- [ ] Delete `src/mock/*` files
-- [ ] Remove any imports/usage of `src/mock/*` in app code
+## Phase 6 - Storage (Local - Configure)
+- [ ] Create storage directory structure
+- [ ] Verify Express serves files correctly
+- [ ] Document storage configuration
 
-## Step 4 (frontend): Remove hardcoded frontend RBAC matrix
+## Phase 7 - API Integration
+- [ ] Verify all frontend services use VITE_API_BASE_URL env var
+- [ ] AuthContext uses environment.ts (already done)
+- [ ] No hardcoded localhost URLs remain
+- [ ] No mock services remain
 
-- [ ] Update `src/components/app/SidebarNav.tsx` to build menu from backend-provided permissions/roles
-- [ ] Remove usage of `src/rbac/permissions.ts`
-- [ ] Ensure permission checks use backend data only
+## Phase 8 - Authentication
+- [ ] Verify login/logout flow
+- [ ] Verify refresh token flow
+- [ ] Verify RBAC permissions
+- [ ] Verify protected routes
+- [ ] Verify session persistence
 
-## Step 5 (backend): Extend Prisma seed with 9 system users + roles/permissions
+## Phase 9 - Module Verification
+- [ ] Dashboard
+- [ ] Employees
+- [ ] Departments
+- [ ] Gate Pass
+- [ ] Leave
+- [ ] MRF
+- [ ] Visitors
+- [ ] Vehicles
+- [ ] Assets
+- [ ] Purchase Request
+- [ ] Reports
+- [ ] Audit Logs
+- [ ] Notifications
+- [ ] Workflow Engine
+- [ ] Approval Engine
+- [ ] QR Generation
+- [ ] PDF Generation
+- [ ] Printing
 
-- [ ] Update `backend/prisma/seed.ts` to create roles: super_admin, admin, executive, manager, supervisor, hr, gad, security, employee
-- [ ] Create HS0001-0001 .. HS0001-0009 users with bcrypt hashes (Admin@12345)
-- [ ] Ensure permissions are inserted for each role so sidebar/modules render correctly
+## Phase 10 - Security Hardening
+- [ ] Helmet (already configured)
+- [ ] Rate Limiting (already configured)
+- [ ] CORS restricted to production domain
+- [ ] JWT validation
+- [ ] Audit Logging
+- [ ] Role Permissions
+- [ ] Cloudflare SSL
+- [ ] Input validation with Zod
 
-## Step 6 (backend/frontend integration): Ensure refresh + session loads user/roles/permissions
+## Phase 11 - Backup & Recovery
+- [ ] Create PostgreSQL backup script
+- [ ] Create storage backup script
+- [ ] Create restore documentation
 
-- [ ] Confirm login refresh flow returns user + roles/permissions needed by frontend
-- [ ] Remove any frontend fallbacks that rely on hardcoded permissions
+## Phase 12 - Monitoring
+- [ ] Health check endpoint
+- [ ] Application logging
+- [ ] Error logging
+- [ ] Audit logging
+- [ ] Cloudflare Tunnel status monitoring
 
-## Step 7 (frontend): Dashboard from real APIs
-
-- [ ] Replace mock dashboard stats with API calls
-
-## Step 8 (frontend): Users & Roles page from PostgreSQL
-
-- [ ] Ensure CRUD/search/pagination uses backend endpoints
-- [ ] Add audit logging if not already present
-
-## Step 9 (verification)
-
-- [ ] No demo buttons/panels exist in UI
-- [ ] No localStorage role switching exists
-- [ ] Login uses PostgreSQL-backed JWT
-- [ ] Sidebar is filtered by backend permissions
-- [ ] Dashboard loads real data
-- [ ] Users page lists DB users only
+## Phase 13 - Documentation
+- [ ] Infrastructure Deployment Guide
+- [ ] Cloudflare Tunnel Setup Guide
+- [ ] Windows Server Deployment Guide
+- [ ] Ubuntu Deployment Guide
+- [ ] PM2 Setup Guide
+- [ ] Nginx/IIS Reverse Proxy Guide
+- [ ] Backup & Recovery Guide
+- [ ] Operations Manual

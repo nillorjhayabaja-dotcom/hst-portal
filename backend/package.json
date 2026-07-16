@@ -8,7 +8,6 @@
     "dev": "tsx watch src/interfaces/http/server.ts",
     "build": "tsc",
     "start": "node dist/src/interfaces/http/server.js",
-    "postinstall": "npx prisma migrate deploy && npx prisma db seed",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "prisma:generate": "prisma generate",

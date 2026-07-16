@@ -13,6 +13,8 @@ export interface GatePassPDFData {
   destination: string;
   purpose: string;
   transportation: string;
+  transportationAssignedBy?: string;
+  transportationAssignedAt?: string;
   isOfficialBusiness: boolean;
   isPersonal: boolean;
   withCar: boolean;
@@ -48,7 +50,7 @@ export class GatePassPDFService {
    * Generate Gate Pass PDF and save as attachment
    */
   async generateGatePassPDF(requestId: string): Promise<string> {
-    const request = await prisma.approvalRequest.findUnique({
+    const request = await (prisma.approvalRequest.findUnique as any)({
       where: { id: requestId },
       include: {
         requester: {
@@ -75,30 +77,39 @@ export class GatePassPDFService {
           },
         },
       },
-    });
+    }) as any;
 
     if (!request || !request.gatePass) {
       throw new Error('Gate pass not found');
     }
 
-    const gatePass = request.gatePass;
-    const employee = request.requester.employees;
-    
-    // Get vehicle details if assigned
-    let vehiclePlateNumber: string | undefined;
-    if (gatePass.vehicleId) {
-      const vehicle = await prisma.vehicle.findUnique({
-        where: { id: gatePass.vehicleId },
-        select: { plateNumber: true },
-      });
-      vehiclePlateNumber = vehicle?.plateNumber || undefined;
-    }
-    
+    const gatePass = request.gatePass as any;
+    const employee = request.requester?.employees;
+
+    // Transportation data is saved directly to gatePass table
+    const assignedTransportation =
+      gatePass.transportation || 'Official Business';
+
+    const assignedPlateNumber =
+      gatePass.plateNumber;
+
+    const assignedDriverName =
+      gatePass.driverName;
+
     // Determine transportation type
-    const isOfficialBusiness = gatePass.transportation === 'official' || !gatePass.transportation;
-    const isPersonal = gatePass.transportation === 'personal';
-    const withCar = !!gatePass.vehicleId;
-    const withoutCar = !gatePass.vehicleId;
+    const isOfficialBusiness =
+      assignedTransportation === 'official' ||
+      assignedTransportation === 'Official Business';
+
+    const isPersonal =
+      assignedTransportation === 'personal' ||
+      assignedTransportation === 'Personal Vehicle';
+
+    const withCar =
+      assignedTransportation === 'Company Vehicle' ||
+      assignedTransportation === 'Personal Vehicle';
+
+    const withoutCar = !withCar;
 
     // Format dates
     const dateFrom = gatePass.expectedReturn 
@@ -135,13 +146,13 @@ export class GatePassPDFService {
       },
       destination: gatePass.destination || 'N/A',
       purpose: gatePass.purpose,
-      transportation: gatePass.transportation || 'Official Business',
+      transportation: assignedTransportation,
       isOfficialBusiness,
       isPersonal,
       withCar,
       withoutCar,
-      plateNumber: vehiclePlateNumber,
-      driverName: gatePass.driverName || undefined,
+      plateNumber: assignedPlateNumber || undefined,
+      driverName: assignedDriverName || undefined,
       remarks: request.description || undefined,
       dateFrom,
       dateTo: dateFrom,
