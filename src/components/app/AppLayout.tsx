@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHydrated } from "@/hooks/useHydrated";
+import { STORAGE_KEYS } from "@/config/environment";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SidebarNav } from "./SidebarNav";
 import { Header } from "./Header";
@@ -15,7 +16,11 @@ export function AppLayout() {
 
   useEffect(() => {
     if (hydrated && ready && !user) {
-      navigate({ to: "/", replace: true });
+      // Only redirect if there's no refresh token (meaning we've already tried to restore the session)
+      const hasRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      if (!hasRefreshToken) {
+        navigate({ to: "/", replace: true });
+      }
     }
   }, [hydrated, ready, user, navigate]);
 

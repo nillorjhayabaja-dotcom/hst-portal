@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   DoorOpen,
   CalendarCheck,
+  UserCheck,
   Users,
   ShoppingCart,
   BarChart3,
@@ -36,12 +37,12 @@ const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
   },
   {
     id: "qa3",
-    label: "MRF Request",
-    description: "Request additional manpower",
-    icon: "Users",
-    action: "create-mrf",
+    label: "Visitors",
+    description: "Register and manage visitors",
+    icon: "UserCheck",
+    action: "visitors",
     color: "purple",
-    to: "/app/m/mrf?action=create",
+    to: "/app/m/visitors",
   },
   {
     id: "qa4",
@@ -75,7 +76,7 @@ const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
 const ICON_MAP: Record<string, LucideIcon> = {
   DoorOpen,
   CalendarCheck,
-  Users,
+  UserCheck,
   ShoppingCart,
   BarChart3,
   CheckCircle,

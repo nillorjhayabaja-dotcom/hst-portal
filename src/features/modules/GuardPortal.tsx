@@ -259,8 +259,8 @@ export function GuardPortal() {
       } : undefined,
       qrCode: gatePass.qrCode,
       status: workflowStatus.status,
-      // Security guard display name - NEVER show UUID
-      releasedBy: gatePass.releasedBy || securityGuardName,
+      // Security guard display name - ALWAYS use logged-in guard's name, never UUID
+      releasedBy: securityGuardName,
       releasedByPosition: securityGuardPosition,
       releasedDate: gatePass.releasedDate
         ? new Date(gatePass.releasedDate).toLocaleDateString()
@@ -269,10 +269,10 @@ export function GuardPortal() {
         ? new Date(gatePass.releasedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : (gatePass.releasedAt ? new Date(gatePass.releasedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined),
       releasedBySignature: gatePass.releasedBySignature,
-      verifiedBy: gatePass.verifiedBy || securityGuardName,
+      verifiedBy: securityGuardName,
       verifiedByPosition: securityGuardPosition,
       verifiedBySignature: gatePass.verifiedBySignature,
-      completedBy: gatePass.returnedBy || securityGuardName,
+      completedBy: securityGuardName,
       completedByPosition: securityGuardPosition,
       completedBySignature: gatePass.completedBySignature,
       vehiclePlate: gatePass.vehiclePlate || gatePass.plateNumber,

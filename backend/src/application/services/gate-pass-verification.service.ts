@@ -547,7 +547,7 @@ export class GatePassVerificationService {
           isUsed: true,
           isVerified: true,
           verifiedAt: data.timeOut,
-          verifiedBy: securityUserId,
+          verifiedBy: securityUserName,  // Display name for PDF - NOT UUID
           printCount: { increment: 1 },
           kmReadingStart: data.kmReadingStart,
           kmReadingEnd: data.kmReadingEnd,

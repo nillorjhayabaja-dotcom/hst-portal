@@ -176,10 +176,20 @@ export class GatePassPDFService {
 
 // Get security guard name for PDF - NEVER display UUID
     // Look up the security guard's full name and position
-    let releasedByName = gatePass.releasedBy;
+    let releasedByName: string | undefined;
     let releasedByPosition = 'Security Guard';
     
-    if (gatePass.securityReleasedBy) {
+    // First check if releasedBy is already a display name (not a UUID)
+    if (gatePass.releasedBy) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gatePass.releasedBy);
+      if (!isUuid) {
+        // Already a display name - use it directly
+        releasedByName = gatePass.releasedBy;
+      }
+    }
+    
+    // If still UUID or not set, try resolving from securityReleasedBy
+    if (!releasedByName && gatePass.securityReleasedBy) {
       const securityUser = await prisma.user.findUnique({
         where: { id: gatePass.securityReleasedBy },
         select: { 
@@ -205,30 +215,37 @@ export class GatePassPDFService {
       }
     }
     
-    // Also get verifiedBy name
+    // Also get verifiedBy name - handle both UUID and display name
     let verifiedByName: string | undefined;
     let verifiedByPosition: string | undefined;
     if (gatePass.verifiedBy) {
-      const verifiedUser = await prisma.user.findUnique({
-        where: { id: gatePass.verifiedBy },
-        select: { 
-          displayName: true,
-          employees: {
-            select: {
-              firstName: true,
-              lastName: true,
-              position: { select: { title: true } },
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gatePass.verifiedBy);
+      if (!isUuid) {
+        // Already a display name - use directly
+        verifiedByName = gatePass.verifiedBy;
+      } else {
+        // UUID - look up user
+        const verifiedUser = await prisma.user.findUnique({
+          where: { id: gatePass.verifiedBy },
+          select: { 
+            displayName: true,
+            employees: {
+              select: {
+                firstName: true,
+                lastName: true,
+                position: { select: { title: true } },
+              },
             },
           },
-        },
-      });
-      if (verifiedUser) {
-        if (verifiedUser.employees?.firstName && verifiedUser.employees?.lastName) {
-          verifiedByName = `${verifiedUser.employees.firstName} ${verifiedUser.employees.lastName}`;
-        } else {
-          verifiedByName = verifiedUser.displayName;
+        });
+        if (verifiedUser) {
+          if (verifiedUser.employees?.firstName && verifiedUser.employees?.lastName) {
+            verifiedByName = `${verifiedUser.employees.firstName} ${verifiedUser.employees.lastName}`;
+          } else {
+            verifiedByName = verifiedUser.displayName;
+          }
+          verifiedByPosition = verifiedUser.employees?.position?.title || 'Security Guard';
         }
-        verifiedByPosition = verifiedUser.employees?.position?.title || 'Security Guard';
       }
     }
     
@@ -569,9 +586,9 @@ export class GatePassPDFService {
       <div class="value">${data.requester.department}</div>
     </div>
 <div class="row">
-      <div class="label">Date:</div>
+      <div class="label">Departure Date:</div>
       <div class="value" style="flex:0.5;">${data.departureDate}</div>
-      <div class="label" style="min-width:70px;margin-left:10px;">Time Out:</div>
+      <div class="label" style="min-width:70px;margin-left:10px;">Departure Time:</div>
       <div class="value" style="flex:0.4;">${data.departureTime}</div>
       <div class="label" style="min-width:60px;margin-left:10px;">Arrival:</div>
       <div class="value" style="flex:0.4;">${data.arrivalTime || 'Pending'}</div>

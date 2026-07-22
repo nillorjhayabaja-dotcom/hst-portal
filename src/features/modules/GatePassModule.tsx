@@ -176,13 +176,47 @@ const GATE_COLUMNS: Column<GatePass>[] = [
     ),
   },
   {
+    id: "employeeReturn",
+    header: "Employee Return",
+    accessorKey: "employeeReturn",
+    sortable: true,
+    width: "170px",
+    cell: (_: any, row: GatePass) => {
+      const retAt = row.employeeReturn || row.returnedAt;
+      return (
+        <span>
+          {retAt
+            ? `${new Date(retAt).toLocaleDateString()} ${new Date(retAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+            : "--"}
+        </span>
+      );
+    },
+  },
+  {
+    id: "tripDuration",
+    header: "Trip Duration",
+    accessorKey: "tripDurationDisplay",
+    sortable: true,
+    width: "140px",
+    cell: (_: any, row: GatePass) => {
+      const td = row.tripDurationDisplay;
+      if (td) return <span>{td}</span>;
+      if (row.tripDurationMinutes) {
+        const h = Math.floor(row.tripDurationMinutes / 60);
+        const m = row.tripDurationMinutes % 60;
+        return <span>{h} hrs {m} mins</span>;
+      }
+      return <span className="text-gray-400">--</span>;
+    },
+  },
+  {
     id: "releasedBy",
     header: "Released By",
-    accessorKey: "securityReleasedBy",
+    accessorKey: "releasedBy",
     sortable: true,
     width: "170px",
     cell: (_: any, row: GatePass) => (
-      <span>{row.securityReleasedBy || "Awaiting Security"}</span>
+      <span>{row.releasedBy || "Awaiting Security"}</span>
     ),
   },
   {
@@ -442,6 +476,7 @@ export function GatePassModule() {
         searchPlaceholder="Search employee, control number, destination, vehicle, plate, purpose, released by, department..."
         filename="gate-pass-list"
         loading={dataLoading}
+        exportExcelOnly
       />
 
       <GatePassForm

@@ -1,51 +1,44 @@
-# Gate Pass Lifecycle & PDF Finalization - Implementation Plan
+# Security Gate Pass Module Enhancement
 
-## Phase 1: Backend - QR Lifecycle Validation (gate-pass-verification.service.ts)
-- [ ] Add `ALREADY_COMPLETED` code for completed/returned gate passes
-- [ ] Add `EXPIRED` immediate rejection without DB updates
-- [ ] Only increment scan count for valid gate-out scans
-- [ ] Return `ALREADY_COMPLETED` without ANY database modifications
+## Implementation Checklist
 
-## Phase 2: Backend - Verification Controller
-- [ ] Handle `ALREADY_COMPLETED` code in controller response
-- [ ] Return proper error structure for completed QRs
+### 1. Database Schema (Prisma)
+- [x] Already exists: `returnedAt`, `tripDurationMinutes`, `obMealEligible`, `obMealAmount`, `releasedBy` fields in GatePass model
+- [ ] Add `employeeReturn` computed/virtual field logic for Security and Admin tables
 
-## Phase 3: Backend - Gate Pass QR Service
-- [ ] Add lifecycle validation for completed/expired QRs
+### 2. Backend - Repository Layer
+- [ ] Update `gate-pass.repository.ts` to include `releasedBy` (display name) and `returnedAt` in selection
+- [ ] Ensure User join for `releasedBy` to return both `releasedById` (UUID) and `releasedByName` (displayName)
 
-## Phase 4: Backend - Gate Pass DTO Updates
-- [ ] Already done - verify mapper includes all lifecycle fields
-- [ ] Ensure releasedBy uses full name not UUID
-- [ ] Ensure completedBy uses full name not UUID
+### 3. Backend - Service Layer
+- [x] Already implemented: OB Meal eligibility logic in `gate-pass-verification.service.ts`
+- [x] Already implemented: Trip duration calculation in `processReturn`
+- [ ] Update `releaseGatePass` to ensure `releasedBy` stores the security guard's display name
+- [ ] Add employee return auto-timestamp when QR scanned in Return Mode (already done in `processReturn`)
 
-## Phase 5: Backend - PDF Service Updates
-- [ ] Already done - verify security names replace UUIDs
-- [ ] Verify Released By shows "Juan Dela Cruz, Security Guard" not UUID
-- [ ] Verify Verified By shows security name not UUID
-- [ ] Verify Request ID is hidden, Control Number shown
-- [ ] Verify Arrival is auto-generated from timeIn
+### 4. Backend - DTO Layer
+- [ ] Update `mapGatePassToListItem` to return `releasedByName` instead of UUID for `releasedBy`
+- [ ] Add `employeeReturn` and `tripDuration` display fields to DTO
 
-## Phase 6: Frontend - SecurityQRScannerModal
-- [ ] Already partially done - verify all new states work
-- [ ] ALREADY_COMPLETED handling - "This Gate Pass has already been completed."
-- [ ] EXPIRED handling - "QR CODE EXPIRED"
-- [ ] No database updates on completed scans
+### 5. Backend - Export Service
+- [ ] Remove PDF/Print export options - keep only Excel
+- [ ] Create Excel export with exact columns: Requester, Department, Purpose, Destination, Workflow Status, Release Date, Release Time, Employee Return, Trip Duration, Released By, OB Meal Eligible, OB Meal Amount
 
-## Phase 7: Frontend - GuardPortal
-- [ ] Admin table: Remove "Status" column
-- [ ] Display: Workflow Status, Released Date/Time, Arrival Date/Time
-- [ ] Display: Completed By, OB Meal, Trip Duration
-- [ ] Use full names not UUIDs for security personnel
+### 6. Frontend - GatePassModule Columns
+- [ ] Replace `securityReleasedBy` column with `releasedBy` showing Security Guard Name
+- [ ] Add `employeeReturn` column after Release Time
+- [ ] Add `tripDuration` column after Employee Return
+- [ ] Remove Export dropdown, replace with single Export Excel button
 
-## Phase 8: Frontend - gate-pass-api.ts
-- [ ] Verify API types match backend response
-- [ ] Handle ALREADY_COMPLETED in response parsing
+### 7. Frontend - GuardPortal
+- [ ] Update display of Released By to show guard name instead of UUID
+- [ ] Add Employee Return and Trip Duration display
 
-## Phase 9: Frontend - verify.$token.tsx
-- [ ] Handle completed QR display
-- [ ] Show proper messages for expired/completed QRs
+### 8. Frontend - SecurityQRScannerModal
+- [ ] Add Employee Return auto-recording on QR scan in Return Mode
 
-## Phase 10: Database - Migration (if PostgreSQL is running)
-- [ ] Run `npx prisma migrate dev --name add_gate_lifecycle_fields`
-- [ ] Regenerate Prisma client
+### 9. Audit Trail Enhancement
+- [ ] Ensure every action is logged: QR Released, QR Returned, Completed
 
+### 10. Verification Routes
+- [ ] Add Excel export endpoint

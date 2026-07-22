@@ -33,6 +33,9 @@ router.get('/qr/verify/:token', ...gatePassController.verifyQRToken);
 router.post('/qr/verify/:token/confirm', ...gatePassController.confirmQRVerification);
 router.get('/:requestId/qr/history', ...gatePassController.getQRScanHistory);
 
+// Export endpoints
+router.get('/export/excel', ...gatePassController.exportExcel);
+
 // Document generation endpoints
 router.get('/:requestId/preview', documentController.getPreview);
 router.get('/:requestId/print', documentController.getPrintHtml);

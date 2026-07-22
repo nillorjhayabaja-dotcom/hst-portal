@@ -31,6 +31,7 @@ export interface GatePassListItem {
   };
   // Security release fields - using full names not UUIDs
   releasedBy?: string;
+  releasedById?: string; // UUID for database integrity
   releasedAt?: string;
   releasedDate?: string;
   releasedTime?: string;
@@ -47,12 +48,15 @@ export interface GatePassListItem {
   // Return fields
   returnedBy?: string;
   returnedAt?: string;
+  employeeReturn?: string; // Timestamp when employee returned
+  tripDurationDisplay?: string; // Human-readable trip duration (e.g. "2 hrs 35 mins")
   completedBy?: string;
   completedAt?: string;
   // OB Meal fields
   obMealEnabled?: boolean;
   obMealAmount?: number;
   obMealEligible?: boolean;
+  obMealEligibleDisplay?: 'YES' | 'NO'; // Display value for export
   tripDuration?: number;
   tripDurationMinutes?: number;
   // Legacy mapped fields
@@ -135,12 +139,25 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
   const lastName = request.requester.employees?.lastName || '';
   const requesterName = `${firstName} ${lastName}`.trim() || request.requester.displayName;
 
-  // Use releasedBy (display name) if available, fallback to looking up from securityReleasedBy (UUID)
-  let releasedByName = gp.releasedBy || undefined;
-  if (!releasedByName && gp.securityReleasedBy) {
-    // We store the full name in releasedBy on release action
-    releasedByName = undefined; // Will be populated by the service layer
+  // releasedBy is always the security guard's display name (stored by the service layer on release)
+  const releasedByName = gp.releasedBy || undefined;
+  // securityReleasedBy remains as the UUID for database integrity (joins with Users table)
+  const securityReleasedById = gp.securityReleasedBy || undefined;
+
+  // Calculate trip duration display string
+  let tripDurationDisplay: string | undefined;
+  if (gp.tripDurationMinutes != null && gp.tripDurationMinutes > 0) {
+    const hours = Math.floor(gp.tripDurationMinutes / 60);
+    const mins = gp.tripDurationMinutes % 60;
+    tripDurationDisplay = `${hours} hrs ${mins} mins`;
+  } else if (gp.tripDuration != null && gp.tripDuration > 0) {
+    const hours = Math.floor(gp.tripDuration);
+    const mins = Math.round((gp.tripDuration - hours) * 60);
+    tripDurationDisplay = `${hours} hrs ${mins} mins`;
   }
+
+  // Employee Return - use returnedAt timestamp
+  const employeeReturn = gp.returnedAt?.toISOString?.() || gp.returnedAt || undefined;
 
   return {
     id: gp.id,
@@ -163,8 +180,9 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
       position: request.requester.employees?.position,
     },
     department: request.department,
-    // Security release fields with full names
-    releasedBy: gp.releasedBy || undefined,
+    // Security release fields with full names (NOT UUIDs)
+    releasedBy: releasedByName,
+    releasedById: securityReleasedById,
     releasedAt: gp.releasedAt?.toISOString?.() || gp.releasedAt || undefined,
     releasedDate: gp.releasedDate?.toISOString?.() || gp.releasedDate || undefined,
     releasedTime: gp.releasedTime?.toISOString?.() || gp.releasedTime || undefined,
@@ -181,6 +199,8 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
     // Return fields
     returnedBy: gp.returnedBy || undefined,
     returnedAt: gp.returnedAt?.toISOString?.() || gp.returnedAt || undefined,
+    employeeReturn,
+    tripDurationDisplay,
     completedBy: gp.completedBy || undefined,
     completedAt: gp.completedAt?.toISOString?.() || gp.completedAt || undefined,
     // OB Meal fields
@@ -189,8 +209,8 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
     obMealEligible: gp.obMealEligible ?? undefined,
     tripDuration: gp.tripDuration ?? undefined,
     tripDurationMinutes: gp.tripDurationMinutes ?? undefined,
-    // Legacy mapped fields
-    securityReleasedBy: gp.securityReleasedBy || undefined,
+    // Legacy mapped fields - keep UUID for internal use
+    securityReleasedBy: securityReleasedById,
     securityReleasedAt: gp.securityReleasedAt?.toISOString?.() || gp.securityReleasedAt || undefined,
     isUsed: gp.isUsed ?? undefined,
     isVerified: gp.isVerified ?? undefined,
@@ -205,6 +225,8 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
     lastUpdated: gp.updatedAt,
     createdAt: gp.createdAt,
     vehicle: gp.vehicle,
+    // OB Meal eligibility display
+    obMealEligibleDisplay: gp.obMealEligible ? 'YES' : (gp.obMealEligible === false ? 'NO' : undefined),
   };
 }
 

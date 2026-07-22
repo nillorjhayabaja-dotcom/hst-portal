@@ -74,6 +74,8 @@ interface EnterpriseDataTableProps<T extends Record<string, any>> {
   searchable?: boolean;
   searchPlaceholder?: string;
   exportable?: boolean;
+  exportExcelOnly?: boolean; // Single Excel export button instead of dropdown
+  excelColumns?: { key: string; header: string }[]; // Custom columns for Excel export
   filename?: string;
   onRowClick?: (row: T) => void;
 }
@@ -93,6 +95,8 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
   searchable = true,
   searchPlaceholder = "Search records...",
   exportable = true,
+  exportExcelOnly = false,
+  excelColumns,
   filename = "export",
   onRowClick,
 }: EnterpriseDataTableProps<T>) {
@@ -304,29 +308,43 @@ export function EnterpriseDataTable<T extends Record<string, any>>({
 
           {/* Export */}
           {exportable && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-                  <Download className="size-3.5" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={handleExportExcel} className="text-xs gap-2">
+            <>
+              {exportExcelOnly ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={handleExportExcel}
+                >
                   <FileSpreadsheet className="size-3.5" />
-                  Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF} className="text-xs gap-2">
-                  <FileText className="size-3.5" />
-                  PDF
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handlePrint} className="text-xs gap-2">
-                  <Printer className="size-3.5" />
-                  Print
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  Export Excel
+                </Button>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                      <Download className="size-3.5" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={handleExportExcel} className="text-xs gap-2">
+                      <FileSpreadsheet className="size-3.5" />
+                      Excel
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPDF} className="text-xs gap-2">
+                      <FileText className="size-3.5" />
+                      PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handlePrint} className="text-xs gap-2">
+                      <Printer className="size-3.5" />
+                      Print
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </>
           )}
         </div>
       </div>

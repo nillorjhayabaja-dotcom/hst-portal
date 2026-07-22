@@ -2,13 +2,13 @@
 import { toast } from "sonner";
 import { API_BASE_URL, getAuthHeaders } from '@/config/environment';
 
-export async function exportToPDF(data: any, filename: string): Promise<void> {
+export async function exportToPDF(params: { filename: string; columns: { key: string; header: string }[]; data: Record<string, unknown>[] }): Promise<void> {
   try {
     // Call backend PDF generation endpoint
     const response = await fetch(`${API_BASE_URL}/export/pdf`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ data, filename }),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
@@ -20,25 +20,28 @@ export async function exportToPDF(data: any, filename: string): Promise<void> {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}.pdf`;
+    a.download = `${params.filename}.pdf`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
     
-    toast.success(`PDF "${filename}.pdf" has been generated`);
+    toast.success(`PDF "${params.filename}.pdf" has been generated`);
   } catch (error: any) {
     toast.error(error.message || 'Failed to generate PDF');
     throw error;
   }
 }
 
-export async function exportToExcel(data: any, filename: string): Promise<void> {
+export async function exportToExcel(params: { filename: string; columns: { key: string; header: string }[]; data: Record<string, unknown>[] }): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/export/excel`, {
-      method: 'POST',
+    // Call the gate-pass export endpoint which generates Excel on the backend
+    const queryParams = new URLSearchParams();
+    queryParams.append('filename', params.filename);
+    
+    const response = await fetch(`${API_BASE_URL}/gate-pass/export/excel?${queryParams.toString()}`, {
+      method: 'GET',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ data, filename }),
     });
 
     if (!response.ok) {
@@ -49,44 +52,22 @@ export async function exportToExcel(data: any, filename: string): Promise<void> 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}.xlsx`;
+    a.download = `${params.filename}.xlsx`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
     
-    toast.success(`Excel "${filename}.xlsx" has been generated`);
+    toast.success(`Excel "${params.filename}.xlsx" has been generated`);
   } catch (error: any) {
     toast.error(error.message || 'Failed to generate Excel');
     throw error;
   }
 }
 
-export function printTable(data: any[], filename: string): void {
-  // Print table using the backend or browser print
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    const headers = data.length > 0 ? Object.keys(data[0]) : [];
-    const html = `
-      <html>
-        <head><title>${filename}</title></head>
-        <body>
-          <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-            <tbody>
-              ${data.map(row => `<tr>${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}</tr>`).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  }
+export function printTable(title: string): void {
+  // Print table using browser print
+  window.print();
 }
 
 export async function exportToCSV(data: any, filename: string): Promise<void> {

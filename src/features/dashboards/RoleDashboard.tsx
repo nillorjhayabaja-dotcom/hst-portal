@@ -340,8 +340,8 @@ export function RoleDashboard({ role }: { role: RoleId }) {
               actions={[
                 { label: "New Gate Pass", icon: DoorOpen, to: "/app/m/gate-pass" },
                 { label: "Request Leave", icon: CalendarDays, to: "/app/m/leave" },
-                { label: "New MRF", icon: ClipboardList, to: "/app/m/mrf" },
                 { label: "Purchase Request", icon: ShoppingCart, to: "/app/m/purchase-request" },
+                { label: "Visitors", icon: UserCheck, to: "/app/m/visitors" },
               ]}
             />
           </div>

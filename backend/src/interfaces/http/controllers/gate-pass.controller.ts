@@ -7,6 +7,7 @@ import { requirePermission } from '../../../infrastructure/auth/rbac.middleware'
 import { auditService } from '../../../infrastructure/audit/audit.service';
 import { NotFoundError, SignatureUploadFailedError } from '../../../shared/errors';
 import type { AuthUser } from '../../../shared/types';
+import { gatePassExportService } from '../../../application/services/gate-pass-export.service';
 import { mapGatePassToListItem, mapGatePassToDetail } from '../dto/gate-pass.dto';
 import multer from 'multer';
 import { env } from '../../../infrastructure/config/env';
@@ -619,6 +620,37 @@ export const gatePassController = {
       try {
         const history = await gatePassQRService.getScanHistory(req.params.requestId);
         res.json({ success: true, data: history });
+      } catch (err) {
+        next(err);
+      }
+    },
+  ],
+
+  // Export to Excel endpoint
+  exportExcel: [
+    authenticate,
+    requirePermission('gate-pass', 'view'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = req.user as AuthUser;
+        const { status, requesterId, departmentId, search, startDate, endDate } = req.query as any;
+        const userRoles = user.roles || ['employee'];
+
+        const buffer = await gatePassExportService.exportToExcel({
+          status,
+          requesterId,
+          departmentId,
+          search,
+          startDate,
+          endDate,
+          currentUserId: user.id,
+          userRoles,
+          userDepartmentId: user.employeeId,
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=gate-pass-report.xlsx`);
+        res.send(Buffer.from(buffer));
       } catch (err) {
         next(err);
       }

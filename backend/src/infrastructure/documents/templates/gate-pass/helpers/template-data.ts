@@ -223,7 +223,8 @@ export class GatePassTemplateDataBuilder {
       timeOut: gatePass.securityReleasedAt ? this.formatDateTime(gatePass.securityReleasedAt) : undefined,
       kmReadingEnd: gatePass.verifications?.[0]?.kmReadingEnd,
       timeIn: gatePass.actualReturn ? this.formatDateTime(gatePass.actualReturn) : undefined,
-      checkedBy: gatePass.securityReleasedBy || undefined,
+      // Resolve security guard name from userId - NEVER display UUID
+      checkedBy: gatePass.releasedBy || await this.resolveUserName(gatePass.securityReleasedBy) || undefined,
       withMeal: false,
       mealAmount: 0,
       qrCodeDataUrl,
@@ -310,6 +311,46 @@ export class GatePassTemplateDataBuilder {
       console.error(`[GatePassTemplate] Failed to read signature file: ${signaturePath}`, err);
       return undefined;
     }
+  }
+
+  /**
+   * Resolve user display name from userId - NEVER return UUID
+   */
+  private async resolveUserName(userId?: string): Promise<string | undefined> {
+    if (!userId) return undefined;
+    
+    // Check if it's already a display name (not a UUID format)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (!isUuid) {
+      return userId; // Already a display name
+    }
+    
+    // It's a UUID - look up user
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { 
+          displayName: true,
+          employees: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+      
+      if (user) {
+        if (user.employees?.firstName && user.employees?.lastName) {
+          return `${user.employees.firstName} ${user.employees.lastName}`;
+        }
+        return user.displayName;
+      }
+    } catch (err) {
+      console.error(`[GatePassTemplate] Failed to resolve user name for ${userId}:`, err);
+    }
+    
+    return undefined;
   }
 
   private formatDate(date: Date): string {

@@ -17,14 +17,21 @@ model User {
   isActive           Boolean           @default(true) @map("is_active")
   isLocked           Boolean           @default(false) @map("is_locked")
   lockedUntil        DateTime?         @map("locked_until")
+  lockedBy           String?           @map("locked_by")
+  lockReason         String?           @map("lock_reason")
   loginAttempts      Int               @default(0) @map("login_attempts")
   lastLoginAt        DateTime?         @map("last_login_at")
+  lastActivityAt     DateTime?         @map("last_activity_at")
   passwordChangedAt  DateTime          @default(now()) @map("password_changed_at")
   mustChangePassword Boolean           @default(false) @map("must_change_password")
+  passwordResetRequired Boolean        @default(false) @map("password_reset_required")
+  defaultPasswordUsed Boolean         @default(false) @map("default_password_used")
   twoFactorEnabled   Boolean           @default(false) @map("two_factor_enabled")
   twoFactorSecret    String?           @map("two_factor_secret")
   createdAt          DateTime          @default(now()) @map("created_at")
   updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdBy          String?           @map("created_by")
+  updatedBy          String?           @map("updated_by")
   signaturePath      String?           @map("signature_path")
   signatureUploadedAt DateTime?        @map("signature_uploaded_at")
   signatureMimeType  String?           @map("signature_mime_type")
@@ -41,6 +48,12 @@ model User {
   qrScanLogs         QRScanLog[]
   userRoles          UserRole[]
   timelineEvents     GatePassTimeline[]
+  sessions           UserSession[]
+  loginHistory       LoginHistory[]
+  passwordHistory    PasswordHistory[]
+  devices            UserDevice[]
+  passwordResetLogs  PasswordResetLog[]
+  failedLoginAttempts FailedLoginAttempt[]
 
   @@map("users")
 }
@@ -440,6 +453,7 @@ model AuditLog {
   ipAddress  String?  @map("ip_address")
   userAgent  String?  @map("user_agent")
   metadata   Json?
+  reason     String?
   createdAt  DateTime @default(now()) @map("created_at")
   actor      User?    @relation(fields: [actorId], references: [id])
 
@@ -931,4 +945,110 @@ enum ReleaseStatus {
 enum GateStatus {
   inside
   outside
+}
+
+// User Management Models
+
+model UserSession {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  sessionToken String    @unique @map("session_token")
+  refreshToken String?   @unique @map("refresh_token")
+  ipAddress    String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
+  device       String?
+  browser      String?
+  os           String?
+  location     String?
+  isActive     Boolean   @default(true) @map("is_active")
+  lastActivity DateTime @default(now()) @map("last_activity")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@map("user_sessions")
+}
+
+model LoginHistory {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  loginTime   DateTime  @default(now()) @map("login_time")
+  logoutTime  DateTime? @map("logout_time")
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent")
+  device      String?
+  browser     String?
+  os          String?
+  location    String?
+  success     Boolean   @default(true)
+  failureReason String? @map("failure_reason")
+  sessionDuration Int?  @map("session_duration")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loginTime])
+  @@map("login_history")
+}
+
+model PasswordHistory {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_history")
+}
+
+model UserDevice {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  deviceName   String    @map("device_name")
+  deviceType   String    @map("device_type")
+  browser      String?
+  os           String?
+  ipAddress    String?   @map("ip_address")
+  lastUsed     DateTime  @default(now()) @map("last_used")
+  isTrusted    Boolean   @default(false) @map("is_trusted")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_devices")
+}
+
+model PasswordResetLog {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  resetBy      String    @map("reset_by")
+  resetAt      DateTime  @default(now()) @map("reset_at")
+  ipAddress    String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
+  reason       String?
+  notified     Boolean   @default(false) @map("notified")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([resetAt])
+  @@map("password_reset_logs")
+}
+
+model FailedLoginAttempt {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  identifier   String
+  ipAddress    String    @map("ip_address")
+  userAgent    String?   @map("user_agent")
+  attemptedAt  DateTime  @default(now()) @map("attempted_at")
+  locked       Boolean   @default(false)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([attemptedAt])
+  @@map("failed_login_attempts")
 }

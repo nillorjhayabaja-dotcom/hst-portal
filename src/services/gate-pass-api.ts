@@ -114,7 +114,11 @@ export interface GatePass {
   releasedDate?: string;
   releasedTime?: string;
   releasedBy?: string;
+  releasedById?: string;
   releasedBySignature?: string;
+  employeeReturn?: string; // Timestamp when employee returned
+  tripDurationDisplay?: string; // Human-readable trip duration
+  obMealEligibleDisplay?: 'YES' | 'NO'; // Display value for export
   vehiclePlate?: string;
   driverNameSecurity?: string;
   transportationTypeSecurity?: string;

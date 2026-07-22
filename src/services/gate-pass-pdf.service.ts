@@ -255,9 +255,9 @@ export function generateGatePassPDF(data: GatePassPDFData): string {
       <div class="value">${data.requester.department}</div>
     </div>
 <div class="row">
-      <div class="label">Date Requested:</div>
+      <div class="label">Departure Date:</div>
       <div class="value" style="flex:0.4;">${data.departureDate}</div>
-      <div class="label" style="min-width:60px;margin-left:10px;">Departure:</div>
+      <div class="label" style="min-width:60px;margin-left:10px;">Departure Time:</div>
       <div class="value" style="flex:0.4;">${data.departureTime}</div>
       <div class="label" style="min-width:50px;margin-left:10px;">Arrival:</div>
       <div class="value" style="flex:0.4;">${data.arrivalTime || ''}</div>

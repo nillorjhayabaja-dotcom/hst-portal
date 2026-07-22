@@ -196,7 +196,7 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
               required
             />
             <FormDatePicker
-              label="Departure Time"
+              label="Departure Date"
               value={departureTime}
               onChange={setDepartureTime}
             />

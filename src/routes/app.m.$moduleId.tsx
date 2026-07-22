@@ -12,15 +12,9 @@ import { EnterpriseDataTable, type Column } from "@/components/enterprise/Enterp
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { GatePassModule } from "@/features/modules/GatePassModule";
 import { LeaveModule } from "@/features/modules/LeaveModule";
-import { MRFModule } from "@/features/modules/MRFModule";
 import { PRModule } from "@/features/modules/PRModule";
 import { ApprovalInbox } from "@/components/enterprise/ApprovalInbox";
-import { DelegationManager } from "@/components/enterprise/DelegationManager";
-import { WorkflowBuilder } from "@/components/enterprise/WorkflowBuilder";
-import { CompanyProfileEditor } from "@/components/enterprise/CompanyProfileEditor";
 import { HolidayCalendar } from "@/components/enterprise/HolidayCalendar";
-import { NotificationRulesManager } from "@/components/enterprise/NotificationRulesManager";
-import { BusinessRulesEngine } from "@/components/enterprise/BusinessRulesEngine";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboards/charts";
 import { ApprovalStepper } from "@/components/app/ApprovalStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,25 +65,19 @@ function ModuleRoute() {
 const descriptions: Partial<Record<ModuleId, string>> = {
   "gate-pass": "Create, route and release gate passes",
   leave: "Request and approve employee leave",
-  mrf: "Manpower requisition forms",
+  "food-request-slip": "Employee meal requests, overtime meals, official business meals, and canteen requests",
   "purchase-request": "Procurement requests and approvals",
   approvals: "Requests awaiting your action",
   employees: "Company-wide employee directory",
   departments: "Departments and organization structure",
   reports: "Analytics and operational reports",
   "audit-logs": "System activity audit trail",
-  "company-profile": "Company profile and organizational settings",
   users: "Role-based access control matrix",
-  "workflow-templates": "Reusable workflow template library",
-  "notification-rules": "Configurable notification rules engine",
-  "business-rules": "IF-THEN business rules engine",
   "holiday-calendar": "Company holiday calendar and events",
   positions: "Job position management",
   visitors: "Visitor management and verification",
   vehicles: "Company vehicle fleet and assignments",
-  assets: "Asset registry and assignments",
-  workflows: "Approval workflow configuration",
-  "control-numbers": "Document control number series",
+  "item-pass": "Employee item movement and company property pass management",
   settings: "System preferences",
 };
 
@@ -104,9 +92,9 @@ function ModuleContent({
 }) {
   if (module === "gate-pass") return <GatePassModule />;
   if (module === "leave") return <LeaveModule />;
-  if (module === "mrf") return <MRFModule />;
   if (module === "purchase-request") return <PRModule />;
   if (module === "approvals") return <ApprovalInbox />;
+  if (module === "food-request-slip") return <ComingSoon title="Food Request Slip" description="Employee meal requests, overtime meals, official business meals, and canteen requests." />;
 
   switch (module) {
     case "employees": {
@@ -146,8 +134,8 @@ function ModuleContent({
       return <EnterpriseDataTable title="Visitor Management" data={[]} columns={[{ id: "name", header: "Name", accessorKey: "name" }]} keyExtractor={(row: any) => row.id} filename="visitors" />;
     case "vehicles":
       return <EnterpriseDataTable title="Vehicle Fleet" data={[]} columns={[{ id: "plateNumber", header: "Plate No.", accessorKey: "plateNumber" }]} keyExtractor={(row: any) => row.id} filename="vehicles" />;
-    case "assets":
-      return <EnterpriseDataTable title="Asset Registry" data={[]} columns={[{ id: "assetTag", header: "Asset ID", accessorKey: "assetTag" }, { id: "name", header: "Name", accessorKey: "name" }]} keyExtractor={(row: any) => row.id} filename="assets" />;
+    case "item-pass":
+      return <EnterpriseDataTable title="Item Pass Registry" data={[]} columns={[{ id: "itemTag", header: "Item ID", accessorKey: "itemTag" }, { id: "name", header: "Item Name", accessorKey: "name" }, { id: "assignedTo", header: "Assigned To", accessorKey: "assignedTo" }]} keyExtractor={(row: any) => row.id} filename="item-pass" />;
     case "audit-logs":
       return <EnterpriseDataTable title="Audit Trail" data={[]} columns={[{ id: "createdAt", header: "Timestamp", accessorKey: "createdAt" }, { id: "actorName", header: "Actor", accessorKey: "actorName" }, { id: "action", header: "Action", accessorKey: "action" }]} keyExtractor={(row: any) => row.id} filename="audit-logs" />;
     case "reports":
@@ -161,16 +149,9 @@ function ModuleContent({
         </div>
       );
     case "users": return <RbacMatrix />;
-    case "workflows":
-    case "workflow-templates": return <WorkflowBuilder />;
-    case "company-profile": return <CompanyProfileEditor />;
     case "holiday-calendar": return <HolidayCalendar />;
-    case "notification-rules": return <NotificationRulesManager />;
-    case "business-rules": return <BusinessRulesEngine />;
-    case "delegations": return <DelegationManager />;
-    case "control-numbers": return <ControlNumbers />;
     case "settings": return <SettingsView />;
-    default: return null;
+    default: return <ComingSoon title={label} description="This module will be implemented in a future phase." />;
   }
 }
 
@@ -248,6 +229,18 @@ function SettingsView() {
             <Switch defaultChecked={o.on} onCheckedChange={() => toast.success("Preference updated")} />
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ComingSoon({ title, description }: { title: string; description: string }) {
+  return (
+    <Card className="shadow-card">
+      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="mt-4 text-xs text-muted-foreground">This module will be implemented in Phase 2.</p>
       </CardContent>
     </Card>
   );

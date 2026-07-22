@@ -25,13 +25,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.USER);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      /* ignore */
+    let cancelled = false;
+
+    async function initAuth() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.USER);
+        if (raw) setUser(JSON.parse(raw));
+
+        // If we have a refresh token but no user, try to refresh the session
+        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+        if (refreshToken && !raw) {
+          // Inline refresh logic to avoid dependency on refreshMe
+          const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (resp.ok) {
+            const payload = (await resp.json()) as { success: boolean; data?: any };
+            if (payload?.data?.refreshToken)
+              localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, payload.data.refreshToken);
+            const me = payload?.data?.user;
+            if (me) setUser(me as AuthUser);
+          } else {
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+          }
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        if (!cancelled) {
+          setReady(true);
+        }
+      }
     }
-    setReady(true);
+
+    initAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persistUser = useCallback((next: AuthUser | null) => {

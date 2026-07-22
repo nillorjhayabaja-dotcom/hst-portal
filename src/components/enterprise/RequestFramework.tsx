@@ -6,12 +6,10 @@ import { UniversalDrawer, type DrawerTab } from "@/components/enterprise/Univers
 import { UniversalTimeline } from "@/components/enterprise/UniversalTimeline";
 import { CommentSection } from "@/components/enterprise/CommentSection";
 import { AttachmentSection } from "@/components/enterprise/AttachmentSection";
-import { QuickActionCards } from "@/components/enterprise/QuickActionCards";
-import { UniversalKpiCard } from "@/components/enterprise/UniversalKpiCard";
+
 import { NoRequests } from "@/components/enterprise/EmptyStates";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+
 import { Separator } from "@/components/ui/separator";
 import {
   Plus,
@@ -86,6 +84,7 @@ interface RequestListPageProps {
   quickActions?: ReactNode;
   searchPlaceholder?: string;
   filename?: string;
+  exportExcelOnly?: boolean;
 }
 
 export function RequestListPage({
@@ -99,6 +98,7 @@ export function RequestListPage({
   quickActions,
   searchPlaceholder,
   filename,
+  exportExcelOnly = false,
 }: RequestListPageProps) {
   const defaultColumns: Column<RequestData>[] = [
     {
@@ -179,6 +179,7 @@ export function RequestListPage({
         searchable
         searchPlaceholder={searchPlaceholder ?? `Search ${config.moduleName.toLowerCase()}...`}
         exportable
+        exportExcelOnly={exportExcelOnly}
         filename={filename ?? `${config.moduleId}-list`}
         onRowClick={onRowClick}
         selectable

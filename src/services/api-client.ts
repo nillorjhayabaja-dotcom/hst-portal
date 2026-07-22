@@ -30,13 +30,8 @@ async function fetchApi<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    if (response.status === 401) {
-      // Clear auth and redirect to login
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      window.location.href = '/login';
-      throw new Error('Your session has expired. Please log in again.');
-    }
+    // Don't auto-logout on 401 - let the user stay logged in
+    // They can manually logout when needed
     throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
   }
 
