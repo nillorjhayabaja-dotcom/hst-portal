@@ -183,7 +183,6 @@ export class GatePassWorkflowService {
         await prisma.gatePass.update({
           where: { requestId },
           data: {
-            approvalStage: 'approved',
             approvedBy: actorId,
             approvedAt: new Date(),
           },

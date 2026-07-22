@@ -62,9 +62,16 @@ export const gatePassRepository = {
           }
         });
       }
-      // Security: can see approved requests
+      // Security: can see approved AND completed/released requests
+      // This ensures released gate passes remain visible as permanent records
       else if (params.userRoles?.includes('security')) {
-        andConditions.push({ request: { status: 'approved' } });
+        andConditions.push({
+          request: {
+            status: {
+              in: ['approved', 'completed', 'released'],
+            },
+          },
+        });
       }
       // HR: can see requests where HR is part of workflow
       else if (params.userRoles?.includes('hr')) {
@@ -247,7 +254,6 @@ export const gatePassRepository = {
         plateNumber: true,
         driverName: true,
         expectedReturn: true,
-        approvalStage: true,
         qrCode: true,
         qrToken: true,
         qrGeneratedAt: true,
@@ -415,7 +421,7 @@ export const gatePassRepository = {
     return prisma.gatePass.findMany({
       where: {
         request: {
-          status: { in: ['pending', 'in_review', 'approved'] }
+          status: { in: ['pending', 'in_review', 'approved', 'completed', 'released'] }
         }
       },
       include: {

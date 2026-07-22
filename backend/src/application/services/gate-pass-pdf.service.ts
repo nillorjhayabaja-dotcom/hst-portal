@@ -22,10 +22,12 @@ export interface GatePassPDFData {
   plateNumber?: string;
   driverName?: string;
   remarks?: string;
-  dateFrom: string;
-  dateTo: string;
-  timeFrom: string;
-  timeTo: string;
+  // Departure comes from Request Form (timeOut from security release)
+  departureDate: string;
+  departureTime: string;
+  // Arrival is auto-generated when employee returns (timeIn)
+  arrivalDate?: string;
+  arrivalTime?: string;
   recommendedBy?: {
     name: string;
     signature?: string;
@@ -43,6 +45,26 @@ export interface GatePassPDFData {
   };
   qrCode?: string;
   status: string;
+  // Security release fields
+  releasedBy?: string;
+  releasedByPosition?: string;
+  releasedDate?: string;
+  releasedTime?: string;
+  verifiedBy?: string;
+  verifiedByPosition?: string;
+  verifiedDate?: string;
+  completedBy?: string;
+  completedByPosition?: string;
+  completedDate?: string;
+  vehiclePlate?: string;
+  driverNameSecurity?: string;
+  transportationTypeSecurity?: string;
+  kmReadingStart?: number;
+  kmReadingEnd?: number;
+  timeOut?: string;
+  timeIn?: string;
+  securityRemarks?: string;
+  returnRemarks?: string;
 }
 
 export class GatePassPDFService {
@@ -111,27 +133,137 @@ export class GatePassPDFService {
 
     const withoutCar = !withCar;
 
-    // Format dates
-    const dateFrom = gatePass.expectedReturn 
-      ? new Date(gatePass.expectedReturn).toLocaleDateString('en-US', { 
+    // Departure comes from timeOut (filled by Security during release)
+    // This was originally filled by the Requestor during Request Form
+    const departureDate = gatePass.timeOut 
+      ? new Date(gatePass.timeOut).toLocaleDateString('en-US', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         })
       : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     
-    const timeFrom = gatePass.expectedReturn
-      ? new Date(gatePass.expectedReturn).toLocaleTimeString('en-US', { 
+    const departureTime = gatePass.timeOut
+      ? new Date(gatePass.timeOut).toLocaleTimeString('en-US', { 
           hour: '2-digit', 
           minute: '2-digit',
           hour12: true 
         })
-      : '';
+      : new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Arrival is auto-generated when employee returns (timeIn)
+    // NEVER manually entered - system generated only
+    const arrivalDate = gatePass.timeIn
+      ? new Date(gatePass.timeIn).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : undefined;
+    
+    const arrivalTime = gatePass.timeIn
+      ? new Date(gatePass.timeIn).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+      : undefined;
 
     // Extract approval signatures
     const recommendedBy = this.extractApprovalSignature(request.steps, 'Recommend');
     const notedBy = this.extractApprovalSignature(request.steps, 'Note');
     const approvedBy = this.extractApprovalSignature(request.steps, 'Approve');
+
+// Get security guard name for PDF - NEVER display UUID
+    // Look up the security guard's full name and position
+    let releasedByName = gatePass.releasedBy;
+    let releasedByPosition = 'Security Guard';
+    
+    if (gatePass.securityReleasedBy) {
+      const securityUser = await prisma.user.findUnique({
+        where: { id: gatePass.securityReleasedBy },
+        select: { 
+          displayName: true,
+          employees: {
+            select: {
+              firstName: true,
+              lastName: true,
+              position: { select: { title: true } },
+            },
+          },
+        },
+      });
+      
+      if (securityUser) {
+        // Use employee full name from Employee record if available
+        if (securityUser.employees?.firstName && securityUser.employees?.lastName) {
+          releasedByName = `${securityUser.employees.firstName} ${securityUser.employees.lastName}`;
+        } else {
+          releasedByName = securityUser.displayName;
+        }
+        releasedByPosition = securityUser.employees?.position?.title || 'Security Guard';
+      }
+    }
+    
+    // Also get verifiedBy name
+    let verifiedByName: string | undefined;
+    let verifiedByPosition: string | undefined;
+    if (gatePass.verifiedBy) {
+      const verifiedUser = await prisma.user.findUnique({
+        where: { id: gatePass.verifiedBy },
+        select: { 
+          displayName: true,
+          employees: {
+            select: {
+              firstName: true,
+              lastName: true,
+              position: { select: { title: true } },
+            },
+          },
+        },
+      });
+      if (verifiedUser) {
+        if (verifiedUser.employees?.firstName && verifiedUser.employees?.lastName) {
+          verifiedByName = `${verifiedUser.employees.firstName} ${verifiedUser.employees.lastName}`;
+        } else {
+          verifiedByName = verifiedUser.displayName;
+        }
+        verifiedByPosition = verifiedUser.employees?.position?.title || 'Security Guard';
+      }
+    }
+    
+    // Get completedBy name
+    let completedByName: string | undefined;
+    let completedByPosition: string | undefined;
+    if (gatePass.returnedBy && gatePass.securityReleasedBy) {
+      // If returnedBy is a display name, use it; if it's a UUID, look it up
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gatePass.returnedBy);
+      if (!isUuid) {
+        completedByName = gatePass.returnedBy;
+      } else {
+        const completedUser = await prisma.user.findUnique({
+          where: { id: gatePass.returnedBy },
+          select: { 
+            displayName: true,
+            employees: {
+              select: {
+                firstName: true,
+                lastName: true,
+                position: { select: { title: true } },
+              },
+            },
+          },
+        });
+        if (completedUser) {
+          if (completedUser.employees?.firstName && completedUser.employees?.lastName) {
+            completedByName = `${completedUser.employees.firstName} ${completedUser.employees.lastName}`;
+          } else {
+            completedByName = completedUser.displayName;
+          }
+          completedByPosition = completedUser.employees?.position?.title || 'Security Guard';
+        }
+      }
+    }
 
     // Build QR code data
     const qrCodeData = gatePass.qrCode || null;
@@ -154,15 +286,33 @@ export class GatePassPDFService {
       plateNumber: assignedPlateNumber || undefined,
       driverName: assignedDriverName || undefined,
       remarks: request.description || undefined,
-      dateFrom,
-      dateTo: dateFrom,
-      timeFrom,
-      timeTo: timeFrom,
+      departureDate,
+      departureTime,
+      arrivalDate,
+      arrivalTime,
       recommendedBy,
       notedBy,
       approvedBy,
       qrCode: qrCodeData || undefined,
       status: request.status.toUpperCase(),
+      // Security release fields
+      releasedBy: releasedByName || undefined,
+      releasedByPosition: releasedByPosition || undefined,
+      releasedDate: gatePass.releasedDate || undefined,
+      releasedTime: gatePass.releasedTime || undefined,
+      verifiedBy: verifiedByName || undefined,
+      verifiedByPosition: verifiedByPosition || undefined,
+      completedBy: completedByName || undefined,
+      completedByPosition: completedByPosition || undefined,
+      vehiclePlate: gatePass.vehiclePlate || undefined,
+      driverNameSecurity: gatePass.driverNameSecurity || undefined,
+      transportationTypeSecurity: gatePass.transportationTypeSecurity || undefined,
+      kmReadingStart: gatePass.kmReadingStart || undefined,
+      kmReadingEnd: gatePass.kmReadingEnd || undefined,
+      timeOut: gatePass.timeOut ? new Date(gatePass.timeOut).toLocaleString() : undefined,
+      timeIn: gatePass.timeIn ? new Date(gatePass.timeIn).toLocaleString() : undefined,
+      securityRemarks: gatePass.securityRemarks || undefined,
+      returnRemarks: gatePass.returnRemarks || undefined,
     };
 
     // Generate HTML
@@ -418,13 +568,13 @@ export class GatePassPDFService {
       <div class="label" style="min-width:90px;margin-left:10px;">Department:</div>
       <div class="value">${data.requester.department}</div>
     </div>
-    <div class="row">
+<div class="row">
       <div class="label">Date:</div>
-      <div class="value" style="flex:0.5;">${data.dateFrom}</div>
+      <div class="value" style="flex:0.5;">${data.departureDate}</div>
       <div class="label" style="min-width:70px;margin-left:10px;">Time Out:</div>
-      <div class="value" style="flex:0.4;">${data.timeFrom}</div>
-      <div class="label" style="min-width:60px;margin-left:10px;">Time In:</div>
-      <div class="value" style="flex:0.4;">${data.timeTo}</div>
+      <div class="value" style="flex:0.4;">${data.departureTime}</div>
+      <div class="label" style="min-width:60px;margin-left:10px;">Arrival:</div>
+      <div class="value" style="flex:0.4;">${data.arrivalTime || 'Pending'}</div>
     </div>
   </div>
 
@@ -514,6 +664,52 @@ export class GatePassPDFService {
       </div>
     </div>
   </div>
+
+  ${data.releasedBy ? `
+  <div style="margin-top:20px;padding-top:15px;border-top:2px solid #000;">
+    <div style="font-weight:bold;font-size:12pt;margin-bottom:10px;text-align:center;">SECURITY RELEASE INFORMATION</div>
+    <div class="row">
+      <div class="label">Released By:</div>
+      <div class="value">${data.releasedBy}</div>
+      <div class="label" style="min-width:90px;margin-left:10px;">Released Date:</div>
+      <div class="value">${data.releasedDate || ''}</div>
+      <div class="label" style="min-width:80px;margin-left:10px;">Released Time:</div>
+      <div class="value">${data.releasedTime || ''}</div>
+    </div>
+    <div class="row">
+      <div class="label">Vehicle Plate:</div>
+      <div class="value" style="flex:0.6;">${data.vehiclePlate || ''}</div>
+      <div class="label" style="min-width:100px;margin-left:10px;">Transportation:</div>
+      <div class="value" style="flex:0.6;">${data.transportationTypeSecurity || ''}</div>
+    </div>
+    <div class="row">
+      <div class="label">Driver:</div>
+      <div class="value" style="flex:0.6;">${data.driverNameSecurity || ''}</div>
+      <div class="label" style="min-width:100px;margin-left:10px;">KM Reading Start:</div>
+      <div class="value" style="flex:0.4;">${data.kmReadingStart !== undefined ? data.kmReadingStart : ''}</div>
+      <div class="label" style="min-width:100px;margin-left:10px;">KM Reading End:</div>
+      <div class="value" style="flex:0.4;">${data.kmReadingEnd !== undefined ? data.kmReadingEnd : ''}</div>
+    </div>
+    <div class="row">
+      <div class="label">Time Out:</div>
+      <div class="value" style="flex:0.6;">${data.timeOut || ''}</div>
+      <div class="label" style="min-width:80px;margin-left:10px;">Time In:</div>
+      <div class="value" style="flex:0.6;">${data.timeIn || ''}</div>
+    </div>
+    ${data.securityRemarks ? `
+    <div class="row">
+      <div class="label">Security Remarks:</div>
+      <div class="value">${data.securityRemarks}</div>
+    </div>
+    ` : ''}
+    ${data.returnRemarks ? `
+    <div class="row">
+      <div class="label">Return Remarks:</div>
+      <div class="value">${data.returnRemarks}</div>
+    </div>
+    ` : ''}
+  </div>
+  ` : ''}
 
   <div class="footer">
     <div>

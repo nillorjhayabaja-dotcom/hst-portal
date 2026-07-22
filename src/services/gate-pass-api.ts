@@ -19,10 +19,8 @@ async function fetchApi<T>(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
     if (response.status === 401) {
-      // Clear auth and redirect to login
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      window.location.href = '/login';
+      // Session expired - do NOT auto-logout or redirect
+      // User can manually login again when needed
       throw new Error('Your session has expired. Please log in again.');
     }
     throw new Error(error.message || `HTTP ${response.status}`);
@@ -91,7 +89,6 @@ export interface GatePass {
   qrCode?: string;
   qrToken?: string;
   qrGeneratedAt?: string;
-  approvalStage?: string;
   isVerified?: boolean;
   isUsed?: boolean;
   verifiedAt?: string;
@@ -112,6 +109,34 @@ export interface GatePass {
     };
     status: string;
   };
+  // Security release fields
+  releasedAt?: string;
+  releasedDate?: string;
+  releasedTime?: string;
+  releasedBy?: string;
+  releasedBySignature?: string;
+  vehiclePlate?: string;
+  driverNameSecurity?: string;
+  transportationTypeSecurity?: string;
+  kmReadingStart?: number;
+  kmReadingEnd?: number;
+  timeOut?: string;
+  timeIn?: string;
+  securityRemarks?: string;
+  returnRemarks?: string;
+  releaseStatus?: string;
+  verificationStatus?: string;
+  returnedBy?: string;
+  returnedAt?: string;
+  verifiedBySignature?: string;
+  completedBySignature?: string;
+  obMealEnabled?: boolean;
+  obMealAmount?: number;
+  obMealEligible?: boolean;
+  tripDuration?: number;
+  tripDurationMinutes?: number;
+  gateStatus?: string;
+  driverIn?: string;
 }
 
 export interface QRScanReleaseResponse {
@@ -119,9 +144,15 @@ export interface QRScanReleaseResponse {
   code?: string;
   message?: string;
   request: {
-    controlNumber: string;
+    controlNumber?: string;
     requester?: {
+      id?: string;
       displayName?: string;
+      employees?: Array<{
+        firstName?: string;
+        lastName?: string;
+        department?: { id?: string; name?: string; code?: string };
+      }>;
     };
     department?: {
       id?: string;
@@ -140,6 +171,23 @@ export interface QRScanReleaseResponse {
     transportationMode?: string;
     vehiclePlate?: string;
     driverName?: string;
+    transportationAssignment?: {
+      id?: string;
+      transportationType?: string;
+      vehiclePlate?: string;
+      driverName?: string;
+      remarks?: string;
+      assignedAt?: string;
+      assignedBy?: { id?: string; displayName?: string };
+      vehicle?: {
+        id?: string;
+        plateNumber?: string;
+        brand?: string;
+        model?: string;
+        vehicleType?: string;
+        status?: string;
+      };
+    };
   };
 }
 
@@ -211,6 +259,7 @@ export const gatePassApi = {
     purpose: string;
     destination?: string;
     items?: any;
+    departureTime?: string;
     expectedReturn?: string;
     notes?: string;
     departmentId?: string;
@@ -506,6 +555,8 @@ export const gatePassApi = {
   async confirmQRVerification(token: string, data: {
     kmReadingStart?: number;
     kmReadingEnd?: number;
+    plateNumber?: string;
+    driverName?: string;
     withMeal?: boolean;
     mealAmount?: number;
     timeOut?: string;
@@ -520,5 +571,23 @@ export const gatePassApi = {
 
   async getQRScanHistory(requestId: string) {
     return fetchApi<any[]>(`/qr-scanner/history/${requestId}`);
+  },
+
+  /**
+   * Process employee return - called when security scans QR on return
+   * @route   POST /api/v1/verify/:token/return
+   * @desc    Process employee return with trip duration and OB meal calculation
+   * @access  Private (Security or Super Admin only)
+   */
+  async processReturn(token: string, data: {
+    kmReadingEnd?: number;
+    returnRemarks?: string;
+    obMealEnabled?: boolean;
+    obMealAmount?: number;
+  }) {
+    return fetchApi<any>(`/verification/verify/${token}/return`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 };

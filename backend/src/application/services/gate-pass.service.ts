@@ -6,6 +6,7 @@ import { prisma } from '../../infrastructure/database/prisma.service';
 import { NotFoundError, ValidationError, ApprovalSignatureRequiredError, InvalidSignatureFormatError, SignatureTooLargeError, SignatureUploadFailedError } from '../../shared/errors';
 import { workflowEngine } from '../../infrastructure/workflow/workflow-engine.service';
 import { GatePassWorkflowService } from './gate-pass-workflow.service';
+import { logger } from '../../infrastructure/logging/logger';
 
 export interface GatePassFilters {
   status?: string;
@@ -70,12 +71,32 @@ export class GatePassService {
     console.log('[SUBMIT] Starting gate pass submission for user:', data.requesterId);
     console.log('[SUBMIT] Data:', JSON.stringify({ ...data, requesterId: data.requesterId }));
     
+    // Resolve department code/name to UUID for foreign key constraint
+    let departmentUuid: string | undefined;
+    if (data.departmentId) {
+      const department = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id: data.departmentId },
+            { code: { equals: data.departmentId.toUpperCase() } },
+            { name: { contains: data.departmentId, mode: 'insensitive' } },
+          ],
+        },
+      });
+      if (department) {
+        departmentUuid = department.id;
+        console.log('[SUBMIT] Resolved department:', data.departmentId, '->', department.name, departmentUuid);
+      } else {
+        console.log('[SUBMIT] Department not found for:', data.departmentId);
+      }
+    }
+    
     const started = await workflowEngine.startRequest({
       moduleId: 'gate-pass',
       title: data.purpose,
       description: data.notes || data.purpose,
       requesterId: data.requesterId,
-      departmentId: data.departmentId,
+      departmentId: departmentUuid,
       metadata: { purpose: data.purpose, destination: data.destination },
     });
 
@@ -92,6 +113,54 @@ export class GatePassService {
       entityId: gatePass.id,
       metadata: { controlNumber: started.controlNumber },
     });
+
+    // Notify requester that their gate pass has been submitted
+    try {
+      await notificationService.notifyUser(data.requesterId, {
+        title: 'Gate Pass Submitted',
+        message: `Your gate pass ${started.controlNumber} has been submitted successfully and is now pending approval.`,
+        actionUrl: '/app/m/gate-pass',
+        requestId: started.id,
+        controlNumber: started.controlNumber,
+        metadata: { moduleId: 'gate-pass', status: 'pending' },
+      });
+    } catch (notifError) {
+      logger.warn({ err: notifError, requestId: started.id }, 'Failed to send submission notification to requester');
+    }
+
+    // Notify all users who have roles in the first approval step
+    try {
+      const workflow = await prisma.workflow.findFirst({
+        where: { moduleId: 'gate-pass', isActive: true },
+        include: {
+          steps: {
+            orderBy: { stepOrder: 'asc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (workflow?.steps?.length) {
+        const firstStep = workflow.steps[0];
+        const approvers = await prisma.userRole.findMany({
+          where: { roleId: firstStep.roleId },
+          include: { user: { select: { id: true } } },
+        });
+
+        for (const ur of approvers) {
+          await notificationService.notifyUser(ur.user.id, {
+            title: 'New Gate Pass Approval Required',
+            message: `A new gate pass ${started.controlNumber} has been submitted and requires your ${firstStep.name}.`,
+            actionUrl: `/app/m/gate-pass`,
+            requestId: started.id,
+            controlNumber: started.controlNumber,
+            metadata: { moduleId: 'gate-pass', status: 'pending', stepName: firstStep.name },
+          });
+        }
+      }
+    } catch (notifError) {
+      logger.warn({ err: notifError, requestId: started.id }, 'Failed to send submission notification to approvers');
+    }
 
     return {
       id: gatePass.id,

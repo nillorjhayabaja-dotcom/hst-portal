@@ -3,11 +3,13 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { gatePassApi, type GatePass, type WorkflowStatus } from "@/services/gate-pass-api";
 import { printGatePass, type GatePassPDFData } from "@/services/gate-pass-pdf.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { QrCode, Printer, CheckCircle, XCircle, Search, Shield, Clock, Archive, Filter, ListFilter, History, RefreshCw } from "lucide-react";
 
 type SecurityTab = "pending" | "released_today" | "completed" | "archived";
 
 export function GuardPortal() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [gatePass, setGatePass] = useState<GatePass | null>(null);
@@ -193,11 +195,16 @@ export function GuardPortal() {
         workflowStatus.actions[workflowStatus.actions.length - 1],
     };
 
+    // Build security guard name from user info instead of UUID
+    const securityGuardName = user?.name || 'Security Guard';
+    const securityGuardPosition = user?.title || 'Security Guard';
+
     const pdfData: GatePassPDFData = {
       controlNumber: gatePass.controlNumber,
       requester: {
         name: gatePass.requester.displayName,
         department: gatePass.department?.name || "N/A",
+        position: gatePass.requester.position?.title,
       },
       destination: gatePass.destination || "N/A",
       purpose: gatePass.purpose,
@@ -221,10 +228,20 @@ export function GuardPortal() {
         gatePass.driverName ||
         "",
       remarks: "",
-      dateFrom: new Date(gatePass.createdAt).toLocaleDateString(),
-      dateTo: new Date(gatePass.expectedReturn || gatePass.createdAt).toLocaleDateString(),
-      timeFrom: new Date(gatePass.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timeTo: new Date(gatePass.expectedReturn || gatePass.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      // Departure from security release timeOut
+      departureDate: gatePass.timeOut
+        ? new Date(gatePass.timeOut).toLocaleDateString()
+        : new Date(gatePass.createdAt).toLocaleDateString(),
+      departureTime: gatePass.timeOut
+        ? new Date(gatePass.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : new Date(gatePass.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      // Arrival auto-generated from timeIn
+      arrivalDate: gatePass.timeIn
+        ? new Date(gatePass.timeIn).toLocaleDateString()
+        : undefined,
+      arrivalTime: gatePass.timeIn
+        ? new Date(gatePass.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : undefined,
       recommendedBy: signatures.recommendedBy ? {
         name: signatures.recommendedBy.actor?.displayName || '',
         signature: signatures.recommendedBy.signaturePath,
@@ -242,6 +259,31 @@ export function GuardPortal() {
       } : undefined,
       qrCode: gatePass.qrCode,
       status: workflowStatus.status,
+      // Security guard display name - NEVER show UUID
+      releasedBy: gatePass.releasedBy || securityGuardName,
+      releasedByPosition: securityGuardPosition,
+      releasedDate: gatePass.releasedDate
+        ? new Date(gatePass.releasedDate).toLocaleDateString()
+        : (gatePass.releasedAt ? new Date(gatePass.releasedAt).toLocaleDateString() : undefined),
+      releasedTime: gatePass.releasedTime
+        ? new Date(gatePass.releasedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : (gatePass.releasedAt ? new Date(gatePass.releasedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined),
+      releasedBySignature: gatePass.releasedBySignature,
+      verifiedBy: gatePass.verifiedBy || securityGuardName,
+      verifiedByPosition: securityGuardPosition,
+      verifiedBySignature: gatePass.verifiedBySignature,
+      completedBy: gatePass.returnedBy || securityGuardName,
+      completedByPosition: securityGuardPosition,
+      completedBySignature: gatePass.completedBySignature,
+      vehiclePlate: gatePass.vehiclePlate || gatePass.plateNumber,
+      driverNameSecurity: gatePass.driverNameSecurity || gatePass.driverName,
+      transportationTypeSecurity: gatePass.transportationTypeSecurity || gatePass.transportation,
+      kmReadingStart: gatePass.kmReadingStart,
+      kmReadingEnd: gatePass.kmReadingEnd,
+      timeOut: gatePass.timeOut ? new Date(gatePass.timeOut).toLocaleString() : undefined,
+      timeIn: gatePass.timeIn ? new Date(gatePass.timeIn).toLocaleString() : undefined,
+      securityRemarks: gatePass.securityRemarks,
+      returnRemarks: gatePass.returnRemarks,
     };
 
     printGatePass(pdfData);
@@ -339,7 +381,7 @@ export function GuardPortal() {
                 <p className="text-sm">No records match the current filter</p>
               </div>
             ) : (
-              <div className="space-y-2">
+                <div className="space-y-2">
                 {gatePassList.map((gp) => (
                   <div
                     key={gp.id}
@@ -350,21 +392,59 @@ export function GuardPortal() {
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-sm font-semibold">{gp.controlNumber}</span>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          gp.status === "released" || gp.securityReleasedAt
+                          gp.releaseStatus === "completed" || gp.isUsed
                             ? "bg-green-100 text-green-800"
-                            : gp.isUsed
-                            ? "bg-gray-100 text-gray-600"
-                            : "bg-blue-100 text-blue-800"
+                            : gp.releaseStatus === "released"
+                            ? "bg-blue-100 text-blue-800"
+                            : gp.releaseStatus === "returned"
+                              ? "bg-purple-100 text-purple-800"
+                            : "bg-amber-100 text-amber-800"
                         }`}>
-                          {gp.securityReleasedAt ? "Released" : gp.isUsed ? "Completed" : gp.status}
+                          {gp.releaseStatus || (gp.isUsed ? "Completed" : gp.status)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 truncate mt-1">
                         {gp.requester?.displayName} - {gp.destination || "N/A"}
                       </p>
+                      {/* Security Release Details */}
+                      {(gp.releaseStatus === "released" || gp.releaseStatus === "returned" || gp.releaseStatus === "completed") && (
+                        <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                          {gp.releasedBy && (
+                            <span className="truncate max-w-[200px]">Released By: {gp.releasedBy}</span>
+                          )}
+                          {gp.releasedAt && (
+                            <span>Released: {new Date(gp.releasedAt).toLocaleDateString()} {new Date(gp.releasedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          )}
+                          {gp.releaseStatus && (
+                            <span className="font-semibold uppercase">Workflow: {gp.releaseStatus}</span>
+                          )}
+                        </div>
+                      )}
+                      {(gp.kmReadingStart !== undefined && gp.kmReadingStart !== null) && (
+                        <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                          {gp.kmReadingStart !== undefined && gp.kmReadingStart !== null && (
+                            <span>KM Out: {gp.kmReadingStart}</span>
+                          )}
+                          {gp.vehiclePlate && (
+                            <span>Plate: {gp.vehiclePlate}</span>
+                          )}
+                          {gp.driverNameSecurity && (
+                            <span>Driver: {gp.driverNameSecurity}</span>
+                          )}
+                          {gp.kmReadingEnd !== undefined && gp.kmReadingEnd !== null && (
+                            <span>KM In: {gp.kmReadingEnd}</span>
+                          )}
+                          {gp.timeOut && (
+                            <span>Time Out: {new Date(gp.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          )}
+                          {gp.timeIn && (
+                            <span>Time In: {new Date(gp.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="text-xs text-gray-400 text-right ml-4">
                       {new Date(gp.createdAt).toLocaleDateString()}

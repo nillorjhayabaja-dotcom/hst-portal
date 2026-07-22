@@ -1,103 +1,51 @@
-# HST Enterprise Portal - Production Migration Checklist
+# Gate Pass Lifecycle & PDF Finalization - Implementation Plan
 
-## Phase 1 - Infrastructure Audit ✅ (Already Complete)
-- [x] AUDIT_REPORT.md generated
-- [x] Hardcoded localhost URLs identified
-- [x] Configuration gaps documented
+## Phase 1: Backend - QR Lifecycle Validation (gate-pass-verification.service.ts)
+- [ ] Add `ALREADY_COMPLETED` code for completed/returned gate passes
+- [ ] Add `EXPIRED` immediate rejection without DB updates
+- [ ] Only increment scan count for valid gate-out scans
+- [ ] Return `ALREADY_COMPLETED` without ANY database modifications
 
-## Phase 2 - Cloudflare Workers Frontend
-- [ ] Update wrangler.toml with proper configuration (main entry, routes, env vars)
-- [ ] Create .env.production with production API URL
-- [ ] Configure SPA routing for Workers
-- [ ] Build frontend successfully
-- [ ] Deploy to Cloudflare Workers
+## Phase 2: Backend - Verification Controller
+- [ ] Handle `ALREADY_COMPLETED` code in controller response
+- [ ] Return proper error structure for completed QRs
 
-## Phase 3 - Cloudflare Tunnel
-- [ ] Update setup-tunnel.ps1
-- [ ] Create cloudflared config.yml
-- [ ] Configure ingress rules (API only, no DB/storage)
+## Phase 3: Backend - Gate Pass QR Service
+- [ ] Add lifecycle validation for completed/expired QRs
 
-## Phase 4 - Backend Production Hardening
-- [ ] Add compression middleware
-- [ ] Add trust proxy
-- [ ] Add secure cookie configuration
-- [ ] Add health check endpoint
-- [ ] Add graceful shutdown improvements
-- [ ] Restrict CORS to production domain
-- [ ] Create PM2 ecosystem.config.cjs
-- [ ] Create Windows service setup script
-- [ ] Create .env.production for backend
+## Phase 4: Backend - Gate Pass DTO Updates
+- [ ] Already done - verify mapper includes all lifecycle fields
+- [ ] Ensure releasedBy uses full name not UUID
+- [ ] Ensure completedBy uses full name not UUID
 
-## Phase 5 - PostgreSQL (Local - Verify)
-- [ ] Verify DATABASE_URL points to localhost:5432
-- [ ] Document PostgreSQL configuration
+## Phase 5: Backend - PDF Service Updates
+- [ ] Already done - verify security names replace UUIDs
+- [ ] Verify Released By shows "Juan Dela Cruz, Security Guard" not UUID
+- [ ] Verify Verified By shows security name not UUID
+- [ ] Verify Request ID is hidden, Control Number shown
+- [ ] Verify Arrival is auto-generated from timeIn
 
-## Phase 6 - Storage (Local - Configure)
-- [ ] Create storage directory structure
-- [ ] Verify Express serves files correctly
-- [ ] Document storage configuration
+## Phase 6: Frontend - SecurityQRScannerModal
+- [ ] Already partially done - verify all new states work
+- [ ] ALREADY_COMPLETED handling - "This Gate Pass has already been completed."
+- [ ] EXPIRED handling - "QR CODE EXPIRED"
+- [ ] No database updates on completed scans
 
-## Phase 7 - API Integration
-- [ ] Verify all frontend services use VITE_API_BASE_URL env var
-- [ ] AuthContext uses environment.ts (already done)
-- [ ] No hardcoded localhost URLs remain
-- [ ] No mock services remain
+## Phase 7: Frontend - GuardPortal
+- [ ] Admin table: Remove "Status" column
+- [ ] Display: Workflow Status, Released Date/Time, Arrival Date/Time
+- [ ] Display: Completed By, OB Meal, Trip Duration
+- [ ] Use full names not UUIDs for security personnel
 
-## Phase 8 - Authentication
-- [ ] Verify login/logout flow
-- [ ] Verify refresh token flow
-- [ ] Verify RBAC permissions
-- [ ] Verify protected routes
-- [ ] Verify session persistence
+## Phase 8: Frontend - gate-pass-api.ts
+- [ ] Verify API types match backend response
+- [ ] Handle ALREADY_COMPLETED in response parsing
 
-## Phase 9 - Module Verification
-- [ ] Dashboard
-- [ ] Employees
-- [ ] Departments
-- [ ] Gate Pass
-- [ ] Leave
-- [ ] MRF
-- [ ] Visitors
-- [ ] Vehicles
-- [ ] Assets
-- [ ] Purchase Request
-- [ ] Reports
-- [ ] Audit Logs
-- [ ] Notifications
-- [ ] Workflow Engine
-- [ ] Approval Engine
-- [ ] QR Generation
-- [ ] PDF Generation
-- [ ] Printing
+## Phase 9: Frontend - verify.$token.tsx
+- [ ] Handle completed QR display
+- [ ] Show proper messages for expired/completed QRs
 
-## Phase 10 - Security Hardening
-- [ ] Helmet (already configured)
-- [ ] Rate Limiting (already configured)
-- [ ] CORS restricted to production domain
-- [ ] JWT validation
-- [ ] Audit Logging
-- [ ] Role Permissions
-- [ ] Cloudflare SSL
-- [ ] Input validation with Zod
+## Phase 10: Database - Migration (if PostgreSQL is running)
+- [ ] Run `npx prisma migrate dev --name add_gate_lifecycle_fields`
+- [ ] Regenerate Prisma client
 
-## Phase 11 - Backup & Recovery
-- [ ] Create PostgreSQL backup script
-- [ ] Create storage backup script
-- [ ] Create restore documentation
-
-## Phase 12 - Monitoring
-- [ ] Health check endpoint
-- [ ] Application logging
-- [ ] Error logging
-- [ ] Audit logging
-- [ ] Cloudflare Tunnel status monitoring
-
-## Phase 13 - Documentation
-- [ ] Infrastructure Deployment Guide
-- [ ] Cloudflare Tunnel Setup Guide
-- [ ] Windows Server Deployment Guide
-- [ ] Ubuntu Deployment Guide
-- [ ] PM2 Setup Guide
-- [ ] Nginx/IIS Reverse Proxy Guide
-- [ ] Backup & Recovery Guide
-- [ ] Operations Manual

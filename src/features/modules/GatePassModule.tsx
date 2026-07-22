@@ -20,7 +20,6 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { toast } from "sonner";
 import type { Column } from "@/components/enterprise/EnterpriseDataTable";
 import { GatePassForm } from "./GatePassForm";
@@ -147,14 +146,6 @@ const GATE_COLUMNS: Column<GatePass>[] = [
         </div>
       );
     },
-  },
-  {
-    id: "status",
-    header: "Status",
-    accessorKey: "status",
-    sortable: true,
-    width: "140px",
-    cell: (val: any) => <StatusBadgeEnhanced status={String(val)} />,
   },
   {
     id: "releaseDate",

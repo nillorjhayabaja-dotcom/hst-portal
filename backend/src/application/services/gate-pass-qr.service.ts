@@ -3,96 +3,89 @@ import { qrTokenService } from './qr-token.service';
 import { auditService } from '../../infrastructure/audit/audit.service';
 import { notificationService } from '../../infrastructure/notifications/notification.service';
 import { NotFoundError, ValidationError } from '../../shared/errors';
+import { gatePassVerificationService } from './gate-pass-verification.service';
 
 export class GatePassQRService {
   /**
    * Verify QR token and return gate pass details
+   * This ONLY validates the QR - it does NOT release the gate pass
    */
   async verifyQRToken(token: string, scannedBy: string) {
-    const validation = await qrTokenService.validateToken(token);
+    const validation = await gatePassVerificationService.validateVerificationToken(token);
     
     // Log the scan attempt
     await qrTokenService.logScan(token, scannedBy, 'scan', {
-      controlNumber: validation.request.controlNumber,
+      controlNumber: validation.request?.controlNumber,
     });
 
     return {
-      success: true,
+      success: validation.success,
       data: {
         gatePass: validation.gatePass,
         request: validation.request,
-        isValid: validation.isValid,
+        verification: validation.verification,
+        isValid: validation.success,
+        message: validation.message,
+        code: validation.code,
       },
     };
   }
 
   /**
-   * Confirm QR verification (security guard verifies exit)
+   * Confirm QR verification and release gate pass (Security Release Form submission)
+   * This is called when the security guard clicks "Release Employee"
    */
   async confirmVerification(token: string, securityUserId: string, data: {
     kmReadingStart?: number;
     kmReadingEnd?: number;
+    plateNumber?: string;
+    driverName?: string;
     withMeal?: boolean;
     mealAmount?: number;
     timeOut?: string;
     timeIn?: string;
+    remarks?: string;
+    ipAddress?: string;
+    device?: string;
+    browser?: string;
   }) {
-    const validation = await qrTokenService.validateToken(token);
-    
-    // Mark QR as used
-    await qrTokenService.markAsUsed(token, securityUserId);
-
-    // Update gate pass with security check data
-    await prisma.gatePass.update({
-      where: { requestId: validation.gatePass.requestId },
-      data: {
-        securityReleasedBy: securityUserId,
-        securityReleasedAt: data.timeOut ? new Date(data.timeOut) : new Date(),
-        actualReturn: data.timeIn ? new Date(data.timeIn) : undefined,
-        printCount: (validation.gatePass.printCount || 0) + 1,
-      },
+    // Get security user's display name
+    const securityUser = await prisma.user.findUnique({
+      where: { id: securityUserId },
+      select: { displayName: true },
     });
 
-    // Update request status to completed
-    await prisma.approvalRequest.update({
-      where: { id: validation.gatePass.requestId },
-      data: {
-        status: 'completed',
-        completedAt: new Date(),
-      },
-    });
+    if (!securityUser) {
+      throw new NotFoundError('Security user not found');
+    }
 
-    // Audit log
-    await auditService.record('verify', 'gate_pass', {
-      actorId: securityUserId,
-      entityId: validation.gatePass.id,
-      metadata: {
-        controlNumber: validation.request.controlNumber,
-        kmReadingStart: data.kmReadingStart,
+    // Use the comprehensive release method from verification service
+    const result = await gatePassVerificationService.releaseGatePass(
+      token,
+      securityUserId,
+      securityUser.displayName,
+      {
+        kmReadingStart: data.kmReadingStart || 0,
         kmReadingEnd: data.kmReadingEnd,
-        withMeal: data.withMeal,
-        mealAmount: data.mealAmount,
-        timeOut: data.timeOut,
-        timeIn: data.timeIn,
-      },
-    });
-
-    // Notify requester
-    await notificationService.notifyUser(validation.request.requesterId, {
-      title: 'Gate Pass Verified',
-      message: `Your gate pass ${validation.request.controlNumber} has been verified by Security`,
-      actionUrl: '/app/m/gate-pass',
-      requestId: validation.gatePass.requestId,
-      controlNumber: validation.request.controlNumber,
-      metadata: { moduleId: 'gate-pass', status: 'completed' },
-    });
+        plateNumber: data.plateNumber,
+        driverName: data.driverName,
+        timeOut: data.timeOut ? new Date(data.timeOut) : new Date(),
+        timeIn: data.timeIn ? new Date(data.timeIn) : undefined,
+        remarks: data.remarks,
+        ipAddress: data.ipAddress,
+        device: data.device,
+        browser: data.browser,
+      }
+    );
 
     return {
-      success: true,
-      message: 'Gate pass verified successfully',
+      success: result.success,
+      message: result.message,
+      code: result.code,
       data: {
-        gatePass: validation.gatePass,
-        request: validation.request,
+        gatePass: result.gatePass,
+        request: result.request,
+        verification: result.verification,
       },
     };
   }

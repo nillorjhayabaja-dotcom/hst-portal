@@ -541,20 +541,47 @@ export const gatePassController = {
         const { token } = req.params;
         
         const result = await gatePassQRService.verifyQRToken(token, user.id);
-        res.json({ success: true, data: result.data });
+        
+        // Return the full result structure from the service
+        res.json({
+          success: result.success,
+          data: result.data,
+          message: result.data?.message,
+          code: result.data?.code
+        });
       } catch (err: any) {
-        if (err.message === 'Invalid QR code') {
-          return res.status(404).json({ success: false, message: err.message });
-        }
-        if (err.code === 'ALREADY_USED') {
-          return res.status(400).json({ success: false, message: err.message, code: 'ALREADY_USED' });
+        console.error('QR verification error:', err);
+        
+        // Handle specific error codes from the verification service
+        if (err.code === 'ALREADY_RELEASED') {
+          return res.status(400).json({ 
+            success: false, 
+            message: err.message, 
+            code: 'ALREADY_RELEASED' 
+          });
         }
         if (err.code === 'EXPIRED') {
-          return res.status(400).json({ success: false, message: err.message, code: 'EXPIRED' });
+          return res.status(400).json({ 
+            success: false, 
+            message: err.message, 
+            code: 'EXPIRED' 
+          });
         }
         if (err.code === 'NOT_APPROVED') {
-          return res.status(400).json({ success: false, message: err.message, code: 'NOT_APPROVED' });
+          return res.status(400).json({ 
+            success: false, 
+            message: err.message, 
+            code: 'NOT_APPROVED' 
+          });
         }
+        if (err.message === 'Invalid QR code' || err.message === 'Invalid verification token') {
+          return res.status(404).json({ 
+            success: false, 
+            message: 'Invalid QR Code', 
+            code: 'INVALID_TOKEN' 
+          });
+        }
+        
         next(err);
       }
     },

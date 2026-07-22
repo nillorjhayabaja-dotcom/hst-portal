@@ -40,6 +40,7 @@ model User {
   notifications      Notification[]
   qrScanLogs         QRScanLog[]
   userRoles          UserRole[]
+  timelineEvents     GatePassTimeline[]
 
   @@map("users")
 }
@@ -498,7 +499,6 @@ model GatePass {
   qrCode             String?         @map("qr_code")
   qrToken            String?         @unique @map("qr_token")
   qrGeneratedAt      DateTime?       @map("qr_generated_at")
-  approvalStage      String          @default("pending") @map("approval_stage")
   isVerified         Boolean         @default(false) @map("is_verified")
   isUsed             Boolean         @default(false) @map("is_used")
   verifiedAt         DateTime?       @map("verified_at")
@@ -514,6 +514,30 @@ model GatePass {
   approvedBy         String?         @map("approved_by")
   approvedAt         DateTime?       @map("approved_at")
   completedAt        DateTime?       @map("completed_at")
+  releasedAt         DateTime?       @map("released_at")
+  releasedDate       DateTime?       @map("released_date")
+  releasedTime       DateTime?       @map("released_time")
+  releasedBy         String?         @map("released_by")
+  vehiclePlate       String?         @map("vehicle_plate")
+  driverNameSecurity String?         @map("driver_name_security")
+  transportationTypeSecurity String?  @map("transportation_type_security")
+  kmReadingStart     Float?          @map("km_reading_start")
+  kmReadingEnd       Float?          @map("km_reading_end")
+  timeOut            DateTime?       @map("time_out")
+  timeIn             DateTime?       @map("time_in")
+  securityRemarks    String?         @map("security_remarks")
+  returnRemarks      String?         @map("return_remarks")
+  releaseStatus      ReleaseStatus   @default(pending) @map("release_status")
+  verificationStatus String?         @default("pending") @map("verification_status")
+  obMealEnabled      Boolean         @default(false) @map("ob_meal_enabled")
+  obMealAmount       Decimal?        @default(0) @db.Decimal(10, 2) @map("ob_meal_amount")
+  obMealEligible     Boolean         @default(false) @map("ob_meal_eligible")
+  tripDuration       Float?          @map("trip_duration")
+  tripDurationMinutes Int?           @map("trip_duration_minutes")
+  gateStatus         GateStatus      @default(inside) @map("gate_status")
+  driverIn           String?         @map("driver_in")
+  returnedBy         String?         @map("returned_by")
+  returnedAt         DateTime?       @map("returned_at")
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
   request            ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
@@ -522,9 +546,12 @@ model GatePass {
   verifications      Verification[]
   gatePassVerifications GatePassVerification[]
   transportationAssignment GatePassTransportAssignment?
+  securityTripLogs         SecurityTripLog[]
+  timelineEvents           GatePassTimeline[]
 
   @@index([qrToken])
-  @@index([approvalStage])
+  @@index([releaseStatus])
+  @@index([gateStatus])
   @@map("gate_passes")
 }
 
@@ -835,7 +862,7 @@ model GatePassVerification {
   gatePassId        String    @map("gate_pass_id")
   requestId         String    @map("request_id")
   verificationToken String    @unique @map("verification_token")
-  status            String    @default("generated") // generated, ready, verified, released, expired, cancelled
+  status            String    @default("generated")
   expiresAt         DateTime  @map("expires_at")
   scannedAt         DateTime? @map("scanned_at")
   releasedAt        DateTime? @map("released_at")
@@ -846,6 +873,20 @@ model GatePassVerification {
   guardDevice       String?   @map("guard_device")
   guardBrowser      String?   @map("guard_browser")
   remarks           String?
+  vehiclePlate      String?   @map("vehicle_plate")
+  driverName        String?   @map("driver_name")
+  driverIn          String?   @map("driver_in")
+  transportationType String?  @map("transportation_type")
+  kmReadingStart    Float?    @map("km_reading_start")
+  kmReadingEnd      Float?    @map("km_reading_end")
+  timeOut           DateTime? @map("time_out")
+  timeIn            DateTime? @map("time_in")
+  securityRemarks   String?   @map("security_remarks")
+  returnRemarks     String?   @map("return_remarks")
+  releaseStatus     ReleaseStatus @default(pending) @map("release_status")
+  verificationStatus String?  @default("pending") @map("verification_status")
+  obMealEligible    Boolean   @default(false) @map("ob_meal_eligible")
+  tripDurationMinutes Int?    @map("trip_duration_minutes")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
@@ -854,5 +895,40 @@ model GatePassVerification {
   @@index([verificationToken])
   @@index([gatePassId])
   @@index([status])
+  @@index([releaseStatus])
   @@map("gate_pass_verifications")
+}
+
+model GatePassTimeline {
+  id              String   @id @default(uuid())
+  gatePassId      String   @map("gate_pass_id")
+  eventType       String   @map("event_type")
+  eventTimestamp  DateTime @default(now()) @map("event_timestamp")
+  actorId         String?  @map("actor_id")
+  actorName       String?  @map("actor_name")
+  description     String?
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  gatePass        GatePass @relation(fields: [gatePassId], references: [id], onDelete: Cascade)
+  actor           User?     @relation(fields: [actorId], references: [id])
+
+  @@index([gatePassId])
+  @@index([eventType])
+  @@index([eventTimestamp])
+  @@map("gate_pass_timeline")
+}
+
+// Release Status Enum
+enum ReleaseStatus {
+  pending
+  released
+  returned
+  completed
+}
+
+// Gate Status Enum
+enum GateStatus {
+  inside
+  outside
 }

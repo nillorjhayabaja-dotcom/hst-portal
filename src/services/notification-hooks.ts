@@ -11,7 +11,9 @@ export function useNotifications(filters?: {
   return useQuery({
     queryKey: ['notifications', filters],
     queryFn: () => notificationApi.getAll(filters),
-    staleTime: 1000 * 60 * 1, // 1 minute
+    staleTime: 1000 * 30, // 30 seconds stale
+    refetchInterval: 1000 * 15, // Poll every 15 seconds for near-real-time
+    refetchIntervalInBackground: true, // Keep polling even when tab is not focused
   });
 }
 
@@ -27,7 +29,9 @@ export function useUnreadNotificationCount(userId: string) {
   return useQuery({
     queryKey: ['notifications', 'unread', userId],
     queryFn: () => notificationApi.getUnreadCount(userId),
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 10, // 10 seconds stale
+    refetchInterval: 1000 * 10, // Poll every 10 seconds for badge count
+    refetchIntervalInBackground: true,
     enabled: !!userId,
   });
 }

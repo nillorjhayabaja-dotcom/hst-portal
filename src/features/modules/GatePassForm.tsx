@@ -20,6 +20,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Department list constant
+const DEPARTMENT_LIST = [
+  { id: 'qa', name: 'Quality Assurance (QA)', code: 'QA' },
+  { id: 'engineering', name: 'Engineering', code: 'ENG' },
+  { id: 'production', name: 'Production', code: 'PROD' },
+  { id: 'president', name: 'President', code: 'PRES' },
+  { id: 'marketing', name: 'MARKETING', code: 'MKTG' },
+  { id: 'qc', name: 'QC', code: 'QC' },
+  { id: 'rmwhse', name: 'RMWHSE', code: 'RMWHSE' },
+  { id: 'fgwhse', name: 'FGWHSE', code: 'FGWHSE' },
+  { id: 'ppic', name: 'PPIC', code: 'PPIC' },
+  { id: 'cs', name: 'CS', code: 'CS' },
+  { id: 'purchasing', name: 'PURCHASING', code: 'PURCH' },
+  { id: 'gad-msit', name: 'GAD/MSIT', code: 'GAD/MSIT' },
+  { id: 'development', name: 'DEVELOPMENT', code: 'DEV' },
+  { id: 'visitor', name: 'VISITOR', code: 'VISITOR' },
+];
 
 interface GatePassFormProps {
   open: boolean;
@@ -34,8 +59,9 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
   // Form fields
   const [purpose, setPurpose] = useState("");
   const [destination, setDestination] = useState("");
-  const [expectedReturn, setExpectedReturn] = useState<Date | undefined>(undefined);
+  const [departureTime, setDepartureTime] = useState<Date | undefined>(undefined);
   const [notes, setNotes] = useState("");
+  const [departmentId, setDepartmentId] = useState<string>("");
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,11 +71,33 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
     if (open) {
       setPurpose("");
       setDestination("");
-      setExpectedReturn(undefined);
       setNotes("");
+      setDepartmentId("");
       setErrors({});
     }
   }, [open]);
+
+  // Auto-select user's department when form opens
+  useEffect(() => {
+    if (!open) return;
+    
+    // Auto-select user's department by matching department name
+    if (user?.department && DEPARTMENT_LIST.length > 0) {
+      const matchingDept = DEPARTMENT_LIST.find((d) => 
+        d.name.toLowerCase() === user.department.toLowerCase() ||
+        d.code.toLowerCase() === user.department.toLowerCase()
+      );
+      if (matchingDept) {
+        setDepartmentId(matchingDept.id);
+      } else {
+        // Default to first department if no match found
+        setDepartmentId(DEPARTMENT_LIST[0].id);
+      }
+    } else if (DEPARTMENT_LIST.length > 0) {
+      // Default to first department if user has no department
+      setDepartmentId(DEPARTMENT_LIST[0].id);
+    }
+  }, [open, user]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -77,8 +125,9 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
       const result = await gatePassApi.submit({
         purpose: purpose.trim(),
         destination: destination.trim(),
-        expectedReturn: expectedReturn?.toISOString(),
+        departureTime: departureTime?.toISOString(),
         notes: notes || undefined,
+        departmentId: departmentId || undefined,
       });
 
       toast.success("Gate pass submitted successfully", {
@@ -118,6 +167,26 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
               error={errors.purpose}
               required
             />
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Department <span className="text-red-500">*</span>
+              </label>
+              <Select value={departmentId} onValueChange={setDepartmentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENT_LIST.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name} ({dept.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </FormRow>
+
+          <FormRow cols={2}>
             <FormInput
               label="Destination"
               placeholder="e.g. Makati City"
@@ -126,6 +195,11 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
               error={errors.destination}
               required
             />
+            <FormDatePicker
+              label="Departure Time"
+              value={departureTime}
+              onChange={setDepartureTime}
+            />
           </FormRow>
 
           <FormTextarea
@@ -133,17 +207,6 @@ export function GatePassForm({ open, onOpenChange, onSuccess }: GatePassFormProp
             placeholder="Additional details about this request..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-          />
-
-          <FormSection
-            title="Return Information"
-            description="Expected return schedule for this request"
-          />
-
-          <FormDatePicker
-            label="Expected Return"
-            value={expectedReturn}
-            onChange={setExpectedReturn}
           />
 
           {/* Items notice */}

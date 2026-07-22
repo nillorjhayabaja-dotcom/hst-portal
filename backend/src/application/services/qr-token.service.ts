@@ -32,10 +32,9 @@ export class QRTokenService {
     // Generate unique token
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Set expiration to expected return date or 7 days from now
-    const expiresAt = gatePass.expectedReturn 
-      ? new Date(gatePass.expectedReturn)
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    // Set expiration: 7 days from generation (independent of expectedReturn)
+    // expectedReturn is the employee's schedule, not QR validity period
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Update gate pass with QR token
     await prisma.gatePass.update({
@@ -44,7 +43,6 @@ export class QRTokenService {
         qrToken: token,
         qrGeneratedAt: new Date(),
         expiresAt: expiresAt,
-        approvalStage: 'qr_generated',
       },
     });
 
@@ -71,6 +69,9 @@ export class QRTokenService {
 
   /**
    * Validate and retrieve gate pass by QR token
+   * Follows strict QR lifecycle: 
+   * Generated → Waiting Scan → Verified → Released → Outside → Returned → Completed → Invalid Forever
+   * Once Completed or Expired, QR can NEVER be scanned again
    */
   async validateToken(token: string) {
     const gatePass = await prisma.gatePass.findUnique({
@@ -124,14 +125,29 @@ export class QRTokenService {
       throw new NotFoundError('Invalid QR code');
     }
 
-    // Check if already used
-    if (gatePass.isUsed) {
-      throw new ValidationError('Gate Pass Already Used', 'ALREADY_USED');
+    // CRITICAL: Check if gate pass is permanently completed (terminal state)
+    // Once completed, QR can NEVER be scanned again - no database updates
+    if (gatePass.releaseStatus === 'completed' || 
+        gatePass.request.status === 'completed' ||
+        (gatePass.isUsed && (gatePass as any).completedAt)) {
+      throw new ValidationError('QR CODE ALREADY USED - This Gate Pass has already been completed.', 'ALREADY_COMPLETED');
     }
 
-    // Check if expired
+    // Check if already used (released but not yet returned - still scannable for return)
+    if (gatePass.isUsed && gatePass.releaseStatus === 'released') {
+      // This is a RETURN scan - employee is coming back
+      // Return the gate pass info for return mode processing
+      return {
+        gatePass,
+        request: gatePass.request,
+        isValid: true,
+        mode: 'return',
+      };
+    }
+
+    // Check if already expired - LOCKED FOREVER, no database updates
     if (gatePass.expiresAt && new Date() > gatePass.expiresAt) {
-      throw new ValidationError('QR code has expired', 'EXPIRED');
+      throw new ValidationError('QR CODE EXPIRED - This QR code is no longer valid.', 'EXPIRED');
     }
 
     // Check if approved
@@ -143,7 +159,34 @@ export class QRTokenService {
       gatePass,
       request: gatePass.request,
       isValid: true,
+      mode: 'exit',
     };
+  }
+
+  /**
+   * Check if QR code is permanently invalid (completed state)
+   * No database updates allowed - read-only validation
+   */
+  async isPermanentlyInvalid(token: string): Promise<{ invalid: boolean; reason?: string }> {
+    const gatePass = await prisma.gatePass.findUnique({
+      where: { qrToken: token },
+      select: {
+        releaseStatus: true,
+        isUsed: true,
+        completedAt: true,
+        request: { select: { status: true } },
+      },
+    });
+
+    if (!gatePass) {
+      return { invalid: true, reason: 'QR CODE NOT FOUND' };
+    }
+
+    if (gatePass.releaseStatus === 'completed' || gatePass.request?.status === 'completed') {
+      return { invalid: true, reason: 'QR CODE ALREADY USED - This Gate Pass has already been completed.' };
+    }
+
+    return { invalid: false };
   }
 
   /**

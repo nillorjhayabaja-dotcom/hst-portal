@@ -16,10 +16,12 @@ export interface GatePassPDFData {
   plateNumber?: string;
   driverName?: string;
   remarks?: string;
-  dateFrom: string;
-  dateTo: string;
-  timeFrom: string;
-  timeTo: string;
+  // Departure comes from Request Form (timeOut from security release)
+  departureDate: string;
+  departureTime: string;
+  // Arrival is auto-generated when employee returns (timeIn)
+  arrivalDate?: string;
+  arrivalTime?: string;
   recommendedBy?: {
     name: string;
     signature?: string;
@@ -37,6 +39,27 @@ export interface GatePassPDFData {
   };
   qrCode?: string;
   status: string;
+  // Security release fields
+  releasedBy?: string;
+  releasedByPosition?: string;
+  releasedDate?: string;
+  releasedTime?: string;
+  releasedBySignature?: string;
+  verifiedBy?: string;
+  verifiedByPosition?: string;
+  verifiedBySignature?: string;
+  completedBy?: string;
+  completedByPosition?: string;
+  completedBySignature?: string;
+  vehiclePlate?: string;
+  driverNameSecurity?: string;
+  transportationTypeSecurity?: string;
+  kmReadingStart?: number;
+  kmReadingEnd?: number;
+  timeOut?: string;
+  timeIn?: string;
+  securityRemarks?: string;
+  returnRemarks?: string;
 }
 
 export function generateGatePassPDF(data: GatePassPDFData): string {
@@ -231,13 +254,13 @@ export function generateGatePassPDF(data: GatePassPDFData): string {
       <div class="label" style="min-width:90px;margin-left:10px;">Department:</div>
       <div class="value">${data.requester.department}</div>
     </div>
-    <div class="row">
-      <div class="label">Date:</div>
-      <div class="value" style="flex:0.5;">${data.dateFrom}</div>
-      <div class="label" style="min-width:70px;margin-left:10px;">Time Out:</div>
-      <div class="value" style="flex:0.4;">${data.timeFrom}</div>
-      <div class="label" style="min-width:60px;margin-left:10px;">Time In:</div>
-      <div class="value" style="flex:0.4;">${data.timeTo}</div>
+<div class="row">
+      <div class="label">Date Requested:</div>
+      <div class="value" style="flex:0.4;">${data.departureDate}</div>
+      <div class="label" style="min-width:60px;margin-left:10px;">Departure:</div>
+      <div class="value" style="flex:0.4;">${data.departureTime}</div>
+      <div class="label" style="min-width:50px;margin-left:10px;">Arrival:</div>
+      <div class="value" style="flex:0.4;">${data.arrivalTime || ''}</div>
     </div>
   </div>
 
@@ -324,6 +347,47 @@ export function generateGatePassPDF(data: GatePassPDFData): string {
       <div class="sig-line">
         <div class="sig-name">${data.approvedBy?.name || '___________________________'}</div>
         <div class="sig-date">${data.approvedBy?.date || ''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signatures" style="margin-top: 15px;">
+    <div class="sig-box">
+      <div class="sig-title">RELEASED BY:</div>
+      <div class="sig-sub">(sign here)</div>
+      ${data.releasedBySignature
+        ? `<img src="${data.releasedBySignature}" class="sig-image" alt="Signature" />`
+        : '<div style="height:60px; border-bottom: 1px solid #000; margin-bottom: 8px;"></div>'
+      }
+      <div class="sig-line">
+        <div class="sig-name">${data.releasedBy || '___________________________'}</div>
+        <div class="sig-date">${data.releasedDate ? `${data.releasedDate} ${data.releasedTime || ''}`.trim() : ''}</div>
+      </div>
+    </div>
+
+    <div class="sig-box">
+      <div class="sig-title">VERIFIED BY:</div>
+      <div class="sig-sub">(Security Guard)</div>
+      ${data.verifiedBySignature
+        ? `<img src="${data.verifiedBySignature}" class="sig-image" alt="Signature" />`
+        : '<div style="height:60px; border-bottom: 1px solid #000; margin-bottom: 8px;"></div>'
+      }
+      <div class="sig-line">
+        <div class="sig-name">${data.verifiedBy || '___________________________'}</div>
+        <div class="sig-date">${data.verifiedByPosition || ''}</div>
+      </div>
+    </div>
+
+    <div class="sig-box">
+      <div class="sig-title">COMPLETED BY:</div>
+      <div class="sig-sub">(Security Guard)</div>
+      ${data.completedBySignature
+        ? `<img src="${data.completedBySignature}" class="sig-image" alt="Signature" />`
+        : '<div style="height:60px; border-bottom: 1px solid #000; margin-bottom: 8px;"></div>'
+      }
+      <div class="sig-line">
+        <div class="sig-name">${data.completedBy || '___________________________'}</div>
+        <div class="sig-date">${data.completedByPosition || ''}</div>
       </div>
     </div>
   </div>

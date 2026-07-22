@@ -52,7 +52,7 @@ export class QRScannerController {
           gatePass: validationResult.gatePass,
           request: validationResult.request,
           isValid: validationResult.isValid,
-          status: validationResult.gatePass.approvalStage,
+          status: validationResult.request?.status,
         },
       });
     } catch (error) {
@@ -175,7 +175,6 @@ export class QRScannerController {
         await prisma.gatePass.update({
           where: { id: gatePass.id },
           data: {
-            approvalStage: 'completed',
             completedAt: new Date(),
             actualReturn: new Date(),
           },

@@ -10,5 +10,6 @@ router.get('/verify/:token/status', ...verificationController.getStatus);
 // Protected endpoints (require authentication)
 router.post('/verify/:token/release', ...verificationController.releaseGatePass);
 router.post('/verify/:token/cancel', ...verificationController.cancelVerification);
+router.post('/verify/:token/return', ...verificationController.processReturn);
 
 export default router;

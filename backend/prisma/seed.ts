@@ -201,17 +201,35 @@ async function main() {
     ],
   });
 
-  // Department
-  const dept = await prisma.department.upsert({
-    where: { code: 'HQ' },
-    update: {},
-    create: {
-      name: 'Headquarters',
-      code: 'HQ',
-      level: 1,
-      sortOrder: 1,
-      description: 'Main office',
-    },
+  // Departments
+  const departments = [
+    { name: 'Quality Assurance (QA)', code: 'QA', level: 1, sortOrder: 1, description: 'Quality Assurance department' },
+    { name: 'Engineering', code: 'ENG', level: 1, sortOrder: 2, description: 'Engineering department' },
+    { name: 'Production', code: 'PROD', level: 1, sortOrder: 3, description: 'Production department' },
+    { name: 'President', code: 'PRES', level: 1, sortOrder: 4, description: 'President office' },
+    { name: 'MARKETING', code: 'MKTG', level: 1, sortOrder: 5, description: 'Marketing department' },
+    { name: 'QC', code: 'QC', level: 1, sortOrder: 6, description: 'Quality Control' },
+    { name: 'RMWHSE', code: 'RMWHSE', level: 1, sortOrder: 7, description: 'Raw Material Warehouse' },
+    { name: 'FGWHSE', code: 'FGWHSE', level: 1, sortOrder: 8, description: 'Finished Goods Warehouse' },
+    { name: 'PPIC', code: 'PPIC', level: 1, sortOrder: 9, description: 'Production Planning & Inventory Control' },
+    { name: 'CS', code: 'CS', level: 1, sortOrder: 10, description: 'Customer Service' },
+    { name: 'PURCHASING', code: 'PURCH', level: 1, sortOrder: 11, description: 'Purchasing department' },
+    { name: 'GAD/MSIT', code: 'GAD/MSIT', level: 1, sortOrder: 12, description: 'General Administration / Management Information Systems' },
+    { name: 'DEVELOPMENT', code: 'DEV', level: 1, sortOrder: 13, description: 'Development department' },
+    { name: 'VISITOR', code: 'VISITOR', level: 1, sortOrder: 14, description: 'Visitor pass' },
+  ];
+
+  for (const deptData of departments) {
+    await prisma.department.upsert({
+      where: { code: deptData.code },
+      update: {},
+      create: deptData,
+    });
+  }
+
+  // Get the first department for the admin user
+  const dept = await prisma.department.findFirst({
+    where: { code: 'QA' },
   });
 
   // Super admin user
@@ -244,7 +262,7 @@ async function main() {
       firstName: 'System',
       lastName: 'Administrator',
       email: 'admin@hst-corp.com',
-      departmentId: dept.id,
+      departmentId: dept!.id,
       hireDate: new Date('2024-01-01'),
       status: 'active',
     },

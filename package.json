@@ -10,7 +10,16 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "services:start": "pm2 start ecosystem.config.cjs",
+    "services:stop": "pm2 stop ecosystem.config.cjs",
+    "services:restart": "pm2 restart ecosystem.config.cjs",
+    "services:status": "pm2 status",
+    "services:logs": "pm2 logs",
+    "services:monit": "pm2 monit",
+    "services:save": "pm2 save",
+    "services:startup": "pm2 startup",
+    "services:all": "pm2 start ecosystem.config.cjs && pm2 save && echo Now run: pm2 startup"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

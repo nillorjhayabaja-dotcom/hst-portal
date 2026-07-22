@@ -29,6 +29,39 @@ export interface GatePassListItem {
     name: string;
     code: string;
   };
+  // Security release fields - using full names not UUIDs
+  releasedBy?: string;
+  releasedAt?: string;
+  releasedDate?: string;
+  releasedTime?: string;
+  vehiclePlate?: string;
+  driverNameSecurity?: string;
+  kmReadingStart?: number;
+  kmReadingEnd?: number;
+  timeOut?: string;
+  timeIn?: string;
+  securityRemarks?: string;
+  returnRemarks?: string;
+  releaseStatus?: string;
+  gateStatus?: string;
+  // Return fields
+  returnedBy?: string;
+  returnedAt?: string;
+  completedBy?: string;
+  completedAt?: string;
+  // OB Meal fields
+  obMealEnabled?: boolean;
+  obMealAmount?: number;
+  obMealEligible?: boolean;
+  tripDuration?: number;
+  tripDurationMinutes?: number;
+  // Legacy mapped fields
+  securityReleasedBy?: string;
+  securityReleasedAt?: string;
+  isUsed?: boolean;
+  isVerified?: boolean;
+  verifiedBy?: string;
+  verifiedAt?: string;
   currentStep?: {
     stepOrder: number;
     name: string;
@@ -64,8 +97,6 @@ export interface GatePassDetail extends GatePassListItem {
   expectedReturn?: string;
   actualReturn?: string;
   qrCode?: string;
-  securityReleasedBy?: string;
-  securityReleasedAt?: string;
   printCount?: number;
   steps: Array<{
     id: string;
@@ -104,6 +135,13 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
   const lastName = request.requester.employees?.lastName || '';
   const requesterName = `${firstName} ${lastName}`.trim() || request.requester.displayName;
 
+  // Use releasedBy (display name) if available, fallback to looking up from securityReleasedBy (UUID)
+  let releasedByName = gp.releasedBy || undefined;
+  if (!releasedByName && gp.securityReleasedBy) {
+    // We store the full name in releasedBy on release action
+    releasedByName = undefined; // Will be populated by the service layer
+  }
+
   return {
     id: gp.id,
     requestId: request.id,
@@ -125,6 +163,39 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
       position: request.requester.employees?.position,
     },
     department: request.department,
+    // Security release fields with full names
+    releasedBy: gp.releasedBy || undefined,
+    releasedAt: gp.releasedAt?.toISOString?.() || gp.releasedAt || undefined,
+    releasedDate: gp.releasedDate?.toISOString?.() || gp.releasedDate || undefined,
+    releasedTime: gp.releasedTime?.toISOString?.() || gp.releasedTime || undefined,
+    vehiclePlate: gp.vehiclePlate || undefined,
+    driverNameSecurity: gp.driverNameSecurity || undefined,
+    kmReadingStart: gp.kmReadingStart ?? undefined,
+    kmReadingEnd: gp.kmReadingEnd ?? undefined,
+    timeOut: gp.timeOut?.toISOString?.() || gp.timeOut || undefined,
+    timeIn: gp.timeIn?.toISOString?.() || gp.timeIn || undefined,
+    securityRemarks: gp.securityRemarks || undefined,
+    returnRemarks: gp.returnRemarks || undefined,
+    releaseStatus: gp.releaseStatus || undefined,
+    gateStatus: gp.gateStatus || undefined,
+    // Return fields
+    returnedBy: gp.returnedBy || undefined,
+    returnedAt: gp.returnedAt?.toISOString?.() || gp.returnedAt || undefined,
+    completedBy: gp.completedBy || undefined,
+    completedAt: gp.completedAt?.toISOString?.() || gp.completedAt || undefined,
+    // OB Meal fields
+    obMealEnabled: gp.obMealEnabled ?? undefined,
+    obMealAmount: gp.obMealAmount ? Number(gp.obMealAmount) : undefined,
+    obMealEligible: gp.obMealEligible ?? undefined,
+    tripDuration: gp.tripDuration ?? undefined,
+    tripDurationMinutes: gp.tripDurationMinutes ?? undefined,
+    // Legacy mapped fields
+    securityReleasedBy: gp.securityReleasedBy || undefined,
+    securityReleasedAt: gp.securityReleasedAt?.toISOString?.() || gp.securityReleasedAt || undefined,
+    isUsed: gp.isUsed ?? undefined,
+    isVerified: gp.isVerified ?? undefined,
+    verifiedBy: gp.verifiedBy || undefined,
+    verifiedAt: gp.verifiedAt?.toISOString?.() || gp.verifiedAt || undefined,
     currentStep: currentStep ? {
       stepOrder: currentStep.stepOrder,
       name: currentStep.name,
