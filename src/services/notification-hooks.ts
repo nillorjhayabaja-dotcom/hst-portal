@@ -1,6 +1,7 @@
 // Notification TanStack Query Hooks
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi } from './notification-api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useNotifications(filters?: {
   isRead?: boolean;
@@ -8,12 +9,15 @@ export function useNotifications(filters?: {
   page?: number;
   pageSize?: number;
 }) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['notifications', filters],
+    queryKey: ['notifications', user?.id, filters],
     queryFn: () => notificationApi.getAll(filters),
     staleTime: 1000 * 30, // 30 seconds stale
     refetchInterval: 1000 * 15, // Poll every 15 seconds for near-real-time
     refetchIntervalInBackground: true, // Keep polling even when tab is not focused
+    enabled: !!user?.id, // Only fetch when user is authenticated
   });
 }
 

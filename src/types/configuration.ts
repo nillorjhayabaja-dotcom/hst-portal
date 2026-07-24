@@ -6,25 +6,25 @@ import type { RoleId, ModuleId } from "@/types";
 // 1. Company Profile
 // ============================================================
 export interface CompanyProfile {
-  id: string;
-  name: string;
-  legalName: string;
+  id?: string;
+  name?: string;
+  legalName?: string;
   logo?: string;
-  address: string;
-  tin: string;
-  contactNumber: string;
-  email: string;
-  website: string;
-  defaultTimezone: string;
-  businessHoursStart: string; // "08:00"
-  businessHoursEnd: string; // "17:00"
-  workingDays: number[]; // [1,2,3,4,5] Mon-Fri
-  fiscalYearStart: string; // "01-01"
-  currency: string;
-  currencySymbol: string;
-  language: string;
-  dateFormat: string;
-  timeFormat: string;
+  address?: string;
+  tin?: string;
+  contactNumber?: string;
+  email?: string;
+  website?: string;
+  defaultTimezone?: string;
+  businessHoursStart?: string; // "08:00"
+  businessHoursEnd?: string; // "17:00"
+  workingDays?: number[]; // [1,2,3,4,5] Mon-Fri
+  fiscalYearStart?: string; // "01-01"
+  currency?: string;
+  currencySymbol?: string;
+  language?: string;
+  dateFormat?: string;
+  timeFormat?: string;
 }
 
 // ============================================================
@@ -117,14 +117,14 @@ export interface RoleConfig {
 // ============================================================
 export interface NotificationRule {
   id: string;
-  moduleId: ModuleId;
+  moduleId: string;
   event: string; // "submitted", "approved", "rejected", "returned", "escalated", "reminder"
-  notifyRoles: RoleId[];
-  notifyUsers: string[];
-  channels: ("in_app" | "email" | "sms")[];
+  notifyRoleIds: string[];
+  notifyUserIds: string[];
+  channels: string[];
   templateSubject: string;
   templateBody: string;
-  active: boolean;
+  isActive?: boolean;
 }
 
 // ============================================================
@@ -165,7 +165,7 @@ export interface Holiday {
   name: string;
   date: string; // YYYY-MM-DD
   type: "regular" | "special_non_working" | "special_working" | "company_event";
-  recurring: boolean;
+  isRecurring?: boolean;
   departmentId?: string;
   description?: string;
 }
@@ -197,12 +197,12 @@ export interface BusinessRuleAction {
 export interface BusinessRule {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   moduleId: ModuleId;
   priority: number;
   conditions: BusinessRuleCondition[];
   actions: BusinessRuleAction[];
-  active: boolean;
+  isActive: boolean;
 }
 
 // ============================================================

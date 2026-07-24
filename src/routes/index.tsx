@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 import illustration from "@/assets/login-illustration.jpg";
 
 export const Route = createFileRoute("/")({
@@ -24,7 +25,7 @@ const FEATURES = [
 ];
 
 function LoginPage() {
-  const { login } = useAuth();
+  const { login, mustChangePassword } = useAuth();
   const navigate = useNavigate();
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +41,16 @@ function LoginPage() {
 
     try {
       setSubmitting(true);
-      await login({ identifier: employeeId, password });
+      const user = await login({ identifier: employeeId, password });
+
+      // Check if password change is required - check both state and localStorage for immediate response
+      const requiresPasswordChange = mustChangePassword || localStorage.getItem("hst.auth.mustChangePassword") === "true";
+      
+      if (requiresPasswordChange) {
+        // Redirect to change-password page
+        navigate({ to: "/change-password" });
+        return;
+      }
 
       toast.success("Signed in successfully");
       navigate({ to: "/app/dashboard" });

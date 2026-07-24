@@ -1,5 +1,5 @@
 // Notification Rules Manager - ERP Configuration
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +36,22 @@ import { cn } from "@/lib/utils";
 const EVENTS = ["submitted", "approved", "rejected", "returned", "escalated", "reminder"];
 
 export function NotificationRulesManager() {
-  const [rules, setRules] = useState<NotificationRule[]>(getNotificationRules());
+  const [rules, setRules] = useState<NotificationRule[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
-  const refresh = () => setRules(getNotificationRules());
+  useEffect(() => {
+    getNotificationRules().then((rules) => setRules(rules as NotificationRule[])).catch(() => setRules([]));
+  }, []);
+
+  const refresh = () => {
+    getNotificationRules().then((rules) => setRules(rules as NotificationRule[])).catch(() => setRules([]));
+  };
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
-    const roles = ((formData.get("notifyRoles") as string) || "")
+    const roles = ((formData.get("notifyRoleIds") as string) || "")
       .split(",")
       .filter(Boolean) as RoleId[];
     const channels = [];
@@ -54,14 +60,14 @@ export function NotificationRulesManager() {
     if (formData.get("channel_sms") === "true") channels.push("sms");
 
     createNotificationRule({
-      moduleId: formData.get("moduleId") as ModuleId,
+      moduleId: formData.get("moduleId") as string,
       event: formData.get("event") as string,
-      notifyRoles: roles.length > 0 ? roles : [],
-      notifyUsers: [],
-      channels: channels.length > 0 ? (channels as ("in_app" | "email" | "sms")[]) : ["in_app"],
+      notifyRoleIds: roles.length > 0 ? roles : [],
+      notifyUserIds: [],
+      channels: channels.length > 0 ? channels : ["in_app"],
       templateSubject: formData.get("templateSubject") as string,
       templateBody: formData.get("templateBody") as string,
-      active: true,
+      isActive: true,
     });
     refresh();
     setShowCreate(false);

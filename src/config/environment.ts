@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   USER: 'hst.auth.user',
   ACCESS_TOKEN: 'hst.auth.accessToken',
   REFRESH_TOKEN: 'hst.auth.refreshToken',
+  MUST_CHANGE_PASSWORD: 'hst.auth.mustChangePassword',
 } as const;
 
 // Helper function to get full API URL

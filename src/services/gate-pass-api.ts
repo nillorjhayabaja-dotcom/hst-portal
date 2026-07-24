@@ -65,6 +65,7 @@ export interface GatePass {
   requestId: string;
   controlNumber: string;
   purpose: string;
+  notes?: string;
   destination?: string;
   transportation?: string;
   plateNumber?: string;
@@ -276,7 +277,6 @@ export const gatePassApi = {
 
   async getAll(filters: {
     status?: string;
-    requesterId?: string;
     departmentId?: string;
     search?: string;
     startDate?: string;
@@ -286,7 +286,7 @@ export const gatePassApi = {
   } = {}) {
     const params = new URLSearchParams();
     if (filters.status) params.append('status', filters.status);
-    if (filters.requesterId) params.append('requesterId', filters.requesterId);
+    // SECURITY: Do NOT send requesterId from frontend - backend uses JWT
     if (filters.departmentId) params.append('departmentId', filters.departmentId);
     if (filters.search) params.append('search', filters.search);
     if (filters.startDate) params.append('startDate', filters.startDate);
@@ -593,5 +593,54 @@ export const gatePassApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  // ========== COMPANIONS ==========
+
+  async getCompanions(gatePassId: string) {
+    return fetchApi<any[]>(`/gate-pass/${gatePassId}/companions`);
+  },
+
+  async getCompanionsByRequestId(requestId: string) {
+    return fetchApi<any[]>(`/gate-pass/request/${requestId}/companions`);
+  },
+
+  async addCompanion(gatePassId: string, data: { fullName: string; employeeId?: string }) {
+    return fetchApi<any>(`/gate-pass/${gatePassId}/companions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async addCompanionsBulk(gatePassId: string, companions: Array<{ fullName: string; employeeId?: string }>) {
+    return fetchApi<any[]>(`/gate-pass/${gatePassId}/companions/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ companions }),
+    });
+  },
+
+  async removeCompanion(companionId: string) {
+    return fetchApi<any>(`/gate-pass/companions/${companionId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async updateCompanion(companionId: string, data: { fullName?: string; employeeId?: string }) {
+    return fetchApi<any>(`/gate-pass/companions/${companionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async clearCompanions(gatePassId: string) {
+    return fetchApi<any>(`/gate-pass/${gatePassId}/companions`, {
+      method: 'DELETE',
+    });
+  },
+
+  // ========== EMPLOYEE SEARCH ==========
+
+  async searchEmployees(query: string) {
+    return fetchApi<any[]>(`/employees/search?q=${encodeURIComponent(query)}`);
   },
 };

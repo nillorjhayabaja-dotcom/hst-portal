@@ -1,5 +1,5 @@
 // Delegation Manager - Configure approval delegations
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +29,12 @@ import type { ModuleId } from "@/types";
 
 export function DelegationManager() {
   const { user } = useAuth();
-  const [delegations, setDelegations] = useState<DelegationRule[]>(getDelegations());
+  const [delegations, setDelegations] = useState<DelegationRule[]>([]);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    getDelegations().then((delegations) => setDelegations(delegations as DelegationRule[])).catch(() => setDelegations([]));
+  }, []);
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,7 +53,18 @@ export function DelegationManager() {
       reason: formData.get("reason") as string,
     });
 
-    setDelegations(getDelegations());
+    createDelegation({
+      delegatorId: user?.id || "",
+      delegatorName: user?.name || "",
+      delegateId: formData.get("delegateId") as string,
+      delegateName: formData.get("delegateName") as string,
+      moduleId: (formData.get("moduleId") as ModuleId | null) || undefined,
+      startDate: formData.get("startDate") as string,
+      endDate: formData.get("endDate") as string,
+      active: true,
+      reason: formData.get("reason") as string,
+    });
+    getDelegations().then((delegations) => setDelegations(delegations as DelegationRule[])).catch(() => setDelegations([]));
     setOpen(false);
     form.reset();
   };

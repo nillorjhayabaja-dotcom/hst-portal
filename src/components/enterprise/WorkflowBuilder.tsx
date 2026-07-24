@@ -1,5 +1,5 @@
 // Workflow Builder - Admin configurable approval workflows
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { Button } from "@/components/ui/button";
@@ -64,13 +64,19 @@ import { cn } from "@/lib/utils";
 
 export function WorkflowBuilder() {
   const { user } = useAuth();
-  const [workflows, setWorkflows] = useState<WorkflowConfig[]>(getWorkflows());
+  const [workflows, setWorkflows] = useState<WorkflowConfig[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowConfig | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showStepDialog, setShowStepDialog] = useState(false);
   const [editingStep, setEditingStep] = useState<WorkflowStep | null>(null);
 
-  const refresh = () => setWorkflows(getWorkflows());
+  useEffect(() => {
+    getWorkflows().then((workflows) => setWorkflows(workflows as WorkflowConfig[])).catch(() => setWorkflows([]));
+  }, []);
+
+  const refresh = () => {
+    getWorkflows().then((workflows) => setWorkflows(workflows as WorkflowConfig[])).catch(() => setWorkflows([]));
+  };
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

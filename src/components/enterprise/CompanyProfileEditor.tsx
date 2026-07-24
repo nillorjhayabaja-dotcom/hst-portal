@@ -1,5 +1,5 @@
 // Company Profile Editor - ERP Configuration
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,24 +28,31 @@ const DAYS = [
 ];
 
 export function CompanyProfileEditor() {
-  const [profile, setProfile] = useState<CompanyProfile>(getCompanyProfile());
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+
+  useEffect(() => {
+    getCompanyProfile().then(setProfile).catch(() => setProfile(null));
+  }, []);
 
   const handleSave = () => {
-    updateCompanyProfile(profile);
+    if (profile) updateCompanyProfile(profile);
   };
 
   const handleReset = () => {
     resetConfiguration();
-    setProfile(getCompanyProfile());
+    getCompanyProfile().then(setProfile).catch(() => setProfile(null));
   };
 
   const toggleDay = (day: number) => {
-    setProfile((prev) => ({
-      ...prev,
-      workingDays: prev.workingDays.includes(day)
-        ? prev.workingDays.filter((d) => d !== day)
-        : [...prev.workingDays, day].sort(),
-    }));
+    setProfile((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        workingDays: prev.workingDays?.includes(day)
+          ? prev.workingDays.filter((d) => d !== day)
+          : [...(prev.workingDays || []), day].sort(),
+      };
+    });
   };
 
   return (
@@ -95,63 +102,71 @@ export function CompanyProfileEditor() {
               <CardTitle className="text-base">General Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              {profile && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Company Name</Label>
+                    <Input
+                      value={profile.name}
+                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Legal Name</Label>
+                    <Input
+                      value={profile.legalName}
+                      onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+              {profile && (
                 <div className="space-y-1.5">
-                  <Label>Company Name</Label>
-                  <Input
-                    value={profile.name}
-                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  <Label>Address</Label>
+                  <Textarea
+                    value={profile.address}
+                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                    rows={2}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Legal Name</Label>
-                  <Input
-                    value={profile.legalName}
-                    onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
-                  />
+              )}
+              {profile && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>TIN</Label>
+                    <Input
+                      value={profile.tin || ""}
+                      onChange={(e) => setProfile({ ...profile, tin: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Contact Number</Label>
+                    <Input
+                      value={profile.contactNumber || ""}
+                      onChange={(e) => setProfile({ ...profile, contactNumber: e.target.value })}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Address</Label>
-                <Textarea
-                  value={profile.address}
-                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                  rows={2}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>TIN</Label>
-                  <Input
-                    value={profile.tin}
-                    onChange={(e) => setProfile({ ...profile, tin: e.target.value })}
-                  />
+              )}
+              {profile && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={profile.email || ""}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Website</Label>
+                    <Input
+                      value={profile.website || ""}
+                      onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Contact Number</Label>
-                  <Input
-                    value={profile.contactNumber}
-                    onChange={(e) => setProfile({ ...profile, contactNumber: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Website</Label>
-                  <Input
-                    value={profile.website}
-                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                  />
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -167,8 +182,8 @@ export function CompanyProfileEditor() {
                   <Label>Timezone</Label>
                   <select
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                    value={profile.defaultTimezone}
-                    onChange={(e) => setProfile({ ...profile, defaultTimezone: e.target.value })}
+                    value={profile?.defaultTimezone || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, defaultTimezone: e.target.value })}
                   >
                     <option value="Asia/Manila">Asia/Manila (UTC+8)</option>
                     <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
@@ -182,8 +197,8 @@ export function CompanyProfileEditor() {
                   <Label>Language</Label>
                   <select
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                    value={profile.language}
-                    onChange={(e) => setProfile({ ...profile, language: e.target.value })}
+                    value={profile?.language || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, language: e.target.value })}
                   >
                     <option value="en">English</option>
                     <option value="fil">Filipino</option>
@@ -196,8 +211,8 @@ export function CompanyProfileEditor() {
                   <Label>Date Format</Label>
                   <select
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                    value={profile.dateFormat}
-                    onChange={(e) => setProfile({ ...profile, dateFormat: e.target.value })}
+                    value={profile?.dateFormat || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, dateFormat: e.target.value })}
                   >
                     <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
                     <option value="MM/DD/YYYY">MM/DD/YYYY (US)</option>
@@ -208,8 +223,8 @@ export function CompanyProfileEditor() {
                   <Label>Time Format</Label>
                   <select
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                    value={profile.timeFormat}
-                    onChange={(e) => setProfile({ ...profile, timeFormat: e.target.value })}
+                    value={profile?.timeFormat || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, timeFormat: e.target.value })}
                   >
                     <option value="HH:mm">24-Hour (14:30)</option>
                     <option value="hh:mm A">12-Hour (2:30 PM)</option>
@@ -226,41 +241,47 @@ export function CompanyProfileEditor() {
               <CardTitle className="text-base">Business Hours</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label className="mb-2 block">Working Days</Label>
-                <div className="flex flex-wrap gap-2">
-                  {DAYS.map((day) => (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => toggleDay(day.value)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                        profile.workingDays.includes(day.value)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-muted-foreground"
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
+              {profile && (
+                <div>
+                  <Label className="mb-2 block">Working Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {DAYS.map((day) => (
+                      <button
+                        key={day.value}
+                        type="button"
+                        onClick={() => toggleDay(day.value)}
+                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                          profile!.workingDays?.includes(day.value)
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-muted-foreground"
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Start Time</Label>
-                  <Input
-                    type="time"
-                    value={profile.businessHoursStart}
-                    onChange={(e) => setProfile({ ...profile, businessHoursStart: e.target.value })}
-                  />
+                  {profile && (
+                    <Input
+                      type="time"
+                      value={profile.businessHoursStart || ""}
+                      onChange={(e) => setProfile({ ...profile, businessHoursStart: e.target.value })}
+                    />
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>End Time</Label>
-                  <Input
-                    type="time"
-                    value={profile.businessHoursEnd}
-                    onChange={(e) => setProfile({ ...profile, businessHoursEnd: e.target.value })}
-                  />
+                  {profile && (
+                    <Input
+                      type="time"
+                      value={profile.businessHoursEnd || ""}
+                      onChange={(e) => setProfile({ ...profile, businessHoursEnd: e.target.value })}
+                    />
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -273,34 +294,38 @@ export function CompanyProfileEditor() {
               <CardTitle className="text-base">Financial Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              {profile && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Currency</Label>
+                    <Input
+                      value={profile.currency || ""}
+                      onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Currency Symbol</Label>
+                    <Input
+                      value={profile.currencySymbol || ""}
+                      onChange={(e) => setProfile({ ...profile, currencySymbol: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+              {profile && (
                 <div className="space-y-1.5">
-                  <Label>Currency</Label>
+                  <Label>Fiscal Year Start</Label>
                   <Input
-                    value={profile.currency}
-                    onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
+                    type="text"
+                    value={profile.fiscalYearStart || ""}
+                    onChange={(e) => setProfile({ ...profile, fiscalYearStart: e.target.value })}
+                    placeholder="MM-DD"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Currency Symbol</Label>
-                  <Input
-                    value={profile.currencySymbol}
-                    onChange={(e) => setProfile({ ...profile, currencySymbol: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Fiscal Year Start</Label>
-                <Input
-                  type="text"
-                  value={profile.fiscalYearStart}
-                  onChange={(e) => setProfile({ ...profile, fiscalYearStart: e.target.value })}
-                  placeholder="MM-DD"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Format: MM-DD (e.g., 01-01 for January 1)
-                </p>
-              </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Format: MM-DD (e.g., 01-01 for January 1)
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -111,7 +111,12 @@ export const gatePassController = {
     requirePermission('gate-pass', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const gatePass = await gatePassService.getById(req.params.id);
+        const user = req.user as AuthUser;
+        const gatePass = await gatePassService.getById(
+          req.params.id,
+          user.id,
+          user.roles
+        );
         const mapped = mapGatePassToDetail(gatePass);
         res.json({ success: true, data: mapped });
       } catch (err) {
@@ -207,7 +212,11 @@ export const gatePassController = {
     requirePermission('gate-pass', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const gatePasses = await gatePassService.getActiveGatePasses();
+        const user = req.user as AuthUser;
+        const gatePasses = await gatePassService.getActiveGatePasses(
+          user.id,
+          user.roles
+        );
         res.json({ success: true, data: gatePasses });
       } catch (err) {
         next(err);

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { auditService } from '../../infrastructure/audit/audit.service';
 
 const prisma = new PrismaClient();
 
@@ -115,7 +116,7 @@ export const approvalService = {
     return { items, total, page, pageSize };
   },
 
-  async getById(id: string) {
+  async getById(id: string, userId?: string, userRoles?: string[]) {
     const request = await prisma.approvalRequest.findUnique({
       where: { id },
       include: {
@@ -139,6 +140,43 @@ export const approvalService = {
     });
 
     if (!request) throw new Error('Approval request not found');
+
+    // SECURITY: Validate ownership and authorization
+    if (userId && userRoles) {
+      const isOwner = request.requesterId === userId;
+      const isAdmin = userRoles.some(r => ['super_admin', 'admin'].includes(r));
+      
+      // Check if user is an approver in the current workflow
+      const isApprover = request.steps.some(step => {
+        const stepRoleName = step.role?.name?.toLowerCase() || '';
+        return userRoles.some(role => 
+          role === stepRoleName || 
+          step.roleId === role ||
+          (step.status === 'current' || step.status === 'pending')
+        );
+      });
+
+      // Grant access if: owner, admin, or assigned approver
+      if (!isOwner && !isAdmin && !isApprover) {
+        // Log unauthorized access attempt
+        await auditService.record('access_denied', 'approval_request', {
+          actorId: userId,
+          entityId: id,
+          metadata: {
+            requestId: id,
+            requesterId: request.requesterId,
+            userRoles,
+            requestStatus: request.status,
+            reason: 'User attempted to access approval request without ownership or approval authority'
+          }
+        }).catch(() => {
+          // Silently fail audit logging
+        });
+        
+        throw new Error('You do not have permission to view this request');
+      }
+    }
+
     return request;
   },
 
@@ -294,16 +332,31 @@ export const approvalService = {
     return { status: 'recalled' };
   },
 
-  async getDashboardStats() {
+  async getDashboardStats(userId?: string) {
+    const userFilter = userId ? { requesterId: userId } : {};
+    
+    console.log('[APPROVAL SERVICE] User ID for filtering:', userId);
+    console.log('[APPROVAL SERVICE] User filter:', JSON.stringify(userFilter));
+    
     const [total, pending, approved, rejected, todayCount] = await Promise.all([
-      prisma.approvalRequest.count(),
-      prisma.approvalRequest.count({ where: { status: { in: ['pending', 'in_review'] } } }),
-      prisma.approvalRequest.count({ where: { status: 'approved' } }),
-      prisma.approvalRequest.count({ where: { status: 'rejected' } }),
+      prisma.approvalRequest.count({ where: userFilter }),
+      prisma.approvalRequest.count({ 
+        where: { 
+          ...userFilter,
+          status: { in: ['pending', 'in_review'] } 
+        } 
+      }),
+      prisma.approvalRequest.count({ where: { ...userFilter, status: 'approved' } }),
+      prisma.approvalRequest.count({ where: { ...userFilter, status: 'rejected' } }),
       prisma.approvalRequest.count({
-        where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+        where: { 
+          ...userFilter,
+          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } 
+        },
       }),
     ]);
+
+    console.log('[APPROVAL SERVICE] Results:', { total, pending, approved, rejected, todayCount });
 
     return { total, pending, approved, rejected, todayCount };
   },

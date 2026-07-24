@@ -9,6 +9,7 @@ interface ExportRow {
   Department: string;
   Purpose: string;
   Destination: string;
+  Companions: string;
   'Workflow Status': string;
   'Release Date': string;
   'Release Time': string;
@@ -142,7 +143,13 @@ export class GatePassExportService {
               }
             }
           }
-        }
+        },
+        companions: {
+          select: {
+            fullName: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       }
     });
 
@@ -196,11 +203,17 @@ export class GatePassExportService {
       // Workflow Status
       const workflowStatus = gp.releaseStatus || req.status || '';
 
+      // Companions
+      const companionsList = (gp.companions || [])
+        .map((c: any) => c.fullName)
+        .join('; ');
+
       return {
         Requester: requesterName,
         Department: departmentName,
         Purpose: gp.purpose || '',
         Destination: gp.destination || '',
+        Companions: companionsList,
         'Workflow Status': workflowStatus,
         'Release Date': releaseDate,
         'Release Time': releaseTime,
@@ -225,6 +238,7 @@ export class GatePassExportService {
       { header: 'Department', key: 'Department', width: 25 },
       { header: 'Purpose', key: 'Purpose', width: 35 },
       { header: 'Destination', key: 'Destination', width: 30 },
+      { header: 'Companions', key: 'Companions', width: 40 },
       { header: 'Workflow Status', key: 'Workflow Status', width: 20 },
       { header: 'Release Date', key: 'Release Date', width: 18 },
       { header: 'Release Time', key: 'Release Time', width: 15 },

@@ -5,6 +5,7 @@ import departmentRoutes from './department.routes';
 import positionRoutes from './position.routes';
 import roleRoutes from './role.routes';
 import gatePassRoutes from './gate-pass.routes';
+import gatePassCompanionRoutes from './gate-pass-companion.routes';
 import qrScannerRoutes from './qr-scanner.routes';
 import notificationRoutes from './notification.routes';
 import auditRoutes from './audit.routes';
@@ -14,6 +15,7 @@ import commentRoutes from './comment.routes';
 import verificationRoutes from './verification.routes';
 import approvalRoutes from './approval.routes';
 import dashboardRoutes from './dashboard.routes';
+import userManagementRoutes from './user-management.routes';
 
 const router = Router();
 
@@ -27,6 +29,7 @@ router.use('/departments', departmentRoutes);
 router.use('/positions', positionRoutes);
 router.use('/roles', roleRoutes);
 router.use('/gate-pass', gatePassRoutes);
+router.use('/gate-pass', gatePassCompanionRoutes);
 router.use('/qr-scanner', qrScannerRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/audit', auditRoutes);
@@ -36,5 +39,6 @@ router.use('/comments', commentRoutes);
 router.use('/verification', verificationRoutes);
 router.use('/approval-requests', approvalRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/users/manage', userManagementRoutes);
 
 export default router;

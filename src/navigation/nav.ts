@@ -51,6 +51,7 @@ export const MODULES: Record<ModuleId, { label: string; icon: string; group: str
       group: "Operations",
       to: "/app/m/purchase-request",
     },
+    mrf: { label: "MRF", icon: "FileText", group: "Operations", to: "/app/m/mrf" },
 
     employees: { label: "Employees", icon: "Users", group: "Management", to: "/app/m/employees" },
     departments: {

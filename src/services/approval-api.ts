@@ -107,19 +107,18 @@ export const approvalApi = {
   async getAll(filters?: {
     status?: string;
     moduleId?: string;
-    requesterId?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ data: ApprovalRequest[]; total: number; page: number; pageSize: number }> {
+  }): Promise<{ data: ApprovalRequest[]; total: number; page: number; pageSize: number; totalPages: number }> {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.moduleId) params.append('moduleId', filters.moduleId);
-    if (filters?.requesterId) params.append('requesterId', filters.requesterId);
+    // SECURITY: Do NOT send requesterId from frontend - backend uses JWT
     if (filters?.page) params.append('page', String(filters.page));
     if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
     
     const query = params.toString();
-    return fetchApi<{ data: ApprovalRequest[]; total: number; page: number; pageSize: number }>(
+    return fetchApi<{ data: ApprovalRequest[]; total: number; page: number; pageSize: number; totalPages: number }>(
       `/approval-requests${query ? `?${query}` : ''}`
     );
   },

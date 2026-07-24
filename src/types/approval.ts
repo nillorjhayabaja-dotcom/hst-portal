@@ -40,8 +40,8 @@ export interface WorkflowConfig {
   steps: WorkflowStep[];
   active: boolean;
   version: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ============================================================
@@ -109,15 +109,15 @@ export interface ApprovalRequest {
 export interface DelegationRule {
   id: string;
   delegatorId: string;
-  delegatorName: string;
+  delegatorName?: string;
   delegateId: string;
-  delegateName: string;
+  delegateName?: string;
   moduleId?: ModuleId;
   startDate: string;
   endDate: string;
   active: boolean;
   reason: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 // ============================================================

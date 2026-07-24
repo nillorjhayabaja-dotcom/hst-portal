@@ -30,7 +30,8 @@ export type ModuleId =
   | "departments"
   | "positions"
   | "holiday-calendar"
-  | "settings";
+  | "settings"
+  | "mrf";
 
 // Granular actions a role may hold on a module
 export type Action = "view" | "create" | "approve" | "manage" | "full";

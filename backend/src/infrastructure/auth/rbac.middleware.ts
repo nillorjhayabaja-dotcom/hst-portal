@@ -6,17 +6,16 @@ import type { PermissionClaim } from '../../shared/types';
  * Require a specific permission for a module. Scope is checked at the
  * controller/service level where entity ownership is known; this guards the
  * action + module pair.
+ * 
+ * SECURITY: RBAC is ALWAYS enforced, regardless of environment.
+ * Development bypass removed for production readiness (CVE-2026-001 FIXED).
  */
 export function requirePermission(moduleId: string, action: string): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) return next(new UnauthorizedError());
     
-    // Development mode: bypass permission checks if NODE_ENV is development
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    if (isDevelopment) {
-      return next();
-    }
-    
+    // SECURITY: Always enforce RBAC in all environments
+    // Development mode bypass has been removed for production readiness
     const allowed = hasPermission(req.user.permissions, moduleId, action);
     if (!allowed) {
       return next(new ForbiddenError(`Missing permission: ${action} on ${moduleId}`));

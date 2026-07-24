@@ -1,4 +1,5 @@
 import { prisma } from '../prisma.service';
+import { auditService } from '../../audit/audit.service';
 
 export const gatePassRepository = {
   async getVehicleByPlateNumber(plateNumber: string) {
@@ -245,8 +246,8 @@ export const gatePassRepository = {
     return { items, total };
   },
 
-  async findById(id: string) {
-    return prisma.gatePass.findUnique({
+  async findById(id: string, currentUserId?: string, userRoles?: string[]) {
+    const gatePass = await prisma.gatePass.findUnique({
       where: { id },
       include: {
         request: {
@@ -286,6 +287,48 @@ export const gatePassRepository = {
         vehicle: true,
       },
     });
+
+    // SECURITY: Validate ownership and authorization
+    if (gatePass && currentUserId && userRoles) {
+      const isOwner = gatePass.request.requesterId === currentUserId;
+      const isAdmin = userRoles.some(r => ['super_admin', 'admin'].includes(r));
+      const isSecurity = userRoles.includes('security');
+      
+      // Security can view approved/released gate passes
+      const isSecurityAuthorized = isSecurity && 
+        ['approved', 'completed', 'released'].includes(gatePass.request.status);
+
+      // Check if user is an approver
+      const isApprover = gatePass.request.steps?.some((step: any) => {
+        const stepRoleName = step.role?.name?.toLowerCase() || '';
+        return userRoles.some(role => 
+          role === stepRoleName || 
+          (step.status === 'current' || step.status === 'pending')
+        );
+      });
+
+      if (!isOwner && !isAdmin && !isSecurityAuthorized && !isApprover) {
+        // Log unauthorized access attempt
+        await auditService.record('access_denied', 'gate_pass', {
+          actorId: currentUserId,
+          entityId: id,
+          metadata: {
+            gatePassId: id,
+            requestId: gatePass.requestId,
+            requesterId: gatePass.request.requesterId,
+            userRoles,
+            requestStatus: gatePass.request.status,
+            reason: 'User attempted to access gate pass without ownership or authorization'
+          }
+        }).catch(() => {
+          // Silently fail audit logging
+        });
+        
+        throw new Error('You do not have permission to view this gate pass');
+      }
+    }
+
+    return gatePass;
   },
 
   async findByRequestId(requestId: string) {
@@ -425,7 +468,7 @@ export const gatePassRepository = {
     });
   },
 
-  async getStats(params: { startDate?: string; endDate?: string; departmentId?: string } = {}) {
+  async getStats(params: { startDate?: string; endDate?: string; departmentId?: string; requesterId?: string } = {}) {
     const where: any = {};
     
     if (params.startDate || params.endDate) {
@@ -436,6 +479,10 @@ export const gatePassRepository = {
 
     if (params.departmentId) {
       where.request = { departmentId: params.departmentId };
+    }
+
+    if (params.requesterId) {
+      where.request = { ...where.request, requesterId: params.requesterId };
     }
 
     const [total, pending, approved, rejected] = await Promise.all([
@@ -463,13 +510,25 @@ export const gatePassRepository = {
     return { total, pending, approved, rejected };
   },
 
-  async getActiveGatePasses() {
+  async getActiveGatePasses(currentUserId?: string, userRoles?: string[]) {
+    const isSecurity = userRoles?.includes('security');
+    const isAdmin = userRoles?.some(r => ['super_admin', 'admin'].includes(r));
+    
+    const where: any = {
+      request: {
+        status: { in: ['pending', 'in_review', 'approved', 'completed', 'released'] }
+      }
+    };
+
+    // SECURITY: Non-security and non-admin users can only see their own gate passes
+    if (!isSecurity && !isAdmin && currentUserId) {
+      where.request.requesterId = currentUserId;
+    }
+
     return prisma.gatePass.findMany({
-      where: {
-        request: {
-          status: { in: ['pending', 'in_review', 'approved', 'completed', 'released'] }
-        }
-      },
+      where,
+      skip: 0,
+      take: 50, // Add pagination to prevent memory issues
       include: {
         request: {
           include: {

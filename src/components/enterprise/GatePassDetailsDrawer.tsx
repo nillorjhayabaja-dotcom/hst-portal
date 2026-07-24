@@ -35,6 +35,7 @@ import {
   Printer,
   TruckIcon,
   UserCheck,
+  Users,
 } from "lucide-react";
 import {
   getEmployeeDisplayName,
@@ -64,6 +65,7 @@ export function GatePassDetailsDrawer({
   const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [companions, setCompanions] = useState<any[]>([]);
 
   // Get user's role name
   const userRoleName = user?.role?.toLowerCase() || '';
@@ -84,11 +86,12 @@ export function GatePassDetailsDrawer({
     !isCompletedWorkflow &&
     !gatePass.securityReleasedAt;
 
-  // Fetch comments and attachments on open
+  // Fetch comments, attachments and companions on open
   useEffect(() => {
     if (open && workflowStatus) {
       fetchComments();
       fetchAttachments();
+      fetchCompanions();
     }
   }, [open, workflowStatus?.requestId]);
 
@@ -115,6 +118,16 @@ export function GatePassDetailsDrawer({
       setAttachments(Array.isArray(result) ? result : []);
     } catch {
       setAttachments([]);
+    }
+  };
+
+  const fetchCompanions = async () => {
+    if (!workflowStatus) return;
+    try {
+      const result = await gatePassApi.getCompanions(gatePass.id);
+      setCompanions(Array.isArray(result) ? result : []);
+    } catch {
+      setCompanions([]);
     }
   };
 
@@ -546,11 +559,52 @@ export function GatePassDetailsDrawer({
               <p className="text-sm text-muted-foreground">{gatePass.purpose}</p>
             </div>
 
+            {(gatePass as any).notes && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Notes / Description</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {(gatePass as any).notes}
+                  </p>
+                </div>
+              </>
+            )}
+
             <Separator />
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-medium text-foreground">Status</h4>
               <StatusBadgeEnhanced status={gatePass.status} size="md" />
             </div>
+
+            {/* Companions Section */}
+            {companions.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-1.5">
+                    <Users className="size-4" />
+                    Companions ({companions.length})
+                  </h4>
+                  <div className="space-y-1">
+                    {companions.map((comp: any) => (
+                      <div
+                        key={comp.id}
+                        className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5"
+                      >
+                        <User className="size-3.5 shrink-0" />
+                        <span>{comp.fullName}</span>
+                        {comp.employee && comp.employee.department && (
+                          <span className="text-xs text-muted-foreground/70">
+                            ({comp.employee.department.name})
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* QR Code - in overview when available */}
             {hasQRCode && (

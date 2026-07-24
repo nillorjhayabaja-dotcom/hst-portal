@@ -1,5 +1,5 @@
 // Holiday Calendar - ERP Configuration
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,16 @@ import type { Holiday } from "@/types/configuration";
 import { cn } from "@/lib/utils";
 
 export function HolidayCalendar() {
-  const [holidays, setHolidays] = useState<Holiday[]>(getHolidays());
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
-  const refresh = () => setHolidays(getHolidays());
+  useEffect(() => {
+    getHolidays().then((holidays) => setHolidays(holidays as Holiday[])).catch(() => setHolidays([]));
+  }, []);
+
+  const refresh = () => {
+    getHolidays().then((holidays) => setHolidays(holidays as Holiday[])).catch(() => setHolidays([]));
+  };
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +47,7 @@ export function HolidayCalendar() {
       name: formData.get("name") as string,
       date: formData.get("date") as string,
       type: formData.get("type") as Holiday["type"],
-      recurring: formData.get("recurring") === "true",
+      isRecurring: formData.get("recurring") === "true",
       description: (formData.get("description") as string) || undefined,
     });
     refresh();
@@ -91,9 +97,9 @@ export function HolidayCalendar() {
       ),
     },
     {
-      id: "recurring",
+      id: "isRecurring",
       header: "Recurring",
-      accessorKey: "recurring",
+      accessorKey: "isRecurring",
       width: "100px",
       cell: (val) =>
         val ? (

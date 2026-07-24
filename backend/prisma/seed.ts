@@ -129,6 +129,7 @@ async function main() {
         actions: ['create', 'view', 'edit', 'approve'],
         scope: 'department',
       },
+      { roleId: supervisor.id, moduleId: 'approval', actions: ['view', 'approve'], scope: 'department' },
     ],
   });
 
@@ -144,6 +145,7 @@ async function main() {
         scope: 'department',
       },
       { roleId: manager.id, moduleId: 'leave', actions: ['create', 'view', 'approve'], scope: 'department' },
+      { roleId: manager.id, moduleId: 'approval', actions: ['view', 'approve'], scope: 'department' },
     ],
   });
 
@@ -157,6 +159,9 @@ async function main() {
         actions: ['create', 'view', 'edit', 'approve'],
         scope: 'all',
       },
+      { roleId: admin.id, moduleId: 'approval', actions: ['view', 'approve'], scope: 'all' },
+      { roleId: admin.id, moduleId: 'notifications', actions: ['view'], scope: 'all' },
+      { roleId: admin.id, moduleId: 'dashboard', actions: ['view'], scope: 'all' },
     ],
   });
 
@@ -198,6 +203,7 @@ async function main() {
         scope: 'own',
       },
       { roleId: employee.id, moduleId: 'leave', actions: ['create', 'view', 'edit'], scope: 'own' },
+      { roleId: employee.id, moduleId: 'approval', actions: ['view'], scope: 'own' },
     ],
   });
 

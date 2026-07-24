@@ -23,6 +23,7 @@ import { TrendChart, RequestPie, DeptBar, PieLegend } from "./charts";
 import { RecentRequests, ApprovalQueueCard, QuickActions, ActivityFeed } from "./widgets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardOverview, useDashboardMetrics } from "@/services/dashboard-hooks";
+import { useAuth } from "@/contexts/AuthContext";
 
 function StatGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{children}</div>;
@@ -33,16 +34,23 @@ function TwoCol({ children }: { children: React.ReactNode }) {
 }
 
 export function RoleDashboard({ role }: { role: RoleId }) {
+  const { user } = useAuth();
   const { data: overview } = useDashboardOverview();
   const { data: metrics } = useDashboardMetrics();
   
   const stats = overview || {
+    // Employee fields
+    myRequests: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    unreadNotifications: 0,
+    // Admin/Manager fields
     totalEmployees: 0,
     activeEmployees: 0,
     totalDepartments: 0,
     pendingGatePasses: 0,
     approvedGatePasses: 0,
-    rejectedGatePasses: 0,
     pendingLeaves: 0,
     approvedLeaves: 0,
     pendingPurchaseRequests: 0,
@@ -50,7 +58,6 @@ export function RoleDashboard({ role }: { role: RoleId }) {
     visitorsToday: 0,
     vehiclesInUse: 0,
     assetsAssigned: 0,
-    unreadNotifications: 0,
     pendingApprovals: 0,
   };
 
@@ -305,7 +312,7 @@ export function RoleDashboard({ role }: { role: RoleId }) {
               tone="success"
               hint="today"
             />
-            <StatCard label="Rejected Gate Pass" value={String(stats.rejectedGatePasses || 0)} icon={LogOut} tone="warning" />
+            <StatCard label="Rejected Gate Pass" value={String(stats.rejected || 0)} icon={LogOut} tone="warning" />
             <StatCard label="Pending Gate Pass" value={String(stats.pendingGatePasses || 0)} icon={LogIn} tone="info" />
             <StatCard label="Visitors Today" value={String(stats.visitorsToday || 0)} icon={UserCheck} tone="primary" />
           </StatGrid>
@@ -330,10 +337,26 @@ export function RoleDashboard({ role }: { role: RoleId }) {
       return (
         <>
           <StatGrid>
-            <StatCard label="My Requests" value={String(metrics?.totalRequests || 0)} icon={ClipboardList} tone="primary" />
-            <StatCard label="Pending" value={String(stats.pendingApprovals || 0)} icon={FileClock} tone="warning" />
-            <StatCard label="Approved" value={String(metrics?.approvedToday || 0)} icon={CheckCircle2} tone="success" />
-            <StatCard label="Notifications" value={String(stats.unreadNotifications || 0)} icon={Activity} tone="info" hint="unread" />
+            <StatCard 
+              label="My Requests" 
+              value={String(stats.myRequests || metrics?.totalRequests || 0)} 
+              icon={ClipboardList} 
+              tone="primary" 
+              hint="all modules"
+            />
+            <StatCard 
+              label="Pending" 
+              value={String(stats.pending || metrics?.pendingApprovals || 0)} 
+              icon={FileClock} 
+              tone="warning" 
+              hint="awaiting approval"
+            />
+            <StatCard 
+              label="Approved" 
+              value={String(stats.approved || 0)} 
+              icon={CheckCircle2} 
+              tone="success" 
+            />
           </StatGrid>
           <div className="mt-6">
             <QuickActions
@@ -345,15 +368,14 @@ export function RoleDashboard({ role }: { role: RoleId }) {
               ]}
             />
           </div>
-          <TwoCol>
-            <div className="lg:col-span-2">
-              <RecentRequests
-                title="My Recent Requests"
-                filter={(r) => r.requester === "Liza Mendoza" || r.department === "Production"}
-              />
-            </div>
-            <ActivityFeed title="Notifications" />
-          </TwoCol>
+          <div className="mt-6">
+            <RecentRequests
+              title="My Recent Requests"
+              showFilters={true}
+              showSearch={true}
+              showPagination={true}
+            />
+          </div>
         </>
       );
   }

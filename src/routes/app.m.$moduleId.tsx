@@ -13,6 +13,7 @@ import { StatusBadgeEnhanced } from "@/components/enterprise/StatusBadgeEnhanced
 import { GatePassModule } from "@/features/modules/GatePassModule";
 import { LeaveModule } from "@/features/modules/LeaveModule";
 import { PRModule } from "@/features/modules/PRModule";
+import { UserManagementModule } from "@/features/modules/UserManagementModule";
 import { ApprovalInbox } from "@/components/enterprise/ApprovalInbox";
 import { HolidayCalendar } from "@/components/enterprise/HolidayCalendar";
 import { TrendChart, RequestPie, DeptBar, PieLegend } from "@/features/dashboards/charts";
@@ -72,7 +73,7 @@ const descriptions: Partial<Record<ModuleId, string>> = {
   departments: "Departments and organization structure",
   reports: "Analytics and operational reports",
   "audit-logs": "System activity audit trail",
-  users: "Role-based access control matrix",
+  users: "Super Admin user account management and identity governance",
   "holiday-calendar": "Company holiday calendar and events",
   positions: "Job position management",
   visitors: "Visitor management and verification",
@@ -148,7 +149,7 @@ function ModuleContent({
           <DeptBar />
         </div>
       );
-    case "users": return <RbacMatrix />;
+    case "users": return <UserManagementModule />;
     case "holiday-calendar": return <HolidayCalendar />;
     case "settings": return <SettingsView />;
     default: return <ComingSoon title={label} description="This module will be implemented in a future phase." />;

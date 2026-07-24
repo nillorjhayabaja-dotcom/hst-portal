@@ -6,6 +6,7 @@ export interface GatePassListItem {
   status: string;
   priority: string;
   purpose: string;
+  notes?: string;
   destination?: string;
   transportation?: string;
   requester: {
@@ -167,6 +168,7 @@ export function mapGatePassToListItem(gp: any): GatePassListItem {
     status: request.status,
     priority: request.priority,
     purpose: gp.purpose,
+    notes: request.description || undefined,
     destination: gp.destination,
     transportation: gp.transportation,
     requester: {

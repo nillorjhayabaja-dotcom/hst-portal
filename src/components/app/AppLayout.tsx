@@ -22,6 +22,14 @@ export function AppLayout() {
         navigate({ to: "/", replace: true });
       }
     }
+
+    // Route protection: if user must change password, redirect to change-password page
+    if (hydrated && ready && user) {
+      const mustChangePassword = localStorage.getItem(STORAGE_KEYS.MUST_CHANGE_PASSWORD) === "true";
+      if (mustChangePassword) {
+        navigate({ to: "/change-password", replace: true });
+      }
+    }
   }, [hydrated, ready, user, navigate]);
 
   if (!hydrated || !ready || !user) {

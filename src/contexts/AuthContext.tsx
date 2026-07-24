@@ -7,15 +7,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { AuthUser } from "@/types";
+import type { AuthUser, RoleId } from "@/types";
 import { API_BASE_URL, API_BASE_NORMALIZED, STORAGE_KEYS } from "@/config/environment";
 
 interface AuthContextValue {
   user: AuthUser | null;
   ready: boolean;
-  login: (params: { identifier: string; password: string }) => Promise<void>;
+  login: (params: { identifier: string; password: string }) => Promise<AuthUser | null>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<void>;
+  switchRole: (role: RoleId) => void;
+  mustChangePassword: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,10 +144,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
       if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
 
+      // Store mustChangePassword flag for UI to detect
+      if (user?.mustChangePassword) {
+        localStorage.setItem(STORAGE_KEYS.MUST_CHANGE_PASSWORD, "true");
+        setMustChangePassword(true);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.MUST_CHANGE_PASSWORD);
+        setMustChangePassword(false);
+      }
+
       // Backend auth response shape differs from our frontend AuthUser.
       // Normalize so the rest of the app can rely on user.role/name/department.
       const normalized = normalizeBackendUser(user);
-      persistUser((normalized ?? null) as AuthUser | null);
+      const authUser = (normalized ?? null) as AuthUser | null;
+      persistUser(authUser);
+      
+      return authUser;
     },
     [persistUser],
   );
@@ -165,12 +180,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       persistUser(null);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.MUST_CHANGE_PASSWORD);
+      setMustChangePassword(false);
     }
   }, [persistUser]);
 
+  const switchRole = useCallback((role: RoleId) => {
+    setUser((prev) => (prev ? { ...prev, role } : null));
+  }, []);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, ready, login, logout, refreshMe }),
-    [user, ready, login, logout, refreshMe],
+    () => ({ user, ready, login, logout, refreshMe, switchRole, mustChangePassword }),
+    [user, ready, login, logout, refreshMe, switchRole, mustChangePassword],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,18 +1,21 @@
 // Approval TanStack Query Hooks
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { approvalApi } from './approval-api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useApprovalRequests(filters?: {
   status?: string;
   moduleId?: string;
-  requesterId?: string;
   page?: number;
   pageSize?: number;
 }) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['approval-requests', filters],
+    queryKey: ['approval-requests', user?.id, filters],
     queryFn: () => approvalApi.getAll(filters),
     staleTime: 1000 * 60 * 2, // 2 minutes
+    enabled: !!user?.id, // Only fetch when user is authenticated
   });
 }
 

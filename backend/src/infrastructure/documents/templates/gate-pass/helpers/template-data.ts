@@ -3,6 +3,9 @@ import path from 'path';
 import fs from 'fs/promises';
 
 export interface GatePassTemplateData {
+  // Companions
+  companions: Array<{ fullName: string; department?: string }>;
+
   // Company Information
   companyName: string;
   companyLegalName: string;
@@ -155,11 +158,13 @@ export class GatePassTemplateDataBuilder {
     const companyContact = company?.contactNumber || '';
     const companyLogo = company?.logoUrl || '';
 
-    const requesterEmployee = gatePass.request.requester.employees;
-    const requesterName = `${requesterEmployee.firstName || ''} ${requesterEmployee.lastName || ''}`.trim() || requesterEmployee.displayName || 'Unknown';
-    const requesterEmployeeId = requesterEmployee.employeeNumber || requesterEmployee.id;
-    const requesterDepartment = requesterEmployee.department?.name || '';
-    const requesterPosition = requesterEmployee.position?.title || '';
+    const requesterEmployee = gatePass.request.requester?.employees;
+    const requesterName = requesterEmployee
+      ? `${requesterEmployee.firstName || ''} ${requesterEmployee.lastName || ''}`.trim() || requesterEmployee.displayName
+      : gatePass.request.requester?.displayName || 'Unknown';
+    const requesterEmployeeId = requesterEmployee?.employeeNumber || requesterEmployee?.id || gatePass.request.requester?.id || 'N/A';
+    const requesterDepartment = requesterEmployee?.department?.name || '';
+    const requesterPosition = requesterEmployee?.position?.title || '';
 
     const now = new Date();
     const generatedDate = this.formatDate(now);
@@ -223,6 +228,9 @@ export class GatePassTemplateDataBuilder {
       timeOut: gatePass.securityReleasedAt ? this.formatDateTime(gatePass.securityReleasedAt) : undefined,
       kmReadingEnd: gatePass.verifications?.[0]?.kmReadingEnd,
       timeIn: gatePass.actualReturn ? this.formatDateTime(gatePass.actualReturn) : undefined,
+      // Companions
+      companions: await this.buildCompanions(gatePass),
+
       // Resolve security guard name from userId - NEVER display UUID
       checkedBy: gatePass.releasedBy || await this.resolveUserName(gatePass.securityReleasedBy) || undefined,
       withMeal: false,
@@ -233,6 +241,29 @@ export class GatePassTemplateDataBuilder {
       status: gatePass.request.status,
       printCount: gatePass.printCount,
     };
+  }
+
+  private async buildCompanions(gatePass: any): Promise<Array<{ fullName: string; department?: string }>> {
+    try {
+      const companions = await this.prisma.gatePassCompanion.findMany({
+        where: { gatePassId: gatePass.id },
+        include: {
+          employee: {
+            select: {
+              department: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      return companions.map((c: any) => ({
+        fullName: c.fullName,
+        department: c.employee?.department?.name || undefined,
+      }));
+    } catch (err) {
+      console.error('[GatePassTemplate] Failed to load companions:', err);
+      return [];
+    }
   }
 
   private async buildSignatures(gatePass: any): Promise<SignatureData[]> {

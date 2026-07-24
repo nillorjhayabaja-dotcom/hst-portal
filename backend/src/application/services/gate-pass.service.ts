@@ -164,14 +164,15 @@ export class GatePassService {
 
     return {
       id: gatePass.id,
+      gatePassId: gatePass.id,
       requestId: started.id,
       controlNumber: started.controlNumber,
       status: started.status,
     };
   }
 
-  async getById(id: string) {
-    const gatePass = await gatePassRepository.findById(id);
+  async getById(id: string, currentUserId?: string, userRoles?: string[]) {
+    const gatePass = await gatePassRepository.findById(id, currentUserId, userRoles);
     if (!gatePass) {
       throw new NotFoundError('Gate pass not found');
     }
@@ -265,12 +266,12 @@ export class GatePassService {
     return updated;
   }
 
-  async getStats(filters: { startDate?: string; endDate?: string; departmentId?: string } = {}) {
+  async getStats(filters: { startDate?: string; endDate?: string; departmentId?: string; requesterId?: string } = {}) {
     return gatePassRepository.getStats(filters);
   }
 
-  async getActiveGatePasses() {
-    return gatePassRepository.getActiveGatePasses();
+  async getActiveGatePasses(currentUserId?: string, userRoles?: string[]) {
+    return gatePassRepository.getActiveGatePasses(currentUserId, userRoles);
   }
 
   async approve(requestId: string, actorId: string, actorName: string, note?: string, signature?: { originalname: string; mimetype: string; size: number; stream: any }) {

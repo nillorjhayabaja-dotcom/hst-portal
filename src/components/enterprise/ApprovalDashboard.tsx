@@ -1,5 +1,5 @@
 // Approval Analytics Dashboard - Metrics, trends, and approver performance
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,43 +19,48 @@ import type { ApprovalMetrics, ApproverPerformance } from "@/types/approval";
 import { cn } from "@/lib/utils";
 
 export function ApprovalDashboard() {
-  const [metrics] = useState<ApprovalMetrics>(getApprovalMetrics());
-  const [performance] = useState<ApproverPerformance[]>(getApproverPerformance());
+  const [metrics, setMetrics] = useState<ApprovalMetrics | null>(null);
+  const [performance, setPerformance] = useState<ApproverPerformance[]>([]);
+
+  useEffect(() => {
+    getApprovalMetrics().then(setMetrics).catch(() => setMetrics(null));
+    getApproverPerformance().then(setPerformance).catch(() => setPerformance([]));
+  }, []);
 
   const kpiCards = [
     {
       label: "Total Requests",
-      value: metrics.totalRequests,
+      value: metrics?.totalRequests ?? 0,
       icon: FileText,
       tone: "primary",
     },
     {
       label: "Pending Approvals",
-      value: metrics.pendingApprovals,
+      value: metrics?.pendingApprovals ?? 0,
       icon: Clock,
       tone: "warning",
     },
     {
       label: "Approved Today",
-      value: metrics.approvedToday,
+      value: metrics?.approvedToday ?? 0,
       icon: CheckCircle2,
       tone: "success",
     },
     {
       label: "Rejected Today",
-      value: metrics.rejectedToday,
+      value: metrics?.rejectedToday ?? 0,
       icon: XCircle,
       tone: "danger",
     },
     {
       label: "Approval Rate",
-      value: `${metrics.approvalRate}%`,
+      value: `${metrics?.approvalRate ?? 0}%`,
       icon: TrendingUp,
       tone: "info",
     },
     {
       label: "Avg. Approval Time",
-      value: `${metrics.averageApprovalTime}h`,
+      value: `${metrics?.averageApprovalTime ?? 0}h`,
       icon: Clock,
       tone: "primary",
     },
@@ -118,7 +123,7 @@ export function ApprovalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {metrics.monthlyTrend.length === 0 ? (
+              {!metrics || metrics.monthlyTrend.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No data available yet
                 </p>
@@ -168,7 +173,7 @@ export function ApprovalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(metrics.byModule).length === 0 ? (
+              {!metrics || Object.entries(metrics.byModule).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No data available yet
                 </p>
@@ -177,7 +182,7 @@ export function ApprovalDashboard() {
                   .sort(([, a], [, b]) => b - a)
                   .map(([module, count]) => {
                     const pct =
-                      metrics.totalRequests > 0 ? (count / metrics.totalRequests) * 100 : 0;
+                      (metrics?.totalRequests ?? 0) > 0 ? (count / (metrics?.totalRequests ?? 1)) * 100 : 0;
                     return (
                       <div key={module}>
                         <div className="flex items-center justify-between mb-1">
@@ -212,7 +217,7 @@ export function ApprovalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {Object.entries(metrics.byPriority).length === 0 ? (
+              {!metrics || Object.entries(metrics.byPriority).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8 col-span-2">
                   No data available yet
                 </p>
@@ -249,7 +254,7 @@ export function ApprovalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(metrics.byDepartment).length === 0 ? (
+              {!metrics || Object.entries(metrics.byDepartment).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No data available yet
                 </p>
@@ -258,7 +263,7 @@ export function ApprovalDashboard() {
                   .sort(([, a], [, b]) => b - a)
                   .map(([dept, count]) => {
                     const pct =
-                      metrics.totalRequests > 0 ? (count / metrics.totalRequests) * 100 : 0;
+                      (metrics?.totalRequests ?? 0) > 0 ? (count / (metrics?.totalRequests ?? 1)) * 100 : 0;
                     return (
                       <div key={dept}>
                         <div className="flex items-center justify-between mb-1">

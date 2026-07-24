@@ -2,21 +2,28 @@
 import { fetchApi } from './api-client';
 
 export interface DashboardOverview {
-  totalEmployees: number;
-  activeEmployees: number;
-  totalDepartments: number;
-  pendingGatePasses: number;
-  approvedGatePasses: number;
-  rejectedGatePasses: number;
-  pendingLeaves: number;
-  approvedLeaves: number;
-  pendingPurchaseRequests: number;
-  pendingMRFs: number;
-  visitorsToday: number;
-  vehiclesInUse: number;
-  assetsAssigned: number;
+  // Employee-specific fields
+  myRequests?: number;
+  pending?: number;
+  approved?: number;
+  rejected?: number;
   unreadNotifications: number;
-  pendingApprovals: number;
+  byModule?: Record<string, number>;
+  
+  // Admin/Manager fields (optional, only for non-employees)
+  totalEmployees?: number;
+  activeEmployees?: number;
+  totalDepartments?: number;
+  pendingGatePasses?: number;
+  approvedGatePasses?: number;
+  pendingLeaves?: number;
+  approvedLeaves?: number;
+  pendingPurchaseRequests?: number;
+  pendingMRFs?: number;
+  visitorsToday?: number;
+  vehiclesInUse?: number;
+  assetsAssigned?: number;
+  pendingApprovals?: number;
 }
 
 export interface DashboardMetrics {

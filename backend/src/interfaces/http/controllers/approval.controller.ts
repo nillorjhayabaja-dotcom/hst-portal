@@ -11,13 +11,20 @@ export const approvalController = {
     requirePermission('approval', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { status, moduleId, requesterId, page, pageSize } = req.query as any;
+        const user = req.user as any;
+        const { status, moduleId, page, pageSize } = req.query as any;
+        
+        // SECURITY: For employee role, ALWAYS filter by authenticated user ID
+        // Ignore any requesterId from frontend to prevent data manipulation
+        const userRole = user.roles?.[0] || '';
+        const isEmployee = userRole === 'employee';
+        const requesterId = isEmployee ? user.id : undefined;
         
         const result = await approvalService.getAll(
           {
             status,
             moduleId,
-            requesterId,
+            requesterId, // Only uses authenticated user ID for employees
           },
           page ? parseInt(page) : 1,
           pageSize ? parseInt(pageSize) : 20
@@ -46,7 +53,12 @@ export const approvalController = {
     requirePermission('approval', 'view'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const request = await approvalService.getById(req.params.id);
+        const user = req.user as any;
+        const request = await approvalService.getById(
+          req.params.id,
+          user?.id,
+          user?.roles
+        );
         res.json({ success: true, data: request, errors: null });
       } catch (err) {
         next(err);

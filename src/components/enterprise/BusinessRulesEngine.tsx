@@ -1,5 +1,5 @@
 // Business Rules Engine - ERP Configuration
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EnterpriseDataTable, type Column } from "@/components/enterprise/EnterpriseDataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,16 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export function BusinessRulesEngine() {
-  const [rules, setRules] = useState<BusinessRule[]>(getBusinessRules());
+  const [rules, setRules] = useState<BusinessRule[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
-  const refresh = () => setRules(getBusinessRules());
+  useEffect(() => {
+    getBusinessRules().then((rules) => setRules(rules as BusinessRule[])).catch(() => setRules([]));
+  }, []);
+
+  const refresh = () => {
+    getBusinessRules().then((rules) => setRules(rules as BusinessRule[])).catch(() => setRules([]));
+  };
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,7 +53,7 @@ export function BusinessRulesEngine() {
       priority: Number(formData.get("priority")) || 1,
       conditions: [{ field: "amount", operator: "gt", value: 0 }],
       actions: [{ type: "notify", target: "role", value: "manager" }],
-      active: true,
+      isActive: true,
     });
     refresh();
     setShowCreate(false);
@@ -112,9 +118,9 @@ export function BusinessRulesEngine() {
       ),
     },
     {
-      id: "active",
+      id: "isActive",
       header: "Status",
-      accessorKey: "active",
+      accessorKey: "isActive",
       width: "80px",
       cell: (val) =>
         val ? (
